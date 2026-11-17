@@ -22,11 +22,12 @@ import {
     type ConnectorHostReceipt,
 } from './ConnectorHostJournalState.js';
 import { ConnectorHostProof } from './ConnectorHostProof.js';
+import { ProtectedFileLimits } from '../local/ProtectedFileLimits.js';
 
 /** One encrypted host journal owns at-most-once local admission through socket and process replacement. */
 export class ConnectorHostJournal implements AsyncDisposable {
-    static readonly #plainBytes: number = 524288;
-    static readonly #recordBytes: number = 786432;
+    static readonly #plainBytes: number = ProtectedFileLimits.hostPlainBytes;
+    static readonly #recordBytes: number = ProtectedFileLimits.hostRecordBytes;
     #busy: boolean = false;
     #failed: boolean = false;
     readonly #storage: ConnectorPrivateDirectory;
@@ -74,18 +75,18 @@ export class ConnectorHostJournal implements AsyncDisposable {
                 throw new Error('Host journal identity changed');
             }
         } else {
-            await owner.write(
-                'host-journal',
-                cipher.encode({
-                    journalId: grant.journalId,
-                    sequence: 0n,
-                    acknowledgedSequence: 0n,
-                    pending: null,
-                    receipt: null,
-                }),
-                this.#recordBytes,
-                true,
-            );
+            const encrypted: Buffer = cipher.encode({
+                journalId: grant.journalId,
+                sequence: 0n,
+                acknowledgedSequence: 0n,
+                pending: null,
+                receipt: null,
+            });
+            try {
+                await owner.write('host-journal', encrypted, this.#recordBytes, true);
+            } finally {
+                encrypted.fill(0);
+            }
         }
         if (!ready) {
             await owner.cleanPartial('host-ready', 4096);
@@ -297,12 +298,17 @@ export class ConnectorHostJournal implements AsyncDisposable {
                 JSON.parse(ConnectorHostCodec.encode(snapshot)),
                 '',
             );
-            await this.#storage.write(
-                'host-journal',
-                this.#encryption.encode(snapshot),
-                ConnectorHostJournal.#recordBytes,
-                false,
-            );
+            const encrypted: Buffer = this.#encryption.encode(snapshot);
+            try {
+                await this.#storage.write(
+                    'host-journal',
+                    encrypted,
+                    ConnectorHostJournal.#recordBytes,
+                    false,
+                );
+            } finally {
+                encrypted.fill(0);
+            }
             this.#snapshot = ConnectorHostJournal.#freeze(snapshot);
         } catch (caught: unknown) {
             this.#failed = true;

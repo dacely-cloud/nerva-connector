@@ -33,12 +33,17 @@ public static partial class NexaConnectorStateOwner
 
     private static int Bound(Dictionary<string, object> request)
     {
+        return Bound(request, 1048576);
+    }
+
+    private static int Bound(Dictionary<string, object> request, int maximum)
+    {
         if (!(request["maximumBytes"] is int))
         {
             throw new Failure("invalid");
         }
         int bound = (int)request["maximumBytes"];
-        if (bound < 1 || bound > 1048576)
+        if (bound < 1 || bound > maximum)
         {
             throw new Failure("limit");
         }

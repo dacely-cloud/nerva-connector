@@ -3,7 +3,8 @@
 
 import { constants } from 'node:fs';
 import { open, lstat, mkdir, readdir, type FileHandle } from 'node:fs/promises';
-import { isAbsolute, dirname, resolve } from 'node:path';
+import { isAbsolute, dirname, resolve, basename } from 'node:path';
+import { ProtectedFileLimits } from './ProtectedFileLimits.js';
 import type { BigIntStats } from 'node:fs';
 import { WindowsStateOwner } from '../windows/WindowsStateOwner.js';
 import {
@@ -122,7 +123,11 @@ export class ProtectedFiles {
     /** Refuse symlink leaves, unsafe ownership/permissions and non-files; bound reads despite concurrent replacement. */
     public static async read(path: string, maximumBytes: number, secret: boolean): Promise<Buffer> {
         ProtectedFiles.path(path);
-        if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1 || maximumBytes > 1048576) {
+        const limit: number =
+            process.platform === 'win32'
+                ? ProtectedFileLimits.ordinaryBytes
+                : ProtectedFileLimits.maximum(basename(path));
+        if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1 || maximumBytes > limit) {
             throw new Error('Invalid protected file bound');
         }
         if (process.platform === 'win32') {

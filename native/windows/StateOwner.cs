@@ -25,7 +25,7 @@ public static partial class NexaConnectorStateOwner
         Run();
     }
 
-    private const int MaximumLine = 1500000;
+    private const int MaximumLine = 6291456;
     private const uint ReadDirectory = 0x001200A1;
     private const uint ReadFileAccess = 0x00120089;
     private const uint WriteFileAccess = 0xC0130000;

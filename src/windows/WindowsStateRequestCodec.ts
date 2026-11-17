@@ -8,6 +8,7 @@ import {
     type WindowsStateParameters,
     type WindowsStateRequest,
 } from './WindowsStateProtocol.js';
+import { ProtectedFileLimits } from '../local/ProtectedFileLimits.js';
 
 /** A fixed primitive envelope keeps artifact streaming separate from bounded private-state bytes. */
 export class WindowsStateRequestCodec {
@@ -25,12 +26,23 @@ export class WindowsStateRequestCodec {
             operation === WindowsStateOperation.ArtifactVerify ||
             operation === WindowsStateOperation.ArtifactInstall;
         const maximum: number | undefined = parameters.maximumBytes;
+        const leafOperations: readonly WindowsStateOperation[] = [
+            WindowsStateOperation.Read,
+            WindowsStateOperation.Write,
+            WindowsStateOperation.Remove,
+            WindowsStateOperation.CleanPartial,
+        ];
+        const leaf: boolean = leafOperations.includes(operation);
+        const stateMaximum: number =
+            leaf && parameters.name !== undefined
+                ? ProtectedFileLimits.maximum(parameters.name)
+                : ProtectedFileLimits.ordinaryBytes;
         if (
             (artifact && maximum === undefined) ||
             (maximum !== undefined &&
                 (!Number.isSafeInteger(maximum) ||
                     maximum < 1 ||
-                    maximum > (artifact ? 268435456 : 1048576)))
+                    maximum > (artifact ? 268435456 : stateMaximum)))
         ) {
             throw new WindowsStateError(WindowsStateFailure.Limit);
         }

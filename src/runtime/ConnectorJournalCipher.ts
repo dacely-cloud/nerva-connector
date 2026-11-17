@@ -13,6 +13,7 @@ import { resolve } from 'node:path';
 import type { SigningKey } from '../identity/SigningKey.js';
 import { KeyDerivationPurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
+import { ProtectedFileLimits } from '../local/ProtectedFileLimits.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import { ConnectorJournalLimits } from './ConnectorJournalLimits.js';
@@ -98,13 +99,14 @@ export class ConnectorJournalCipher<TState> implements Disposable {
         codec: ConnectorStorageCodec<TState>,
     ): ConnectorJournalCipher<TState> {
         const limits: ConnectorJournalEncryptionLimits = context.limits;
+        const host: boolean = context.purpose === KeyDerivationPurpose.RetainedHost;
         if (
             !Number.isSafeInteger(limits.plainBytes) ||
             limits.plainBytes < 1 ||
-            limits.plainBytes > 786432 ||
+            limits.plainBytes > (host ? ProtectedFileLimits.hostPlainBytes : 786432) ||
             !Number.isSafeInteger(limits.recordBytes) ||
             limits.recordBytes < 1 ||
-            limits.recordBytes > 1048576 ||
+            limits.recordBytes > (host ? ProtectedFileLimits.hostRecordBytes : 1048576) ||
             Math.ceil((limits.plainBytes * 8) / 6) + 128 > limits.recordBytes ||
             !(context.aad instanceof Uint8Array) ||
             context.aad.byteLength < 1 ||

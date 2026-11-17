@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { WindowsStateExecutable } from './WindowsStateExecutable.js';
 import { WindowsStateRequestCodec } from './WindowsStateRequestCodec.js';
+import { ProtectedFileLimits } from '../local/ProtectedFileLimits.js';
 import type { WindowsStateArtifactMetadata } from './WindowsStateArtifactMetadata.js';
 import {
     WindowsStateOperation,
@@ -138,9 +139,15 @@ export class WindowsStateOwner {
         }
     }
 
-    /** Native bytes are canonical base64 and bounded again before allocation escapes the process boundary. */
-    public static bytes(response: WindowsStateResponse, maximum: number): Buffer {
-        if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 1048576) {
+    /** Native bytes retain ordinary bounds; a named lease read permits the reserved encrypted host receipt budget. */
+    public static bytes(
+        response: WindowsStateResponse,
+        maximum: number,
+        name: string | null = null,
+    ): Buffer {
+        const limit: number =
+            name === null ? ProtectedFileLimits.ordinaryBytes : ProtectedFileLimits.maximum(name);
+        if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > limit) {
             throw new WindowsStateError(WindowsStateFailure.Limit);
         }
         const encoded: string | null = response.dataBase64;
@@ -192,7 +199,7 @@ export class WindowsStateOwner {
             parameters,
         );
         const encoded: string = JSON.stringify(request);
-        if (Buffer.byteLength(encoded) > 1500000) {
+        if (Buffer.byteLength(encoded) > ProtectedFileLimits.nativeFrameBytes) {
             throw new WindowsStateError(WindowsStateFailure.Limit);
         }
         const ready: PromiseWithResolvers<WindowsStateResponse> =
@@ -220,7 +227,7 @@ export class WindowsStateOwner {
             this.#fail(WindowsStateFailure.Invalid);
             return;
         }
-        if (Buffer.byteLength(this.#buffer) > 1500000) {
+        if (Buffer.byteLength(this.#buffer) > ProtectedFileLimits.nativeFrameBytes) {
             this.#fail(WindowsStateFailure.Limit);
             return;
         }
@@ -321,7 +328,10 @@ export class WindowsStateOwner {
                           }
                           return result;
                       }),
-            dataBase64: text(value['dataBase64'], 1400000),
+            dataBase64: text(
+                value['dataBase64'],
+                Math.ceil(ProtectedFileLimits.hostRecordBytes / 3) * 4,
+            ),
             error,
             sizeBytes: typeof rawSize === 'string' ? BigInt(rawSize) : null,
             sha256: typeof rawHash === 'string' ? rawHash : null,

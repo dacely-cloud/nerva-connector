@@ -50,6 +50,11 @@ public static partial class NexaConnectorStateOwner
         {
             throw new Failure("invalid");
         }
+        int maximum =
+            lease.Purpose == "installation"
+            && (name == "host-journal" || name == "host-journal.partial")
+                ? 4259840
+                : 1048576;
         if (operation == "write")
         {
             Write(
@@ -57,7 +62,7 @@ public static partial class NexaConnectorStateOwner
                 lease,
                 name,
                 Text(request, "dataBase64"),
-                Bound(request),
+                Bound(request, maximum),
                 Flag(request, "initialize")
             );
             return result;
@@ -82,11 +87,11 @@ public static partial class NexaConnectorStateOwner
                 }
                 else if (operation == "read")
                 {
-                    result["dataBase64"] = ReadEncoded(file, name, Bound(request), true);
+                    result["dataBase64"] = ReadEncoded(file, name, Bound(request, maximum), true);
                 }
                 else
                 {
-                    byte[] bytes = ReadBytes(file, Bound(request) + 4096);
+                    byte[] bytes = ReadBytes(file, Bound(request, maximum) + 4096);
                     Array.Clear(bytes, 0, bytes.Length);
                     Delete(file);
                 }

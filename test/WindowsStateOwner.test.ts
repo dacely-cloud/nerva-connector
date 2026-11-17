@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { join, win32 } from 'node:path';
 import { expect, it } from 'vitest';
 import { ProtectedFiles } from '../src/local/ProtectedFiles.js';
+import { ProtectedFileLimits } from '../src/local/ProtectedFileLimits.js';
 import {
     ConnectorDeviceKey,
     type ConnectorDeviceIdentity,
@@ -63,6 +64,33 @@ it.skipIf(process.platform !== 'win32')(
                 ConnectorDirectoryPurpose.Installation,
             );
             await owner.write('qualification-owner', Buffer.from(nonce), 128, true);
+            const large: Buffer = Buffer.alloc(ProtectedFileLimits.hostRecordBytes, 255);
+            try {
+                await owner.write('host-journal', large, ProtectedFileLimits.hostRecordBytes, true);
+                const retained: Buffer = await owner.read(
+                    'host-journal',
+                    ProtectedFileLimits.hostRecordBytes,
+                );
+                try {
+                    expect(retained.equals(large)).toBe(true);
+                } finally {
+                    retained.fill(0);
+                }
+                await expect(
+                    owner.write('other-state', large, ProtectedFileLimits.hostRecordBytes, true),
+                ).rejects.toThrow();
+                await using identityOwner: ConnectorPrivateDirectory =
+                    await ConnectorPrivateDirectory.open(
+                        directory,
+                        ConnectorDirectoryPurpose.Identity,
+                    );
+                await expect(
+                    identityOwner.read('host-journal', ProtectedFileLimits.hostRecordBytes),
+                ).rejects.toThrow();
+                await owner.remove('host-journal', ProtectedFileLimits.hostRecordBytes);
+            } finally {
+                large.fill(0);
+            }
             const keyFile: string = join(directory, 'device-key.json');
             const publicKey: string = await ConnectorDeviceKey.initialize(keyFile);
             const encrypted: Buffer = await readFile(keyFile);

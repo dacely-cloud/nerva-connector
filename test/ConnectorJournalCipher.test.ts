@@ -11,6 +11,7 @@ import { KeyDerivationPurpose } from 'nerva-connector-protocol/identity/Identity
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorJournalCipher } from '../src/runtime/ConnectorJournalCipher.js';
 import { ConnectorJournalLimits } from '../src/runtime/ConnectorJournalLimits.js';
+import { ProtectedFileLimits } from '../src/local/ProtectedFileLimits.js';
 import type { ConnectorJournalRecord } from '../src/runtime/ConnectorJournalRecord.js';
 import { ConnectorJournalStore } from '../src/runtime/ConnectorJournalStore.js';
 import { ConnectorPrivateDirectory } from '../src/runtime/ConnectorPrivateDirectory.js';
@@ -67,6 +68,44 @@ class CipherFixture implements AsyncDisposable {
 }
 
 const snapshot: FixtureState = { sequence: 9007199254740993n, value: 'retained' };
+
+it('only the separate retained-host purpose accepts the expanded encrypted receipt quota', async (): Promise<void> => {
+    await using fixture: CipherFixture = await CipherFixture.create();
+    for (const purpose of Object.values(KeyDerivationPurpose)) {
+        if (purpose === KeyDerivationPurpose.RetainedHost) {
+            using host: ConnectorJournalCipher<FixtureState> = ConnectorJournalCipher.scoped(
+                fixture.key,
+                {
+                    purpose,
+                    salt: Buffer.from('fixture-host'),
+                    aad: Buffer.from('fixture-host-context'),
+                    limits: {
+                        plainBytes: ProtectedFileLimits.hostPlainBytes,
+                        recordBytes: ProtectedFileLimits.hostRecordBytes,
+                    },
+                },
+                fixture.codec,
+            );
+            expect(host.decode(host.encode(snapshot)).state).toEqual(snapshot);
+        } else {
+            expect((): ConnectorJournalCipher<FixtureState> =>
+                ConnectorJournalCipher.scoped(
+                    fixture.key,
+                    {
+                        purpose,
+                        salt: Buffer.from('fixture-host'),
+                        aad: Buffer.from('fixture-host-context'),
+                        limits: {
+                            plainBytes: ProtectedFileLimits.hostPlainBytes,
+                            recordBytes: ProtectedFileLimits.hostRecordBytes,
+                        },
+                    },
+                    fixture.codec,
+                ),
+            ).toThrow('context');
+        }
+    }
+});
 /** Fixed pre-extraction AES-256-GCM vectors use key bytes 0..31, nonce bytes 0..11 and the original AAD. */
 const originalTags: Readonly<Record<ConnectorOperationPurpose, string>> = {
     [ConnectorOperationPurpose.Files]: 'lVKtPcfnacIsZeALq7FHpg',

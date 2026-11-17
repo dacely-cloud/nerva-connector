@@ -58,7 +58,7 @@ jobs:
                   npx vitest run test/WindowsStateOwner.test.ts test/PairedStateMigration.test.ts test/ConnectorLogout.test.ts ^
                   test/HostProcessLaunch.test.ts test/HostProcessLifetime.test.ts test/WindowsHostTerminal.real.test.ts ^
                   test/HostHttp.test.ts test/WindowsHostMcp.real.test.ts ^
-                  test/WindowsHostWorkspace.real.test.ts ^
+                  test/WindowsHostWorkspace.real.test.ts test/ConnectorDesktopReceipt.test.ts ^
                   --maxWorkers=1 --testTimeout=60000 --hookTimeout=30000 ^
                   --reporter=json --outputFile=build/windows-state-validation.json
             - name: Require actual Windows cases without skips

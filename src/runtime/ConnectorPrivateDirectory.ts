@@ -8,6 +8,7 @@ import type { Dir } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { createServer, type Server, type Socket } from 'node:net';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
+import { ProtectedFileLimits } from '../local/ProtectedFileLimits.js';
 import { ConnectorDarwinStateLock } from './ConnectorDarwinStateLock.js';
 import { WindowsStateOwner } from '../windows/WindowsStateOwner.js';
 import type { WindowsStateArtifactMetadata } from '../windows/WindowsStateArtifactMetadata.js';
@@ -186,6 +187,7 @@ export class ConnectorPrivateDirectory implements AsyncDisposable {
                     maximumBytes: maximum,
                 }),
                 maximum,
+                name,
             );
         }
         const path: string = await this.#resolve(name);
@@ -245,7 +247,7 @@ export class ConnectorPrivateDirectory implements AsyncDisposable {
         if (
             !Number.isSafeInteger(maximum) ||
             maximum < 1 ||
-            maximum > 1048576 ||
+            maximum > ProtectedFileLimits.maximum(name) ||
             bytes.byteLength > maximum
         ) {
             throw new Error('Connector state exceeds its bound');
