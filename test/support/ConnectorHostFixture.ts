@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { randomBytes } from 'node:crypto';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -25,6 +25,12 @@ import { ConnectorClientHost } from '../../src/runtime/ConnectorClientHost.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import type { ConnectorActivitySink } from '../../src/runtime/ConnectorActivity.js';
 import { ConnectorSessionFixture } from './ConnectorSessionFixture.js';
+import { ProtectedFiles } from '../../src/local/ProtectedFiles.js';
+import { WindowsStateOwner } from '../../src/windows/WindowsStateOwner.js';
+import {
+    WindowsStateOperation,
+    type WindowsStateResponse,
+} from '../../src/windows/WindowsStateProtocol.js';
 
 /** Local host tests use isolated protected storage and generated keys, never a real account or device. */
 export class ConnectorHostFixture implements AsyncDisposable {
@@ -32,7 +38,13 @@ export class ConnectorHostFixture implements AsyncDisposable {
     public readonly identity: ConnectorClientIdentity;
     public readonly tasks: string;
     readonly #owners: Set<ConnectorClientHost> = new Set();
-    private constructor(public readonly directory: string) {
+    readonly #qualification: string | null;
+    #marked: boolean = false;
+    private constructor(
+        public readonly directory: string,
+        qualification: string | null = null,
+    ) {
+        this.#qualification = qualification;
         this.tasks = join(directory, 'tasks');
         this.identity = {
             ...this.peer.identity,
@@ -44,13 +56,40 @@ export class ConnectorHostFixture implements AsyncDisposable {
             },
         };
     }
-    /** Every test owns a bounded folder beneath trusted home ancestry and removes it on all exits. */
+    /** Windows uses native private ACLs below its verified Known Folder; POSIX uses trusted home ancestry. */
     public static async create(): Promise<ConnectorHostFixture> {
-        const fixture: ConnectorHostFixture = new ConnectorHostFixture(
-            await mkdtemp(join(homedir(), '.nerva-host-relay-')),
-        );
-        await mkdir(fixture.tasks, { mode: 0o700 });
-        return fixture;
+        let directory: string;
+        let qualification: string | null = null;
+        if (process.platform === 'win32') {
+            const root: WindowsStateResponse = await WindowsStateOwner.request(
+                WindowsStateOperation.Root,
+            );
+            if (root.path === null) {
+                throw new Error('Verified Windows Known Folder required');
+            }
+            qualification = randomUUID();
+            directory = join(root.path, 'qualification-host-' + qualification);
+            await ProtectedFiles.createDirectory(directory);
+        } else {
+            directory = await mkdtemp(join(homedir(), '.nerva-host-relay-'));
+        }
+        const fixture: ConnectorHostFixture = new ConnectorHostFixture(directory, qualification);
+        try {
+            if (qualification !== null) {
+                await writeFile(join(directory, 'qualification-owner'), qualification, {
+                    flag: 'wx',
+                    mode: 0o600,
+                });
+                fixture.#marked = true;
+                await ProtectedFiles.createDirectory(fixture.tasks);
+            } else {
+                await mkdir(fixture.tasks, { mode: 0o700 });
+            }
+            return fixture;
+        } catch (caught: unknown) {
+            await fixture[Symbol.asyncDispose]();
+            throw caught;
+        }
     }
     /** Direct installer invocation models the same explicit local approval used by the foreground wizard. */
     public async grant(enabled: boolean = true): Promise<ConnectorHostLocalGrant> {
@@ -160,15 +199,28 @@ export class ConnectorHostFixture implements AsyncDisposable {
     }
     /** Owned runtime cleanup joins processes and journal writes before fixture removal and key erasure. */
     public async [Symbol.asyncDispose](): Promise<void> {
-        try {
-            await Promise.allSettled(
-                [...this.#owners].map((owner: ConnectorClientHost): Promise<void> =>
-                    owner[Symbol.asyncDispose](),
-                ),
-            );
-        } finally {
-            this.peer[Symbol.dispose]();
-            await rm(this.directory, { recursive: true, force: true });
+        await Promise.allSettled(
+            [...this.#owners].map((owner: ConnectorClientHost): Promise<void> =>
+                owner[Symbol.asyncDispose](),
+            ),
+        );
+        this.peer[Symbol.dispose]();
+        if (this.#qualification !== null) {
+            if (this.#marked) {
+                if (
+                    (await readFile(join(this.directory, 'qualification-owner'), 'utf8')) !==
+                    this.#qualification
+                ) {
+                    throw new Error('Windows host fixture ownership changed');
+                }
+            } else if (
+                (await readdir(this.directory)).some(
+                    (name: string): boolean => name !== 'qualification-owner',
+                )
+            ) {
+                throw new Error('Unrecognized Windows host fixture contents');
+            }
         }
+        await rm(this.directory, { recursive: true, force: true });
     }
 }

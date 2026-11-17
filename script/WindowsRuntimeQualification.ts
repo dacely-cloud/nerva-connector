@@ -27,10 +27,15 @@ export class WindowsRuntimeQualification {
         'HostHttp.test.ts': 12,
         'WindowsHostMcp.real.test.ts': 1,
         'WindowsHostWorkspace.real.test.ts': 3,
+        'ConnectorDesktopReceipt.test.ts': 2,
     };
 
     /** These assertions exercise actual native owners, ConPTY, isolated IP-pinned TLS and persistent stdio MCP. */
     public static readonly nativeCases: Readonly<Record<string, readonly string[]>> = {
+        'ConnectorDesktopReceipt.test.ts': [
+            'a maximum inline image survives encrypted completion, process replacement and exact acknowledgment without capturing twice',
+            'the largest escaped response and request remain complete and immutable across encrypted journal recovery',
+        ],
         'HostProcessLaunch.test.ts': [
             'Windows native creation acknowledges absolute and PATH executables and preserves literal arguments',
             'Windows missing and invalid executable failures are definitive only after native no-create cleanup',

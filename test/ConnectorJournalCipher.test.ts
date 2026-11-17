@@ -199,7 +199,7 @@ it('scope changes never authenticate another directory, enrollment, lane or devi
     }
 });
 
-it('validates context without creating directories or taking the live store lock', async (): Promise<void> => {
+it('validates context without creating directories', async (): Promise<void> => {
     await using fixture: CipherFixture = await CipherFixture.create();
     const missing: string = join(fixture.directory, 'never-created');
     using standalone: ConnectorJournalCipher<FixtureState> = fixture.cipher(
@@ -223,33 +223,40 @@ it('validates context without creating directories or taking the live store lock
             fixture.codec,
         ]);
     }).toThrow();
-    await using store: ConnectorJournalStore<FixtureState> = await ConnectorJournalStore.open(
-        fixture.directory,
-        fixture.enrollment,
-        fixture.key,
-        ConnectorOperationPurpose.Files,
-        fixture.codec,
-    );
-    await store.write(snapshot, true);
-    await expect(
-        ConnectorJournalStore.open(
+});
+
+it.skipIf(process.platform !== 'linux')(
+    'cipher inspection never takes the live Linux store lock',
+    async (): Promise<void> => {
+        await using fixture: CipherFixture = await CipherFixture.create();
+        await using store: ConnectorJournalStore<FixtureState> = await ConnectorJournalStore.open(
             fixture.directory,
             fixture.enrollment,
             fixture.key,
             ConnectorOperationPurpose.Files,
             fixture.codec,
-        ),
-    ).rejects.toThrow();
-    const bytes: Buffer = await readFile(store.file);
-    try {
-        using inspector: ConnectorJournalCipher<FixtureState> = fixture.cipher();
-        expect(inspector.decode(bytes).state).toEqual(snapshot);
-        expect(await store.read()).toEqual(snapshot);
-        expect((await readFile(store.file)).equals(bytes)).toBe(true);
-    } finally {
-        bytes.fill(0);
-    }
-});
+        );
+        await store.write(snapshot, true);
+        await expect(
+            ConnectorJournalStore.open(
+                fixture.directory,
+                fixture.enrollment,
+                fixture.key,
+                ConnectorOperationPurpose.Files,
+                fixture.codec,
+            ),
+        ).rejects.toThrow();
+        const bytes: Buffer = await readFile(store.file);
+        try {
+            using inspector: ConnectorJournalCipher<FixtureState> = fixture.cipher();
+            expect(inspector.decode(bytes).state).toEqual(snapshot);
+            expect(await store.read()).toEqual(snapshot);
+            expect((await readFile(store.file)).equals(bytes)).toBe(true);
+        } finally {
+            bytes.fill(0);
+        }
+    },
+);
 
 it('refuses malformed encodings, tampering and authenticated invalid state without changing input', async (): Promise<void> => {
     await using fixture: CipherFixture = await CipherFixture.create();
@@ -309,7 +316,7 @@ it('refuses malformed encodings, tampering and authenticated invalid state witho
     }
 });
 
-it('disposal clears derived ownership and store zeroes only its owned IO buffers after completion', async (): Promise<void> => {
+it('disposal clears derived ownership and refuses further cipher use', async (): Promise<void> => {
     await using fixture: CipherFixture = await CipherFixture.create();
     const cipher: ConnectorJournalCipher<FixtureState> = fixture.cipher();
     const bytes: Buffer = cipher.encode(snapshot);
@@ -318,44 +325,54 @@ it('disposal clears derived ownership and store zeroes only its owned IO buffers
     expect((): Buffer => cipher.encode(snapshot)).toThrow();
     expect((): ConnectorJournalRecord<FixtureState> => cipher.decode(bytes)).toThrow();
     bytes.fill(0);
-    const write: MockInstance<ConnectorPrivateDirectory['write']> = vi.spyOn(
-        ConnectorPrivateDirectory.prototype,
-        'write',
-    );
-    const read: MockInstance<ConnectorPrivateDirectory['read']> = vi.spyOn(
-        ConnectorPrivateDirectory.prototype,
-        'read',
-    );
-    try {
-        await using store: ConnectorJournalStore<FixtureState> = await ConnectorJournalStore.open(
-            fixture.directory,
-            fixture.enrollment,
-            fixture.key,
-            ConnectorOperationPurpose.Files,
-            fixture.codec,
-        );
-        await store.write(snapshot, true);
-        const written: Buffer | undefined = write.mock.calls.at(-1)?.[1];
-        expect(written?.every((byte: number): boolean => byte === 0)).toBe(true);
-        expect(await store.read()).toEqual(snapshot);
-        const result: MockResult<Promise<Buffer>> | undefined = read.mock.results.at(-1);
-        if (result?.type !== 'return') {
-            throw new Error('Actual store read was not observed');
-        }
-        expect((await result.value).every((byte: number): boolean => byte === 0)).toBe(true);
-        await expect(store.write(snapshot, true)).rejects.toThrow();
-        expect(write.mock.calls.at(-1)?.[1].every((byte: number): boolean => byte === 0)).toBe(
-            true,
-        );
-        await writeFile(store.file, 'invalid encrypted JSON');
-        await expect(store.read()).rejects.toThrow();
-        const failedRead: MockResult<Promise<Buffer>> | undefined = read.mock.results.at(-1);
-        if (failedRead?.type !== 'return') {
-            throw new Error('Actual failed read was not observed');
-        }
-        expect((await failedRead.value).every((byte: number): boolean => byte === 0)).toBe(true);
-    } finally {
-        write.mockRestore();
-        read.mockRestore();
-    }
 });
+
+it.skipIf(process.platform !== 'linux')(
+    'the Linux store zeroes only its owned IO buffers after completion',
+    async (): Promise<void> => {
+        await using fixture: CipherFixture = await CipherFixture.create();
+        const write: MockInstance<ConnectorPrivateDirectory['write']> = vi.spyOn(
+            ConnectorPrivateDirectory.prototype,
+            'write',
+        );
+        const read: MockInstance<ConnectorPrivateDirectory['read']> = vi.spyOn(
+            ConnectorPrivateDirectory.prototype,
+            'read',
+        );
+        try {
+            await using store: ConnectorJournalStore<FixtureState> =
+                await ConnectorJournalStore.open(
+                    fixture.directory,
+                    fixture.enrollment,
+                    fixture.key,
+                    ConnectorOperationPurpose.Files,
+                    fixture.codec,
+                );
+            await store.write(snapshot, true);
+            const written: Buffer | undefined = write.mock.calls.at(-1)?.[1];
+            expect(written?.every((byte: number): boolean => byte === 0)).toBe(true);
+            expect(await store.read()).toEqual(snapshot);
+            const result: MockResult<Promise<Buffer>> | undefined = read.mock.results.at(-1);
+            if (result?.type !== 'return') {
+                throw new Error('Actual store read was not observed');
+            }
+            expect((await result.value).every((byte: number): boolean => byte === 0)).toBe(true);
+            await expect(store.write(snapshot, true)).rejects.toThrow();
+            expect(write.mock.calls.at(-1)?.[1].every((byte: number): boolean => byte === 0)).toBe(
+                true,
+            );
+            await writeFile(store.file, 'invalid encrypted JSON');
+            await expect(store.read()).rejects.toThrow();
+            const failedRead: MockResult<Promise<Buffer>> | undefined = read.mock.results.at(-1);
+            if (failedRead?.type !== 'return') {
+                throw new Error('Actual failed read was not observed');
+            }
+            expect((await failedRead.value).every((byte: number): boolean => byte === 0)).toBe(
+                true,
+            );
+        } finally {
+            write.mockRestore();
+            read.mockRestore();
+        }
+    },
+);

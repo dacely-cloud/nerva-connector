@@ -54,8 +54,8 @@ function report(): QualificationReport {
 it('requires the complete finite Windows report and every actual workspace, environment, process, ConPTY, HTTP and MCP case', (): void => {
     expect(WindowsRuntimeQualification.read(report(), 'win32')).toEqual({
         platform: 'win32',
-        suites: 9,
-        passed: 38,
+        suites: 10,
+        passed: 40,
         skipped: 0,
     });
     expect((): void => {
