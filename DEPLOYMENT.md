@@ -54,7 +54,43 @@ Upload the contents of `build/windows-update` to the feed URL, the setup program
 `latest.json.sig`. Installed copies take only a newer version whose `latest.json` was signed by that key. A build
 without `assets/windows/updates.json` never checks for updates.
 
-## Linux
+## macOS and Linux desktop installers
+
+The desktop installers bundle their own checksum-pinned Node.js 26.12.1 runtime, connector, native helpers and
+licenses. They never include npm, `node_modules` or Cargo caches. Build on the target operating system and
+processor; Linux helpers cannot be included in a Mac app, and Intel and ARM64 downloads are separate.
+
+```sh
+CARGO_TARGET_DIR=/path/to/existing/cargo-target npm run build:native
+npm run build:linux-installer    # Linux: build/Nerva-Connector-Setup-<version>-<arch>.run
+npm run build:macos-installer    # macOS: build/Nerva-Connector-Setup-<version>-<arch>.dmg
+```
+
+Run the appropriate installer command for your OS. macOS additionally requires the Xcode command-line tools and
+the standard `osacompile`, `sips`, `iconutil`, `codesign` and `hdiutil` tools. Each build checks the native helper
+format, embedded helper commitment, actual runtime target and launcher before publishing an installer and its
+`.sha256` file. Linux also audits the entire payload before compression; unexpected files, directories and
+symlinks fail the build. Intermediate files are removed, current runtime downloads are reused, and obsolete
+installers for the same platform and architecture are pruned.
+
+The **macOS and Linux connector installers** GitHub Actions workflow builds and exercises all four combinations
+on native runners. Only the finished installer and checksum are uploaded, with seven-day retention. Download
+artifacts from a successful run to publish them through your HTTPS distribution service.
+
+Linux installs offline for the current user in `~/.local/lib/nerva-connector`, or the `--destination` folder, and
+creates an applications-menu shortcut. No desktop shortcut is created with `--no-shortcuts`. It rejects symlink
+ancestry, unsafe writable ancestors and existing unrelated files. Updates replace only recognized program files;
+device state stays separately in `~/.local/share/nerva-connector`. Stop the connector before updating it.
+
+The Mac disk image contains **Nerva Connector.app** and an **Applications** shortcut. Its application opens the
+existing local permission and pairing console in Terminal. The generated bundle is ad-hoc signed and verified,
+which checks its integrity but does not provide Developer ID or notarization. For public macOS distribution,
+apply your Developer ID Application signature and notarize the app before recreating, signing and notarizing
+the disk image using Apple's [distribution packaging instructions](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution).
+Keep signing credentials outside the repository. Grant Screen Recording and Accessibility to Terminal on the
+Mac where the connector runs; the package does not grant access itself.
+
+## Linux managed releases
 
 ### Prepare a release
 

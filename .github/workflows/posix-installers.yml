@@ -1,0 +1,96 @@
+name: macOS and Linux connector installers
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - .github/workflows/posix-installers.yml
+            - assets/linux/**
+            - assets/posix/**
+            - assets/windows/nerva-connector-logo.png
+            - native/**
+            - src/**
+            - script/**
+            - test/**
+            - package.json
+            - package-lock.json
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: posix-installers-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    installer:
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - runner: ubuntu-24.04
+                      platform: linux
+                      architecture: x64
+                    - runner: ubuntu-24.04-arm
+                      platform: linux
+                      architecture: arm64
+                    - runner: macos-15-intel
+                      platform: macos
+                      architecture: x64
+                    - runner: macos-15
+                      platform: macos
+                      architecture: arm64
+        runs-on: ${{ matrix.runner }}
+        timeout-minutes: 20
+        env:
+            CARGO_TARGET_DIR: ${{ github.workspace }}/native/target
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+              with:
+                  node-version: 26.12.1
+                  package-manager-cache: false
+            - run: npm ci --ignore-scripts --no-audit --no-fund
+            - run: npm run typecheck && npm run lint
+            - name: Build only the native helpers into one reusable target
+              run: |
+                  mkdir -p "$CARGO_TARGET_DIR"
+                  npm run build:native
+            - run: npm run build:${{ matrix.platform }}-installer
+            - name: Exercise installation and native executable boundaries
+              run: npx vitest run test/ConnectorLinuxInstaller.test.ts test/ConnectorNativeFormat.test.ts test/ConnectorNativeExecutable.test.ts --maxWorkers=1
+            - name: Install and launch the real Linux package offline
+              if: matrix.platform == 'linux'
+              shell: bash
+              run: |
+                  destination="$HOME/nerva-installer-smoke"
+                  trap 'rm -rf -- "$destination"' EXIT
+                  sh build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.run --destination "$destination" --no-shortcuts
+                  "$destination/nerva-connector" --help
+                  "$destination/node" -e 'if(process.arch!=="${{ matrix.architecture }}")process.exit(1)'
+            - name: Mount and launch the real macOS package
+              if: matrix.platform == 'macos'
+              shell: bash
+              run: |
+                  mount="$RUNNER_TEMP/nerva-installer-image"
+                  mkdir "$mount"
+                  trap 'hdiutil detach "$mount"; rmdir "$mount"' EXIT
+                  hdiutil attach -readonly -nobrowse -mountpoint "$mount" build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.dmg
+                  app="$mount/Nerva Connector.app"
+                  codesign --verify --deep --strict "$app"
+                  "$app/Contents/Resources/app/nerva-connector" --help
+                  "$app/Contents/Resources/app/node" -e 'if(process.arch!=="${{ matrix.architecture }}")process.exit(1)'
+            - name: Retain only the installer and checksum
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: nerva-connector-${{ matrix.platform }}-${{ matrix.architecture }}
+                  path: |
+                      build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.run
+                      build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.run.sha256
+                      build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.dmg
+                      build/Nerva-Connector-Setup-*-${{ matrix.architecture }}.dmg.sha256
+                  if-no-files-found: error
+                  retention-days: 7

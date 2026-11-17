@@ -7,18 +7,10 @@ import { createHash, type Hash } from 'node:crypto';
 import { dirname } from 'node:path';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import { ConnectorNativeExecutionError } from './ConnectorNativeExecutionError.js';
+import { ConnectorNativeFormat } from './ConnectorNativeFormat.js';
 
 /** Verification pins one reviewed native ELF or Mach-O; mutable pathnames and shell-script fallback cannot choose execution. */
 export class ConnectorNativeExecutable {
-    /** 64-bit Mach-O magic `MH_MAGIC_64`, little-endian on both Mac architectures. */
-    static readonly #machMagic: number = 0xfeedfacf;
-    /** `CPU_TYPE_X86_64` and `CPU_TYPE_ARM64` from `<mach/machine.h>`. */
-    static readonly #machCpu: Readonly<Record<string, number>> = {
-        x64: 0x01000007,
-        arm64: 0x0100000c,
-    };
-    /** `MH_EXECUTE`. */
-    static readonly #machExecutable: number = 2;
     /** The file state each returned descriptor had when its digest was verified. */
     static readonly #verified: WeakMap<FileHandle, BigIntStats> = new WeakMap();
 
@@ -104,7 +96,7 @@ export class ConnectorNativeExecutable {
                 header.byteLength,
                 0,
             );
-            if (loaded.bytesRead !== 64 || !ConnectorNativeExecutable.#native(header)) {
+            if (loaded.bytesRead !== 64 || !ConnectorNativeFormat.matches(header)) {
                 throw new Error('Connector requires a reviewed native executable');
             }
             const hash: Hash = createHash('sha256');
@@ -141,27 +133,5 @@ export class ConnectorNativeExecutable {
             await executable.close();
             throw caught;
         }
-    }
-
-    /** A 64-bit little-endian executable for this machine: ELF on Linux, thin Mach-O on macOS. */
-    static #native(header: Buffer): boolean {
-        if (process.platform === 'darwin') {
-            const cpu: number | undefined = this.#machCpu[process.arch];
-            return (
-                cpu !== undefined &&
-                header.readUInt32LE(0) === this.#machMagic &&
-                header.readUInt32LE(4) === cpu &&
-                header.readUInt32LE(12) === this.#machExecutable
-            );
-        }
-        const machine: number = process.arch === 'x64' ? 62 : process.arch === 'arm64' ? 183 : 0;
-        return (
-            header.subarray(0, 4).toString('hex') === '7f454c46' &&
-            header[4] === 2 &&
-            header[5] === 1 &&
-            machine !== 0 &&
-            header.readUInt16LE(18) === machine &&
-            [2, 3].includes(header.readUInt16LE(16))
-        );
     }
 }

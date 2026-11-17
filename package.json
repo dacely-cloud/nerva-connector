@@ -46,6 +46,8 @@
         "prepare:release": "npm run check:circular && node script/prepare-release.ts",
         "build:windows": "node script/build-connector.ts --windows",
         "build:windows-installer": "node script/build-windows-installer.ts",
+        "build:linux-installer": "node script/build-posix-installer.ts --platform linux",
+        "build:macos-installer": "node script/build-posix-installer.ts --platform darwin",
         "create:windows-update-key": "node script/create-windows-update-key.ts",
         "release:windows": "node script/release-windows.ts",
         "build:windows:qualification": "npm run check:circular && node script/build-windows-qualification.ts",

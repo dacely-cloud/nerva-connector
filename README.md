@@ -50,30 +50,28 @@ finishes. Continue with [First start](#first-start).
 
 ### macOS
 
-You need [Node.js 26](https://nodejs.org) and git.
+1. Download `Nerva-Connector-Setup-<version>-arm64.dmg` for Apple Silicon, or `-x64.dmg` for an Intel Mac.
+2. Open the disk image and drag **Nerva Connector** to **Applications**, or another folder you choose.
+3. Open **Nerva Connector**. It opens its setup and connection console in Terminal. Node is included.
 
-```sh
-git clone https://github.com/dacely-cloud/nerva-connector.git
-cd nerva-connector
-npm ci
-npm run build
-npm start
-```
+Current macOS builds are signed locally for bundle integrity. Public distribution with Gatekeeper trust requires
+the publisher's Developer ID signature and notarization; the build does not claim those are present.
 
 So Nexa can see the screen and use the mouse and keyboard, allow **Screen Recording** and **Accessibility** for
-Terminal in **System Settings → Privacy & Security**, then quit the connector and run `npm start` again.
+Terminal in **System Settings → Privacy & Security**, then quit and reopen the connector.
 
 ### Linux
 
-You need [Node.js 26](https://nodejs.org) and git.
+Download `Nerva-Connector-Setup-<version>-x64.run` (`-arm64.run` on ARM64 Linux), then run:
 
 ```sh
-git clone https://github.com/dacely-cloud/nerva-connector.git
-cd nerva-connector
-npm ci
-npm run build
-npm start
+sh ./Nerva-Connector-Setup-0.1.0-x64.run
 ```
+
+It installs for your account without administrator rights, Node, npm or a compiler. Open **Nerva Connector** from
+the applications menu, or run `~/.local/lib/nerva-connector/nerva-connector`. A desktop terminal emulator is needed
+for the menu shortcut. To choose another program location, add `--destination "/absolute/path/Nerva Connector"`.
+Use `--no-shortcuts` on a machine without a desktop. Close the connector before installing an update.
 
 ## First start
 
@@ -100,7 +98,8 @@ Open the connector:
 
 - **Windows:** click the Nerva icon next to the clock (it may be under the **^** arrow), or Start menu →
   **Nerva Connector**.
-- **macOS and Linux:** run `npm start` in the `nerva-connector` folder.
+- **macOS:** Applications → **Nerva Connector**.
+- **Linux:** open **Nerva Connector** from the applications menu, or run its installed `nerva-connector` launcher.
 
 On Windows the connector keeps running in the background when you minimize its window; the icon next to the
 clock brings it back. Right-click the icon to check for updates, turn **Start when I sign in** on or off, or quit.
@@ -129,8 +128,9 @@ Type `/` to open the menu:
 - **Windows:** updates install by themselves. Nerva Connector checks when it starts and every hour, installs a new
   version and starts again, keeping this computer's link and settings. Right-click its icon and choose **Check for
   updates** to check now, or run a newer setup file.
-- **macOS and Linux:** in the `nerva-connector` folder run `git pull`, `npm ci` and `npm run build`, then
-  `npm start`.
+- **macOS:** quit the connector, then replace the application with the newer disk image's copy.
+- **Linux:** close the connector and run the newer installer with the same `--destination`, if customized.
+  Both keep your account link, permissions and history.
 
 ## Uninstall
 
@@ -138,8 +138,11 @@ To remove the computer from your account as well, open the connector and type `/
 
 - **Windows:** Settings → Apps → Installed apps → **Nerva Connector** → Uninstall. The link and settings stay in
   `%LOCALAPPDATA%\Nerva\Connector`; delete that folder to remove them.
-- **macOS and Linux:** delete the `nerva-connector` folder. The link and settings are in
-  `~/.local/share/nerva-connector`.
+- **macOS:** delete **Nerva Connector.app**.
+- **Linux:** delete the installed program folder (`~/.local/lib/nerva-connector` by default) and
+  `~/.local/share/applications/nerva-connector.desktop`.
+
+On macOS and Linux, the account link and settings stay in `~/.local/share/nerva-connector`.
 
 ## Troubleshooting
 
@@ -191,5 +194,5 @@ npm test
 npm run check     # typecheck, lint, format, build and tests
 ```
 
-Building signed Windows and Linux releases, the Windows update feed and running the connector as a Linux service
+Building desktop installers, signed managed releases, the Windows update feed and running the connector as a Linux service
 are covered in [DEPLOYMENT.md](DEPLOYMENT.md).
