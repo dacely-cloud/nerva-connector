@@ -1,8 +1,40 @@
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/dacely-cloud/nerva-connector/main/assets/windows/nerva-connector-logo.png" alt="Nerva" width="128" height="128" />
+
 # Nerva Connector
 
+### Your computer, connected to Nexa.
+
+<sub>Open apps, work with files and use the desktop on Windows, macOS and Linux, with the access you choose.</sub>
+
+<br/>
+
+[![Windows native runtime](https://github.com/dacely-cloud/nerva-connector/actions/workflows/windows-state.yml/badge.svg)](https://github.com/dacely-cloud/nerva-connector/actions/workflows/windows-state.yml)
+[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-ff7a00?labelColor=0e1520)](#install)
+[![Node.js](https://img.shields.io/badge/Node.js-26-5fa04e?labelColor=0e1520&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+
+<br/>
+
+<img src="https://img.shields.io/badge/TypeScript-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+<img src="https://img.shields.io/badge/C%23-512bd4?style=for-the-badge" alt="C#" />
+
+<br/>
+<br/>
+
+[Install](#install) · [First start](#first-start) · [Development & deployment](DEPLOYMENT.md)
+
+</div>
+
+---
+
+## Introduction
+
 Nerva Connector lets Nexa use your computer when you ask it to: open programs, read and write files, look at the
-screen and use the mouse and keyboard. It runs on Windows, macOS and Linux. Nexa can only use the computer while
-the connector is open, and only in the ways you allow.
+screen and use the mouse and keyboard. Link your computer to your Nerva account, choose what Nexa can do and
+pick a folder for its work. Access lasts while the connector runs, and you can turn off full computer access
+at any time.
 
 ## Install
 
