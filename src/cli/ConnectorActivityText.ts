@@ -67,6 +67,7 @@ export class ConnectorActivityText {
     ): readonly ConnectorStyledRow[] {
         const running: boolean = entry.state === ConnectorActivityState.Running;
         const failed: boolean = entry.state === ConnectorActivityState.Failed;
+        const unconfirmed: boolean = entry.state === ConnectorActivityState.Unconfirmed;
         const mark: ConnectorLockupText = running
             ? {
                   text: this.spinner[Math.abs(Math.trunc(tick)) % this.spinner.length] ?? '•',
@@ -74,15 +75,19 @@ export class ConnectorActivityText {
               }
             : failed
               ? { text: '✕', color: ConnectorTheme.error }
-              : { text: '✓', color: ConnectorTheme.success };
+              : unconfirmed
+                ? { text: '?', color: ConnectorTheme.warning }
+                : { text: '✓', color: ConnectorTheme.success };
         const time: ConnectorLockupText = running
             ? { text: this.elapsed(now - entry.startedAtMs), color: ConnectorTheme.dim }
             : failed
               ? { text: 'failed', color: ConnectorTheme.error }
-              : {
-                    text: this.ago(now - (entry.endedAtMs ?? entry.startedAtMs)),
-                    color: ConnectorTheme.dim,
-                };
+              : unconfirmed
+                ? { text: 'unconfirmed', color: ConnectorTheme.warning }
+                : {
+                      text: this.ago(now - (entry.endedAtMs ?? entry.startedAtMs)),
+                      color: ConnectorTheme.dim,
+                  };
         return this.#card(mark, entry.title, entry.subject, entry.agent, time, width);
     }
 

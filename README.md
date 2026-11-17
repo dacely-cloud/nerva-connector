@@ -146,6 +146,11 @@ On macOS and Linux, the account link and settings stay in `~/.local/share/nerva-
 
 ## Troubleshooting
 
+**A computer action failed or an app did not open.** Type `/log`. Failed native operations include their tool,
+failure reason and Windows error code when available. The log does not include typed text or screenshot bytes.
+An app is marked as opened only after its window is observed; missing, ambiguous and unconfirmed launches stay
+explicit. Windows application lookup also checks Start menu shortcuts, App Paths and installed-package entries.
+
 **Screen snapshots ask for an updated approval.** Install the latest connector, then open `/settings`,
 choose **Full computer** and approve the review. Updates that add computer tools need a new local approval;
 your account link and activity history stay in place.

@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { execFile } from 'node:child_process';
+import { execFile, type ExecException } from 'node:child_process';
 import { access, constants } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { HostDesktopLimits } from './HostDesktopTypes.js';
+import { HostDesktopError } from './HostDesktopError.js';
 
 /** Fixed installed desktop tools run without shell interpretation and with bounded buffered output. */
 export class HostDesktopCommand {
@@ -59,11 +60,19 @@ export class HostDesktopCommand {
                         maxBuffer: maximum,
                         windowsHide: true,
                     },
-                    (error: Error | null, stdout: Buffer): void => {
+                    (error: ExecException | null, stdout: Buffer, stderr: Buffer): void => {
                         if (inputFailure !== null) {
                             reject(inputFailure);
                         } else if (error !== null) {
-                            reject(error);
+                            const failure: Error =
+                                error instanceof Error
+                                    ? error
+                                    : new Error('Desktop command execution failed');
+                            reject(
+                                arguments_.includes('--desktop')
+                                    ? HostDesktopError.read(stderr, error.killed === true)
+                                    : failure,
+                            );
                         } else if (!inputFinished) {
                             reject(new Error('Desktop input pipe closed before completion'));
                         } else {

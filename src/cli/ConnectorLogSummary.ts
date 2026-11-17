@@ -9,7 +9,14 @@
  * network. Routine connecting, sign-in and retry lines are left in the file. Every field is read as untrusted data: a line that is not the expected shape is skipped.
  */
 export class ConnectorLogSummary {
-    static readonly #shown: ReadonlySet<string> = new Set(['ending', 'closed', 'stall', 'failed']);
+    static readonly #shown: ReadonlySet<string> = new Set([
+        'ending',
+        'closed',
+        'stall',
+        'failed',
+        'host-operation-failed',
+        'host-application-result',
+    ]);
 
     /**
      * The console rows for the log's recent lines, oldest first.
@@ -51,6 +58,25 @@ export class ConnectorLogSummary {
             const value: unknown = line[key];
             return typeof value === 'number' && Number.isFinite(value) ? value : null;
         };
+        if (event === 'host-operation-failed') {
+            const code: number | null = number('nativeCode');
+            return (
+                (text('tool') ?? 'Computer operation') +
+                ': ' +
+                (text('reason') ?? text('code') ?? 'failed') +
+                (text('nativeReason') === null ? '' : ' [' + (text('nativeReason') ?? '') + ']') +
+                (code === null ? '' : ' (native code ' + code.toString() + ')')
+            );
+        }
+        if (event === 'host-application-result') {
+            return (
+                'Application launch: ' +
+                (text('status') ?? 'unknown') +
+                (line['windowObserved'] === true
+                    ? ' · window observed'
+                    : ' · no application window confirmed')
+            );
+        }
         if (event === 'ending') {
             const frame: string | null = text('frame');
             const error: string | null = text('error');

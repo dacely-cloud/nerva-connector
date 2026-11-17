@@ -50,6 +50,23 @@ internal static partial class NexaConnectorHostDesktop
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetProcessDPIAware();
 
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CursorPoint
+    {
+        internal int X;
+        internal int Y;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetCursorPos(out CursorPoint point);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
     [DllImport("user32.dll")]
     private static extern int GetSystemMetrics(int index);
 

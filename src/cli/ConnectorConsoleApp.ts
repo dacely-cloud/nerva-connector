@@ -41,6 +41,7 @@ import type { ConnectorSetupProfile } from '../runtime/ConnectorSetupProfile.js'
 import { ConnectorConnectionLog } from '../runtime/ConnectorConnectionLog.js';
 import { ConnectorLogSummary } from './ConnectorLogSummary.js';
 import { WindowsBackgroundStartup } from '../windows/WindowsBackgroundStartup.js';
+import { ConnectorUpdateChannel } from './ConnectorUpdateChannel.js';
 
 /** Foreground application: first-run setup and linking, then the console's slash commands. */
 export class ConnectorConsoleApp {
@@ -58,6 +59,7 @@ export class ConnectorConsoleApp {
     readonly #startup: WindowsBackgroundStartup | null = WindowsBackgroundStartup.find();
     #view: ConnectorConsole | null = null;
     #action: Promise<void> | null = null;
+    #updates: ConnectorUpdateChannel | null = null;
 
     /** The installer chooses the private pairing file; the terminal never asks users to author it. */
     public constructor(public readonly source: ConnectorConsoleSource) {
@@ -107,6 +109,14 @@ export class ConnectorConsoleApp {
                 this.#activity,
             );
             this.#view = view;
+            using updates: ConnectorUpdateChannel = new ConnectorUpdateChannel(
+                (rows: readonly string[]): void => {
+                    this.#model.details = rows;
+                    this.#view?.draw();
+                },
+            );
+            this.#updates = updates;
+            this.#model.updates = updates.available;
             if (this.#startup !== null) {
                 void this.#readStartup();
             }
@@ -147,6 +157,7 @@ export class ConnectorConsoleApp {
             }
             await this.#log.flush();
             this.#view = null;
+            this.#updates = null;
             signal.removeEventListener('abort', abort);
         }
     }
@@ -210,6 +221,9 @@ export class ConnectorConsoleApp {
                 await this.#showLog();
             } else if (command === ConnectorConsoleCommand.Startup) {
                 await this.#toggleStartup();
+            } else if (command === ConnectorConsoleCommand.Updates) {
+                this.#updates?.check();
+                this.#model.details = ['Checking for updates…'];
             } else {
                 this.#model.details = [];
             }

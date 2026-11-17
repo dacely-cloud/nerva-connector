@@ -55,6 +55,7 @@ export class ConnectorWindowsSources {
         'HostDesktop.cs',
         'HostDesktopNative.cs',
         'HostApplication.cs',
+        'HostApplicationCatalog.cs',
         'HostDesktopFrame.cs',
     ].map((name: string): string => resolve('native/windows', name));
 

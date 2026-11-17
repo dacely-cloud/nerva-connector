@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -22,9 +22,11 @@ internal static class NexaConnectorHostApplication
         {
             throw new InvalidOperationException("application-name");
         }
-        List<Application> matches = Find(name.Trim());
+        List<NexaConnectorApplicationEntry> matches = NexaConnectorHostApplicationCatalog.Find(
+            name.Trim()
+        );
         List<Dictionary<string, object>> candidates = new List<Dictionary<string, object>>();
-        foreach (Application application in matches)
+        foreach (NexaConnectorApplicationEntry application in matches)
         {
             candidates.Add(
                 new Dictionary<string, object>
@@ -49,11 +51,14 @@ internal static class NexaConnectorHostApplication
         {
             return result;
         }
-        Application selected = matches[0];
+        NexaConnectorApplicationEntry selected = matches[0];
         IntPtr accepted = ShellExecuteW(
             IntPtr.Zero,
             "open",
-            "shell:AppsFolder\\" + selected.Id,
+            Path.IsPathRooted(selected.Id)
+            || selected.Id.StartsWith("shell:", StringComparison.OrdinalIgnoreCase)
+                ? selected.Id
+                : "shell:AppsFolder\\" + selected.Id,
             null,
             null,
             1
@@ -77,84 +82,6 @@ internal static class NexaConnectorHostApplication
         return result;
     }
 
-    /// <summary>Exact display names or identifiers win; partial names must resolve to exactly one installed entry.</summary>
-    private static List<Application> Find(string query)
-    {
-        Type shellType = Type.GetTypeFromProgID("Shell.Application", true);
-        object shell = null;
-        object folder = null;
-        object items = null;
-        List<Application> exact = new List<Application>();
-        List<Application> partial = new List<Application>();
-        try
-        {
-            shell = Activator.CreateInstance(shellType);
-            folder = Call(shell, "NameSpace", "shell:AppsFolder");
-            if (folder == null)
-            {
-                throw new InvalidOperationException("application-catalog-unavailable");
-            }
-            items = Call(folder, "Items");
-            int count = Convert.ToInt32(Property(items, "Count"));
-            if (count < 0 || count > 8192)
-            {
-                throw new InvalidOperationException("application-catalog-limit");
-            }
-            for (int index = 0; index < count; index++)
-            {
-                object item = null;
-                try
-                {
-                    item = Call(items, "Item", index);
-                    string name = Convert.ToString(Property(item, "Name"));
-                    string id = Convert.ToString(Property(item, "Path"));
-                    if (
-                        String.IsNullOrWhiteSpace(name)
-                        || String.IsNullOrWhiteSpace(id)
-                        || name.Length > 512
-                        || id.Length > 4096
-                    )
-                    {
-                        continue;
-                    }
-                    Application application = new Application { Name = name, Id = id };
-                    if (
-                        String.Equals(query, name, StringComparison.OrdinalIgnoreCase)
-                        || String.Equals(query, id, StringComparison.OrdinalIgnoreCase)
-                    )
-                    {
-                        exact.Add(application);
-                    }
-                    else if (
-                        partial.Count < 32
-                        && (
-                            name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
-                            || id.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
-                        )
-                    )
-                    {
-                        partial.Add(application);
-                    }
-                    if (exact.Count > 32)
-                    {
-                        throw new InvalidOperationException("application-match-limit");
-                    }
-                }
-                finally
-                {
-                    Release(item);
-                }
-            }
-            return exact.Count > 0 ? exact : partial;
-        }
-        finally
-        {
-            Release(items);
-            Release(folder);
-            Release(shell);
-        }
-    }
-
     /// <summary>Window titles are observed evidence, not an assertion that a launched process is ready.</summary>
     private static bool ActivateWindow(string name)
     {
@@ -176,7 +103,14 @@ internal static class NexaConnectorHostApplication
                 }
                 StringBuilder title = new StringBuilder(1024);
                 GetWindowTextW(window, title, title.Capacity);
-                if (!String.Equals(title.ToString(), name, StringComparison.OrdinalIgnoreCase))
+                if (
+                    NexaConnectorHostApplicationCatalog
+                        .Compact(title.ToString())
+                        .IndexOf(
+                            NexaConnectorHostApplicationCatalog.Compact(name),
+                            StringComparison.OrdinalIgnoreCase
+                        ) < 0
+                )
                 {
                     return true;
                 }
@@ -192,34 +126,6 @@ internal static class NexaConnectorHostApplication
             IntPtr.Zero
         );
         return found;
-    }
-
-    private static object Call(object instance, string name, params object[] arguments)
-    {
-        return instance
-            .GetType()
-            .InvokeMember(name, BindingFlags.InvokeMethod, null, instance, arguments);
-    }
-
-    private static object Property(object instance, string name)
-    {
-        return instance
-            .GetType()
-            .InvokeMember(name, BindingFlags.GetProperty, null, instance, null);
-    }
-
-    private static void Release(object instance)
-    {
-        if (instance != null && Marshal.IsComObject(instance))
-        {
-            Marshal.FinalReleaseComObject(instance);
-        }
-    }
-
-    private sealed class Application
-    {
-        internal string Name;
-        internal string Id;
     }
 
     private delegate bool WindowCallback(IntPtr window, IntPtr parameter);

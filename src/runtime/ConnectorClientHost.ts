@@ -6,6 +6,7 @@ import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityForm
 import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostLimits,
+    ConnectorHostTool,
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
     type ConnectorHostPublication,
@@ -41,6 +42,9 @@ import {
 } from './ConnectorHostObservationOwners.js';
 import type { ConnectorHostObservationCapability } from '../protocol/ConnectorHostObservationCapability.js';
 import type { ConnectorActivityHandle, ConnectorActivitySink } from './ConnectorActivity.js';
+import { ConnectorConnectionLog } from './ConnectorConnectionLog.js';
+import { HostDesktopError } from '../host/HostDesktopError.js';
+import { ConnectorActivityArguments } from './ConnectorActivityArguments.js';
 
 /** One verified delivery of an original host permit, bound to the lease it arrived on. */
 export interface ConnectorHostDelivery {
@@ -73,6 +77,7 @@ export class ConnectorClientHost implements AsyncDisposable {
         public readonly journal: ConnectorHostJournal,
         observationProtocol: typeof ConnectorHostObservedStart.Protocol | null,
         activity: ConnectorActivitySink | null,
+        public readonly log: ConnectorConnectionLog | null,
     ) {
         this.#activity = activity;
         this.#observations =
@@ -103,6 +108,7 @@ export class ConnectorClientHost implements AsyncDisposable {
         identity: ConnectorClientIdentity,
         observationProtocol: typeof ConnectorHostObservedStart.Protocol | null = null,
         activity: ConnectorActivitySink | null = null,
+        log: ConnectorConnectionLog | null = null,
     ): Promise<ConnectorClientHost | null> {
         if (
             observationProtocol !== null &&
@@ -128,7 +134,14 @@ export class ConnectorClientHost implements AsyncDisposable {
         let host: ConnectorClientHost | null = null;
         try {
             journal = await ConnectorHostJournal.load(owner, identity, grant);
-            host = new ConnectorClientHost(identity, grant, journal, observationProtocol, activity);
+            host = new ConnectorClientHost(
+                identity,
+                grant,
+                journal,
+                observationProtocol,
+                activity,
+                log,
+            );
             if (grant.profile.enabled) {
                 const windowsLauncher: string | undefined =
                     process.platform === 'win32'
@@ -464,6 +477,13 @@ export class ConnectorClientHost implements AsyncDisposable {
                 errorCode: ConnectorHostErrorCode.AdmissionDenied,
             };
             activity?.finish(false, null);
+            this.log?.record('host-operation-failed', {
+                tool: permit.request.toolName,
+                jobId: permit.jobId,
+                outcome: response.outcome,
+                code: response.errorCode,
+                reason: 'Local full computer approval is unavailable or changed',
+            });
             await this.journal.complete(permit, response);
             return response;
         }
@@ -515,6 +535,24 @@ export class ConnectorClientHost implements AsyncDisposable {
             });
         } catch (caught: unknown) {
             response = ConnectorHostFailure.response(permit.request.toolName, caught);
+            this.log?.record('host-operation-failed', {
+                tool: permit.request.toolName,
+                jobId: permit.jobId,
+                outcome: response.outcome,
+                code: response.errorCode,
+                reason:
+                    caught instanceof HostDesktopError
+                        ? caught.message
+                        : 'The OS or local authority rejected this operation: ' +
+                          (response.errorCode ?? 'operation-failed'),
+                ...(caught instanceof HostDesktopError
+                    ? {
+                          operation: caught.operation,
+                          nativeReason: caught.reason,
+                          nativeCode: caught.nativeCode,
+                      }
+                    : {}),
+            });
         }
         if (observation !== null && this.#observations !== null) {
             try {
@@ -528,6 +566,19 @@ export class ConnectorClientHost implements AsyncDisposable {
             }
         }
         activity?.finish(response.outcome === ConnectorHostOutcome.Succeeded, response.resultJson);
+        if (
+            permit.request.toolName === ConnectorHostTool.ApplicationOpen &&
+            response.resultJson !== null
+        ) {
+            const result: ConnectorActivityArguments = ConnectorActivityArguments.parse(
+                response.resultJson,
+            );
+            this.log?.record('host-application-result', {
+                jobId: permit.jobId,
+                status: result.text('status'),
+                windowObserved: result.flag('windowObserved'),
+            });
+        }
         await this.journal.complete(permit, response);
         return response;
     }

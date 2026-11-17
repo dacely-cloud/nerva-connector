@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -35,16 +36,32 @@ internal static partial class NexaConnectorHostDesktop
     /// <summary>Shell COM uses an STA only for desktop commands; process and terminal brokers retain their normal apartment.</summary>
     private static int RunInteractive()
     {
+        string diagnosticOperation = "unknown";
         try
         {
             Dictionary<string, object> request = ReadRequest(Console.OpenStandardInput());
             SetProcessDPIAware();
+            SetThreadDpiAwarenessContext(new IntPtr(-4));
             JavaScriptSerializer serializer = new JavaScriptSerializer
             {
                 MaxJsonLength = RequestBytes,
                 RecursionLimit = 4,
             };
             string operation = (string)request["operation"];
+            if (
+                new HashSet<string>
+                {
+                    "info",
+                    "application-open",
+                    "snapshot",
+                    "screenshot",
+                    "pointer",
+                    "button-up",
+                    "key",
+                    "text",
+                }.Contains(operation)
+            )
+                diagnosticOperation = operation;
             bool available = Available();
             Rectangle bounds = new Rectangle(
                 GetSystemMetrics(76),
@@ -71,7 +88,7 @@ internal static partial class NexaConnectorHostDesktop
             }
             if (!available || bounds.Width <= 0 || bounds.Height <= 0)
             {
-                return 70;
+                throw new InvalidOperationException("desktop-unavailable");
             }
             if (operation == "application-open")
             {
@@ -129,8 +146,11 @@ internal static partial class NexaConnectorHostDesktop
                 }
                 if (!SetCursorPos(x, y))
                 {
-                    return 70;
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "pointer-move-rejected");
                 }
+                CursorPoint observed;
+                if (!GetCursorPos(out observed) || observed.X != x || observed.Y != y)
+                    throw new InvalidOperationException("pointer-position-unconfirmed");
                 if (action != "move")
                 {
                     Button(Text(request, "button"), action);
@@ -150,12 +170,17 @@ internal static partial class NexaConnectorHostDesktop
             {
                 Fields(request, "operation", "text");
                 string text = Text(request, "text");
+                IntPtr foreground = GetForegroundWindow();
+                if (foreground == IntPtr.Zero)
+                    throw new InvalidOperationException("keyboard-focus-unavailable");
                 if (Encoding.UTF8.GetByteCount(text) > 16384)
                 {
                     return 70;
                 }
                 foreach (char character in text)
                 {
+                    if (GetForegroundWindow() != foreground)
+                        throw new InvalidOperationException("keyboard-focus-changed");
                     if (character == '\0')
                     {
                         return 70;
@@ -171,8 +196,39 @@ internal static partial class NexaConnectorHostDesktop
             Console.WriteLine("{\"ok\":true}");
             return 0;
         }
-        catch
+        catch (Exception failure)
         {
+            HashSet<string> reasons = new HashSet<string>
+            {
+                "input-not-delivered",
+                "pointer-move-rejected",
+                "pointer-position-unconfirmed",
+                "keyboard-focus-unavailable",
+                "keyboard-focus-changed",
+                "desktop-unavailable",
+                "application-launch-rejected",
+                "application-catalog-limit",
+                "desktop-fields",
+                "desktop-input-limit",
+                "desktop-operation",
+                "source-pixels",
+                "inline-image-limit",
+                "key",
+                "key-action",
+                "button",
+            };
+            string reason = reasons.Contains(failure.Message)
+                ? failure.Message
+                : "operation-failed";
+            Win32Exception native = failure as Win32Exception;
+            Console.Error.WriteLine(
+                "NERVA_DESKTOP operation="
+                    + diagnosticOperation
+                    + " reason="
+                    + reason
+                    + " native="
+                    + (native == null ? 0 : native.NativeErrorCode).ToString()
+            );
             return 70;
         }
     }
@@ -398,7 +454,7 @@ internal static partial class NexaConnectorHostDesktop
     {
         if (SendInput((uint)input.Length, input, Marshal.SizeOf(typeof(Input))) != input.Length)
         {
-            throw new InvalidOperationException("input-not-delivered");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "input-not-delivered");
         }
     }
 

@@ -54,6 +54,10 @@ export class ConnectorConsole implements Disposable {
             description: 'Show why recent connections ended',
         },
         {
+            command: ConnectorConsoleCommand.Updates,
+            description: 'Check for an update and install it automatically',
+        },
+        {
             command: ConnectorConsoleCommand.Logout,
             description: 'Unlink this computer from your account',
         },
@@ -130,7 +134,8 @@ export class ConnectorConsole implements Disposable {
                     model.phase !== ConnectorConsolePhase.Connected) &&
                 (choice.command !== ConnectorConsoleCommand.Permissions || platform === 'linux') &&
                 (choice.command !== ConnectorConsoleCommand.DisableHost || model.host) &&
-                (choice.command !== ConnectorConsoleCommand.Startup || model.startup !== null),
+                (choice.command !== ConnectorConsoleCommand.Startup || model.startup !== null) &&
+                (choice.command !== ConnectorConsoleCommand.Updates || model.updates),
         );
     }
 

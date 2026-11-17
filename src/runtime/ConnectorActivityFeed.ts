@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorHostTool } from '../protocol/ConnectorHost.js';
+import { HostApplicationStatus } from '../host/HostApplication.js';
 import {
     ConnectorActivityState,
     type ConnectorActivityEntry,
@@ -183,9 +184,32 @@ export class ConnectorActivityFeed implements ConnectorActivitySink, ConnectorAc
             return;
         }
         this.#running.delete(id);
+        let state: ConnectorActivityState = succeeded
+            ? ConnectorActivityState.Done
+            : ConnectorActivityState.Failed;
+        let title: string = run.entry.title;
+        if (succeeded && run.toolName === ConnectorHostTool.ApplicationOpen) {
+            const result: ConnectorActivityArguments = ConnectorActivityArguments.parse(resultJson);
+            if (result.text('status') === HostApplicationStatus.NotFound) {
+                state = ConnectorActivityState.Failed;
+                title = 'Application not found';
+            } else if (result.text('status') === HostApplicationStatus.Ambiguous) {
+                state = ConnectorActivityState.Failed;
+                title = 'Application name is ambiguous';
+            } else if (
+                result.text('status') === HostApplicationStatus.Launched &&
+                result.flag('windowObserved')
+            ) {
+                title = 'Application window observed';
+            } else {
+                state = ConnectorActivityState.Unconfirmed;
+                title = 'Application launch unconfirmed';
+            }
+        }
         const entry: ConnectorActivityEntry = Object.freeze({
             ...run.entry,
-            state: succeeded ? ConnectorActivityState.Done : ConnectorActivityState.Failed,
+            state,
+            title,
             endedAtMs: Date.now(),
         });
         this.#recent[this.#recentNext] = entry;

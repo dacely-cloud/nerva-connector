@@ -29,6 +29,7 @@ export const ConnectorActivityState = {
     Running: 'running',
     Done: 'done',
     Failed: 'failed',
+    Unconfirmed: 'unconfirmed',
 } as const;
 /** Activity states derive from their runtime mapping. */
 export type ConnectorActivityState =

@@ -129,6 +129,7 @@ export class ConnectorClient implements AsyncDisposable {
             identity,
             null,
             activity,
+            log,
         );
         if (host !== null) {
             capabilities.use(host);

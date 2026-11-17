@@ -181,9 +181,12 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     y: this.#coordinate(args['y']),
                     action: this.#choice(args['action'], Object.values(HostDesktopPointerAction)),
                     button:
-                        args['button'] == null
-                            ? null
-                            : this.#choice(args['button'], Object.values(HostDesktopButton)),
+                        args['button'] === undefined &&
+                        args['action'] !== HostDesktopPointerAction.Move
+                            ? HostDesktopButton.Left
+                            : args['button'] == null
+                              ? null
+                              : this.#choice(args['button'], Object.values(HostDesktopButton)),
                 };
                 await this.workspace.desktopPointer(request);
                 return '{"sent":true}';
