@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { once } from 'node:events';
-import { setTimeout as delay } from 'node:timers/promises';
 import { ConnectorStartupDisplay } from '../src/cli/ConnectorStartupDisplay.js';
 import type { Duplex } from 'node:stream';
 import { expect, it } from 'vitest';
@@ -164,8 +163,9 @@ it('an actual stalled TLS upgrade keeps its named elapsed stage visible without 
     const finished: Promise<void> = closed(client);
     try {
         await requested.promise;
-        await delay(1100);
-        expect(lines.at(-1)).toContain('Opening secure tunnel · 1s');
+        await expect
+            .poll((): string | undefined => lines.at(-1), { timeout: 3000, interval: 25 })
+            .toContain('Opening secure tunnel · 1s');
         expect(client.isOpen).toBe(false);
         expect(lines.join('\n')).not.toContain('Authenticated');
     } finally {

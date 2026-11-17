@@ -9,6 +9,7 @@ import { setTimeout } from 'node:timers/promises';
 import { expect, it } from 'vitest';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
 import { HostWorkspace } from '../src/host/HostWorkspace.js';
+import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { HostWriteMode } from '../src/host/HostWorkspaceTypes.js';
 import {
     HostDesktopBackend,
@@ -48,14 +49,48 @@ it.skipIf(!x11Qualification)(
             width: 800,
             height: 600,
         });
-        await fixture.host.desktopPointer({
-            x: 120,
-            y: 100,
+        const tools: HostMcpWorkspaceTools = new HostMcpWorkspaceTools(
+            fixture.host,
+            new AbortController().signal,
+        );
+        await tools.call('desktop_pointer', {
+            x: 60,
+            y: 50,
             action: HostDesktopPointerAction.Click,
-            button: HostDesktopButton.Left,
+            image: {
+                width: 400,
+                height: 300,
+                sourceX: 0,
+                sourceY: 0,
+                sourceWidth: 800,
+                sourceHeight: 600,
+            },
         });
+        const pointer: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
+            execFile,
+        )('xdotool', ['getmouselocation', '--shell'], {
+            env: fixture.environment,
+            timeout: 5000,
+            maxBuffer: 4096,
+        });
+        expect(pointer.stdout.toString()).toContain('X=121\nY=101\n');
+        await expect(
+            tools.call('desktop_pointer', {
+                x: 1,
+                y: 1,
+                action: HostDesktopPointerAction.Click,
+                image: {
+                    width: 400,
+                    height: 300,
+                    sourceX: 0,
+                    sourceY: 0,
+                    sourceWidth: 801,
+                    sourceHeight: 600,
+                },
+            }),
+        ).rejects.toThrow('fresh screenshot');
         await fixture.host.desktopKey({ key: 'A', action: HostDesktopKeyAction.Press });
-        await fixture.host.desktopText('hello');
+        await tools.call('desktop_text', { text: 'hello' });
         for (
             let attempt: number = 0;
             attempt < 100 && !fixture.events.includes('keysym 0x6f, o');

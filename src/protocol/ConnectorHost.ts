@@ -240,9 +240,9 @@ export class ConnectorHostLimits {
     /** Directory pages can always be continued rather than silently dropping names. */
     public static readonly directoryEntries: number = 64;
     /** Returned JSON is bounded before signing or journal persistence. */
-    public static readonly resultBytes: number = 131072;
+    public static readonly resultBytes: number = 1048576;
     /** Double-encoded JSON and composite signatures fit this explicit authenticated host envelope. */
-    public static readonly frameBytes: number = 524288;
+    public static readonly frameBytes: number = 3145728;
     /** No delayed permit may extend its original connection's authority. */
     public static readonly permitMs: bigint = 10000n;
     /**

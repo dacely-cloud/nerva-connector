@@ -4,6 +4,7 @@
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostWriteMode } from './HostWorkspaceTypes.js';
 import { HostDesktopCapture } from './HostDesktopCapture.js';
+import { HostDesktopCoordinates } from './HostDesktopCoordinates.js';
 import { HostDesktopX11 } from './HostDesktopX11.js';
 import { HostDesktopWayland } from './HostDesktopWayland.js';
 import { HostDesktopWindows } from './HostDesktopWindows.js';
@@ -22,6 +23,7 @@ import {
     type HostDesktopKeyRequest,
     type HostDesktopOptions,
     type HostDesktopDriver,
+    type HostDesktopViewport,
 } from './HostDesktopTypes.js';
 
 /** One desktop session owns held inputs and uses the connector user's actual interactive display. */
@@ -133,10 +135,18 @@ export class HostDesktop implements AsyncDisposable {
     }
 
     /** Pointer ownership supports drags and cleanup of partially completed button effects. */
-    public async pointer(request: HostDesktopPointerRequest): Promise<void> {
+    public async pointer(
+        input: HostDesktopPointerRequest,
+        image: HostDesktopViewport | null = null,
+    ): Promise<void> {
         return await this.#operate(async (): Promise<void> => {
             this.#active();
             const desktop: HostDesktopInfo = await this.#available();
+            const request: HostDesktopPointerRequest = HostDesktopCoordinates.physical(
+                input,
+                desktop,
+                image,
+            );
             HostWorkspaceValidation.count(request.x, desktop.x, desktop.x + desktop.width - 1);
             HostWorkspaceValidation.count(request.y, desktop.y, desktop.y + desktop.height - 1);
             if (

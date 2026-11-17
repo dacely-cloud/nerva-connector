@@ -82,8 +82,8 @@ class Runtime:
             return self.portal.info() if operation=='probe' else self.portal.open()
         if operation=='capture':
             self.shape(request,base+['maximumWidth','maximumHeight'])
-            width=self.number(request['maximumWidth'],2048)
-            height=self.number(request['maximumHeight'],2048)
+            width=self.number(request['maximumWidth'],4096)
+            height=self.number(request['maximumHeight'],4096)
             png,source_width,source_height=self.portal.capture(width,height)
             return dict(kind='capture',png=base64.b64encode(png).decode('ascii'),sourceWidth=source_width,sourceHeight=source_height)
         if self.portal.session is None or self.portal.closed: raise Failure('unavailable')

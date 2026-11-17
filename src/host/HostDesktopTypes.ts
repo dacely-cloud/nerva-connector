@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorHostLimits } from '../protocol/ConnectorHost.js';
+
 /** Desktop backends describe actual session mechanisms, without assuming every machine has a GUI. */
 export const HostDesktopBackend = {
     X11: 'x11',
@@ -82,6 +84,16 @@ export interface HostDesktopPointerRequest {
     readonly button: HostDesktopButton | null;
 }
 
+/** Image pixels and the physical desktop they depict must be supplied together when clicking a scaled screenshot. */
+export interface HostDesktopViewport {
+    readonly width: number;
+    readonly height: number;
+    readonly sourceX: number;
+    readonly sourceY: number;
+    readonly sourceWidth: number;
+    readonly sourceHeight: number;
+}
+
 /** Held modifiers can be combined with ordinary key presses and are released on session cleanup. */
 export const HostDesktopKeyAction = { Press: 'press', Down: 'down', Up: 'up' } as const;
 /** Runtime-accessible key actions. */
@@ -107,8 +119,14 @@ export class HostDesktopLimits {
     public static readonly sourcePixels: number = 16 * 1024 * 1024;
     /** Image output never exceeds sixteen MiB plus bounded PNG framing. */
     public static readonly imageBytes: number = 16 * 1024 * 1024 + 65536;
-    /** Resized images have at most 2048 pixels on either axis. */
-    public static readonly dimension: number = 2048;
+    /** Images retain native pixels up to 4096 pixels on either axis. */
+    public static readonly dimension: number = 4096;
+    /** Inline JPEG images have a finite signed-receipt budget independent of PNG artifact size. */
+    public static readonly inlineBytes: number = 640000;
+    /** Canonical base64 encoding of the inline JPEG byte bound. */
+    public static readonly inlineBase64: number = 853336;
+    /** One native JSON callback includes its image plus bounded application metadata. */
+    public static readonly resultBytes: number = ConnectorHostLimits.resultBytes;
     /** Desktop program invocations have a finite wall deadline. */
     public static readonly timeoutMs: number = 10000;
 }

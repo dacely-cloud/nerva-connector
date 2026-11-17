@@ -7,6 +7,7 @@ import {
     HostDesktopPointerAction,
     HostDesktopButton,
     HostDesktopKeyAction,
+    HostDesktopLimits,
 } from './HostDesktopTypes.js';
 import type { HostJsonObject, HostMcpTool } from './HostMcpProtocol.js';
 import type { HostMcpWorkspaceBounds } from './HostMcpWorkspaceBounds.js';
@@ -153,8 +154,16 @@ export class HostMcpWorkspaceCatalog {
                 {
                     path: text,
                     mode: { type: 'string', enum: ['create', 'replace'] },
-                    maximumWidth: { type: 'integer', minimum: 1, maximum: 2048 },
-                    maximumHeight: { type: 'integer', minimum: 1, maximum: 2048 },
+                    maximumWidth: {
+                        type: 'integer',
+                        minimum: 1,
+                        maximum: HostDesktopLimits.dimension,
+                    },
+                    maximumHeight: {
+                        type: 'integer',
+                        minimum: 1,
+                        maximum: HostDesktopLimits.dimension,
+                    },
                 },
                 ['path', 'mode'],
             ),
@@ -172,7 +181,7 @@ export class HostMcpWorkspaceCatalog {
             ),
             this.#tool(
                 'desktop_pointer',
-                'Move, click, press or release a mouse button in the approved desktop scope. Coordinates use desktop_info physical pixels, independent of scaled screenshot pixels. Wayland coordinates start at 0,0 in the selected monitor; this does not grant control of other monitors.',
+                'Move the real mouse, click, press or release a button in the approved desktop scope. For a screenshot pixel position, supply its width, height and source geometry in image; the connector maps it to physical pixels and rejects a changed desktop. Without image, x/y use desktop_info physical pixels. Click an input to focus it before desktop_text. Wayland covers only the selected monitor.',
                 {
                     x: { type: 'integer', minimum: -1000000, maximum: 1000000 },
                     y: { type: 'integer', minimum: -1000000, maximum: 1000000 },
@@ -180,6 +189,34 @@ export class HostMcpWorkspaceCatalog {
                     button: {
                         type: ['string', 'null'],
                         enum: [null, ...Object.values(HostDesktopButton)],
+                    },
+                    image: {
+                        type: 'object',
+                        additionalProperties: false,
+                        properties: {
+                            width: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: HostDesktopLimits.dimension,
+                            },
+                            height: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: HostDesktopLimits.dimension,
+                            },
+                            sourceX: { type: 'integer', minimum: -65535, maximum: 65535 },
+                            sourceY: { type: 'integer', minimum: -65535, maximum: 65535 },
+                            sourceWidth: { type: 'integer', minimum: 1, maximum: 65535 },
+                            sourceHeight: { type: 'integer', minimum: 1, maximum: 65535 },
+                        },
+                        required: [
+                            'width',
+                            'height',
+                            'sourceX',
+                            'sourceY',
+                            'sourceWidth',
+                            'sourceHeight',
+                        ],
                     },
                 },
                 ['x', 'y', 'action'],

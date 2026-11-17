@@ -107,14 +107,14 @@ internal static partial class NexaConnectorHostDesktop
                         result["screenshot"] = null;
                     }
                 }
-                serializer.MaxJsonLength = 131072;
+                serializer.MaxJsonLength = 1048576;
                 Console.WriteLine(serializer.Serialize(result));
                 return 0;
             }
             if (operation == "snapshot")
             {
                 Fields(request, "operation");
-                serializer.MaxJsonLength = 131072;
+                serializer.MaxJsonLength = 1048576;
                 Console.WriteLine(
                     serializer.Serialize(NexaConnectorHostDesktopFrame.Capture(bounds))
                 );
@@ -125,8 +125,8 @@ internal static partial class NexaConnectorHostDesktop
                 Fields(request, "operation", "maximumWidth", "maximumHeight");
                 Capture(
                     bounds,
-                    Count(request, "maximumWidth", 1, 2048),
-                    Count(request, "maximumHeight", 1, 2048)
+                    Count(request, "maximumWidth", 1, 4096),
+                    Count(request, "maximumHeight", 1, 4096)
                 );
                 return 0;
             }
@@ -213,6 +213,9 @@ internal static partial class NexaConnectorHostDesktop
                 "desktop-operation",
                 "source-pixels",
                 "inline-image-limit",
+                "image-limit",
+                "image-codec-unavailable",
+                "source-geometry",
                 "key",
                 "key-action",
                 "button",

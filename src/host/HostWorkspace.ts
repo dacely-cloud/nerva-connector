@@ -18,6 +18,7 @@ import type {
     HostDesktopScreenshot,
     HostDesktopPointerRequest,
     HostDesktopKeyRequest,
+    HostDesktopViewport,
 } from './HostDesktopTypes.js';
 import { HostFileDigest } from './HostFileDigest.js';
 import { HostFilesystem } from './HostFilesystem.js';
@@ -382,8 +383,8 @@ export class HostWorkspace implements AsyncDisposable {
     public async desktopScreenshot(
         path: string,
         mode: HostWriteMode,
-        maximumWidth: number = 1920,
-        maximumHeight: number = 1080,
+        maximumWidth: number = 4096,
+        maximumHeight: number = 4096,
     ): Promise<HostDesktopScreenshot> {
         return await this.#file(
             HostOperation.Screenshot,
@@ -394,7 +395,10 @@ export class HostWorkspace implements AsyncDisposable {
     }
 
     /** Pointer effects require an independently checked live full-computer grant. */
-    public async desktopPointer(request: HostDesktopPointerRequest): Promise<void> {
+    public async desktopPointer(
+        request: HostDesktopPointerRequest,
+        image: HostDesktopViewport | null = null,
+    ): Promise<void> {
         await this.#run(
             {
                 operation: HostOperation.Pointer,
@@ -402,7 +406,7 @@ export class HostWorkspace implements AsyncDisposable {
                 destinationPath: null,
                 processId: null,
             },
-            (): Promise<void> => this.#desktopOwner().pointer(request),
+            (): Promise<void> => this.#desktopOwner().pointer(request, image),
         );
     }
 

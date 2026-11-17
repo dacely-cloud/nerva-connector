@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import { HostDesktopLimits, type HostDesktopViewport } from './HostDesktopTypes.js';
 
 /** Resolution never launches an ambiguous or missing application. */
 export const HostApplicationStatus = {
@@ -20,15 +21,9 @@ export interface HostApplicationEntry {
 }
 
 /** One bounded image of the actual desktop travels in memory with its native geometry. */
-export interface HostDesktopFrame {
+export interface HostDesktopFrame extends HostDesktopViewport {
     readonly mimeType: 'image/jpeg';
     readonly data: string;
-    readonly width: number;
-    readonly height: number;
-    readonly sourceX: number;
-    readonly sourceY: number;
-    readonly sourceWidth: number;
-    readonly sourceHeight: number;
 }
 
 /** Shell acceptance, observed window presence and the captured screen remain independent evidence. */
@@ -100,12 +95,13 @@ export class HostApplication {
             'sourceWidth',
             'sourceHeight',
         ]);
-        const data: string = this.#text(value['data'], 120000);
+        const data: string = this.#text(value['data'], HostDesktopLimits.inlineBase64);
         const bytes: Buffer = Buffer.from(data, 'base64');
         if (
             value['mimeType'] !== 'image/jpeg' ||
             bytes.toString('base64') !== data ||
             bytes.length < 4 ||
+            bytes.length > HostDesktopLimits.inlineBytes ||
             bytes[0] !== 255 ||
             bytes[1] !== 216 ||
             bytes.at(-2) !== 255 ||
@@ -116,8 +112,8 @@ export class HostApplication {
         return {
             mimeType: 'image/jpeg',
             data,
-            width: this.#positive(value['width'], 1280),
-            height: this.#positive(value['height'], 720),
+            width: this.#positive(value['width'], HostDesktopLimits.dimension),
+            height: this.#positive(value['height'], HostDesktopLimits.dimension),
             sourceX: this.#coordinate(value['sourceX']),
             sourceY: this.#coordinate(value['sourceY']),
             sourceWidth: this.#positive(value['sourceWidth'], 65535),

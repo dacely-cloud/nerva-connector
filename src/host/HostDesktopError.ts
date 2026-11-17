@@ -14,6 +14,9 @@ export class HostDesktopError extends Error {
         'text',
     ]);
     static readonly #reasons: ReadonlySet<string> = new Set([
+        'screenshot-geometry-changed',
+        'screenshot-geometry-invalid',
+        'pointer-outside-image',
         'input-not-delivered',
         'pointer-move-rejected',
         'pointer-position-unconfirmed',
@@ -27,6 +30,9 @@ export class HostDesktopError extends Error {
         'desktop-operation',
         'source-pixels',
         'inline-image-limit',
+        'image-limit',
+        'image-codec-unavailable',
+        'source-geometry',
         'key',
         'key-action',
         'button',
@@ -42,7 +48,16 @@ export class HostDesktopError extends Error {
     ) {
         super(HostDesktopError.message(reason));
         this.name = 'HostDesktopError';
-        this.code = nativeCode === 5 ? 'EACCES' : 'EIO';
+        this.code =
+            nativeCode === 5
+                ? 'EACCES'
+                : [
+                        'screenshot-geometry-changed',
+                        'screenshot-geometry-invalid',
+                        'pointer-outside-image',
+                    ].includes(reason)
+                  ? 'EINVAL'
+                  : 'EIO';
     }
 
     /** Missing/truncated native reports still yield a bounded actionable error. */
@@ -65,6 +80,12 @@ export class HostDesktopError extends Error {
     /** Native reason identifiers map to product language and never echo the request payload. */
     public static message(reason: string): string {
         switch (reason) {
+            case 'screenshot-geometry-changed':
+                return 'Screenshot geometry changed; take a fresh screenshot before clicking.';
+            case 'screenshot-geometry-invalid':
+                return 'Screenshot geometry must include valid image dimensions and physical source coordinates.';
+            case 'pointer-outside-image':
+                return 'The requested mouse position is outside the screenshot image.';
             case 'input-not-delivered':
                 return 'Windows rejected mouse or keyboard input. Check the focused window, secure desktop, or an administrator-only application.';
             case 'pointer-move-rejected':
@@ -77,6 +98,15 @@ export class HostDesktopError extends Error {
                 return 'No foreground window is available for typing. Focus the intended application first.';
             case 'desktop-unavailable':
                 return 'The interactive Windows desktop is unavailable or locked.';
+            case 'source-pixels':
+                return 'The desktop exceeds the capture limit of 16,777,216 source pixels.';
+            case 'image-limit':
+            case 'inline-image-limit':
+                return 'The captured image exceeds its bounded output size.';
+            case 'image-codec-unavailable':
+                return 'The Windows JPEG encoder is unavailable.';
+            case 'source-geometry':
+                return 'The captured screen does not match its reported physical geometry.';
             case 'timeout':
                 return 'The desktop operation timed out; it may have had a partial effect.';
             case 'application-launch-rejected':

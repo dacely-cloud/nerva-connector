@@ -93,7 +93,12 @@ export class HostDesktopWindows implements HostDesktopDriver {
     /** Native Start menu resolution and one screen capture share the same bounded callback. */
     public async openApplication(name: string): Promise<HostApplicationResult> {
         const raw: unknown = JSON.parse(
-            (await this.#run({ operation: 'application-open', name }, 131072)).toString('utf8'),
+            (
+                await this.#run(
+                    { operation: 'application-open', name },
+                    HostDesktopLimits.resultBytes,
+                )
+            ).toString('utf8'),
         );
         return HostApplication.result(raw);
     }
@@ -101,7 +106,9 @@ export class HostDesktopWindows implements HostDesktopDriver {
     /** Read a desktop image directly, without creating an artifact or selecting a workspace. */
     public async snapshot(): Promise<HostDesktopFrame> {
         const raw: unknown = JSON.parse(
-            (await this.#run({ operation: 'snapshot' }, 131072)).toString('utf8'),
+            (await this.#run({ operation: 'snapshot' }, HostDesktopLimits.resultBytes)).toString(
+                'utf8',
+            ),
         );
         return HostApplication.frame(raw);
     }

@@ -61,7 +61,7 @@ it('returns an accepted launch with unavailable screen evidence without invoking
             'verified-helper.exe',
             ['--desktop'],
             {},
-            131072,
+            1048576,
             JSON.stringify({ operation: 'application-open', name: 'Calculator' }),
         );
     } finally {
@@ -92,7 +92,7 @@ it('bounds native application metadata and rejects images on non-launching outco
             windowObserved: true,
             screenshot: {
                 mimeType: 'image/jpeg',
-                data: 'x'.repeat(120001),
+                data: 'x'.repeat(853337),
                 width: 1280,
                 height: 720,
                 sourceX: 0,

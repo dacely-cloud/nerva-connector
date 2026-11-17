@@ -9,6 +9,7 @@ import { HostFileSnapshotCodec } from './HostFileSnapshotCodec.js';
 import { HostWorkspace } from './HostWorkspace.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostMcpWorkspaceCatalog } from './HostMcpWorkspaceCatalog.js';
+import { HostDesktopCoordinates } from './HostDesktopCoordinates.js';
 import { HostHttpMethod, type HostHttpRequest, type HostHttpRead } from './HostHttpTypes.js';
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from './HostTerminalTypes.js';
@@ -18,6 +19,7 @@ import {
     HostDesktopPointerAction,
     HostDesktopButton,
     HostDesktopKeyAction,
+    HostDesktopLimits,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
 } from './HostDesktopTypes.js';
@@ -167,11 +169,11 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                         this.#text(args['path']),
                         mode,
                         args['maximumWidth'] === undefined
-                            ? 1920
-                            : Boundary.count(args['maximumWidth'], 2048),
+                            ? HostDesktopLimits.dimension
+                            : Boundary.count(args['maximumWidth'], HostDesktopLimits.dimension),
                         args['maximumHeight'] === undefined
-                            ? 1080
-                            : Boundary.count(args['maximumHeight'], 2048),
+                            ? HostDesktopLimits.dimension
+                            : Boundary.count(args['maximumHeight'], HostDesktopLimits.dimension),
                     ),
                 );
             }
@@ -188,7 +190,10 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                               ? null
                               : this.#choice(args['button'], Object.values(HostDesktopButton)),
                 };
-                await this.workspace.desktopPointer(request);
+                await this.workspace.desktopPointer(
+                    request,
+                    args['image'] === undefined ? null : HostDesktopCoordinates.read(args['image']),
+                );
                 return '{"sent":true}';
             }
             case 'desktop_key': {
