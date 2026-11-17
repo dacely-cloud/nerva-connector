@@ -146,6 +146,16 @@ export class ConnectorConsoleModel {
 
     /** Pairing alone can never produce the green authenticated connection state. */
     public connection(state: ConnectorClientState): void {
+        if (state === ConnectorClientState.Revoked) {
+            this.#everConnected = false;
+            this.files = false;
+            this.execution = false;
+            this.host = false;
+            this.notLinked();
+            this.message =
+                'This computer was disconnected from your account. Type /pair to link it again.';
+            return;
+        }
         if (state === ConnectorClientState.Authenticated) {
             this.#everConnected = true;
         }

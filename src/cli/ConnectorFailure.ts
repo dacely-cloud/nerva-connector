@@ -222,6 +222,8 @@ export class ConnectorFailure {
     }
 
     static readonly #dropped: Readonly<Record<ConnectorDisconnect, string>> = {
+        [ConnectorDisconnect.Revoked]:
+            'This computer was disconnected from your account. Pair it again to reconnect.',
         [ConnectorDisconnect.Closed]: 'Nerva or the network closed it.',
         [ConnectorDisconnect.Network]: 'A network error interrupted it.',
         [ConnectorDisconnect.HandshakeTimeout]: 'Signing in again took too long.',

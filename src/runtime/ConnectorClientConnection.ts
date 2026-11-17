@@ -30,6 +30,8 @@ import {
 } from '../protocol/ConnectorTransport.js';
 import { ConnectorClientState } from './ConnectorClientState.js';
 import { ConnectorDisconnect } from './ConnectorDisconnect.js';
+import { ConnectorRevocation } from './ConnectorRevocation.js';
+import type { ConnectorUnpair } from 'nerva-connector-protocol/protocol/ConnectorUnpair.js';
 import { ConnectorConnectionLog } from './ConnectorConnectionLog.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import type { ConnectorClientFiles, ConnectorFileDelivery } from './ConnectorClientFiles.js';
@@ -61,6 +63,7 @@ export class ConnectorClientConnection {
     #observation: ConnectorHostObservationRun | null = null;
     readonly #observationTasks: Set<Promise<void>> = new Set();
     #disconnect: ConnectorDisconnect | null = null;
+    #revocation: ConnectorUnpair | null = null;
     #leases: number = 0;
     #received: number = 0;
     #lastReceived: ConnectorFrameKind | null = null;
@@ -92,10 +95,16 @@ export class ConnectorClientConnection {
         public readonly workspaces: ConnectorClientWorkspaces | null = null,
         public readonly host: ConnectorClientHost | null = null,
         public readonly log: ConnectorConnectionLog | null = null,
+        public readonly revoke: ((receipt: ConnectorUnpair) => Promise<void>) | null = null,
     ) {}
     /** Termination cannot cancel a started read or discard its retained result. */
     public terminate(): void {
         this.#socket?.terminate();
+    }
+
+    /** A permanent decision is exposed only after verifying the installed authority and exact key. */
+    public get revocation(): ConnectorUnpair | null {
+        return this.#revocation;
     }
 
     /**
@@ -151,6 +160,9 @@ export class ConnectorClientConnection {
         using session: ConnectorClientSession = new ConnectorClientSession(this.identity);
         let renewal: NodeJS.Timeout | undefined;
         const hello: () => void = (): void => {
+            if (this.#revocation !== null) {
+                return;
+            }
             try {
                 this.#stopObservation();
                 this.#pendingHandshake = true;
@@ -196,6 +208,9 @@ export class ConnectorClientConnection {
             hello();
         });
         socket.on('message', (data: Buffer, binary: boolean): void => {
+            if (this.#revocation !== null) {
+                return;
+            }
             let kind: ConnectorFrameKind | null = null;
             try {
                 if (performance.now() - window >= 1000) {
@@ -225,7 +240,14 @@ export class ConnectorClientConnection {
                 if (data.byteLength > ConnectorTransportLimits.bytes(frame.kind)) {
                     throw new Error('Connector frame budget exceeded');
                 }
-                if (frame.kind === ConnectorFrameKind.Challenge) {
+                if (frame.kind === ConnectorFrameKind.Unpaired) {
+                    this.#revocation = ConnectorRevocation.verify(
+                        this.identity.authority,
+                        this.identity.publicKey,
+                        frame.receipt,
+                    );
+                    this.#end(ConnectorDisconnect.Revoked);
+                } else if (frame.kind === ConnectorFrameKind.Challenge) {
                     if (this.#leaseId === null) {
                         this.progress?.({ stage: ConnectorStartupStage.Proof });
                     }
@@ -446,12 +468,18 @@ export class ConnectorClientConnection {
                     this.progress?.({ stage: ConnectorStartupStage.Closing });
                 }
             } finally {
-                await Promise.allSettled([
-                    ...(this.#fileLane.task === null ? [] : [this.#fileLane.task]),
-                    ...(this.#hostLane.task === null ? [] : [this.#hostLane.task]),
-                    ...(this.#inventoryTask === null ? [] : [this.#inventoryTask]),
-                    ...this.#observationTasks,
-                ]);
+                try {
+                    if (this.#revocation !== null) {
+                        await this.revoke?.(this.#revocation);
+                    }
+                } finally {
+                    await Promise.allSettled([
+                        ...(this.#fileLane.task === null ? [] : [this.#fileLane.task]),
+                        ...(this.#hostLane.task === null ? [] : [this.#hostLane.task]),
+                        ...(this.#inventoryTask === null ? [] : [this.#inventoryTask]),
+                        ...this.#observationTasks,
+                    ]);
+                }
             }
         }
         return this.#disconnect ?? ConnectorDisconnect.Closed;
@@ -609,7 +637,12 @@ export class ConnectorClientConnection {
     }
     /** A finished lane reply leaves only on its own lease, and only once that lease is confirmed and still current. */
     #reply(frame: ConnectorClientFrame, leaseId: string): void {
-        if (!this.#pendingHandshake && this.#leaseId === leaseId && this.#socket?.isOpen === true) {
+        if (
+            this.#revocation === null &&
+            !this.#pendingHandshake &&
+            this.#leaseId === leaseId &&
+            this.#socket?.isOpen === true
+        ) {
             this.#send(frame);
         }
     }
@@ -624,6 +657,7 @@ export class ConnectorClientConnection {
         switch (kind) {
             case ConnectorFrameKind.Challenge:
             case ConnectorFrameKind.Authenticated:
+            case ConnectorFrameKind.Unpaired:
                 return ConnectorDisconnect.Authentication;
             case ConnectorFrameKind.HostPermit:
             case ConnectorFrameKind.HostAcknowledgment:

@@ -6,5 +6,6 @@ export enum ConnectorClientState {
     Connecting = 'connecting',
     Authenticated = 'authenticated',
     Disconnected = 'disconnected',
+    Revoked = 'revoked',
     Stopped = 'stopped',
 }

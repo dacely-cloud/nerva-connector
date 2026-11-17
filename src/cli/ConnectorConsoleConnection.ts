@@ -8,7 +8,7 @@ import {
     type ConnectorPairEvent,
 } from '../runtime/ConnectorPairClient.js';
 import { ConnectorClient } from '../runtime/ConnectorClient.js';
-import type { ConnectorClientState } from '../runtime/ConnectorClientState.js';
+import { ConnectorClientState } from '../runtime/ConnectorClientState.js';
 import {
     ConnectorStartupStage,
     type ConnectorStartupObserver,
@@ -211,6 +211,11 @@ export class ConnectorConsoleConnection implements AsyncDisposable {
             await using client: ConnectorClient = await ConnectorClient.load(
                 configurationFile,
                 (state: ConnectorClientState): void => {
+                    if (state === ConnectorClientState.Revoked) {
+                        this.#configurationFile = null;
+                        this.#signedIn = false;
+                        this.cancelRetry();
+                    }
                     model.connection(state);
                     this.#options.view()?.draw();
                 },

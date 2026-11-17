@@ -149,7 +149,7 @@ export class ConnectorCloudConfiguration {
             : join(active.settings.stateDirectory, 'pairing.json');
     }
 
-    /** Read-only status never creates configuration, starts pairing, or claims current network connectivity. */
+    /** Local status never starts pairing or claims current connectivity; verified revocation may retire its saved identity. */
     public static async status(directory: string, signal: AbortSignal): Promise<string> {
         try {
             await ProtectedFiles.directory(directory);

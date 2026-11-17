@@ -26,6 +26,7 @@ export class ConnectorLifecyclePeer {
     public constructor(
         public readonly socket: Duplex,
         public readonly session: ConnectorSessionFixture,
+        public readonly receive: ((frame: ConnectorClientFrame) => void) | null = null,
     ) {
         socket.on('data', (chunk: Buffer): void => {
             try {
@@ -126,6 +127,8 @@ export class ConnectorLifecyclePeer {
                 kind: ConnectorFrameKind.Authenticated,
                 lease: this.session.confirmation(this.#challenge, proof),
             });
+        } else if (this.receive !== null) {
+            this.receive(frame);
         } else {
             throw new Error('Lifecycle peer received an unexpected frame');
         }

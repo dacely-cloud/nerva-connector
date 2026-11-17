@@ -6,6 +6,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { ConnectorDisconnect } from './ConnectorDisconnect.js';
 import { ConnectorConnectionLog } from './ConnectorConnectionLog.js';
 import { ConnectorClientState } from './ConnectorClientState.js';
+import { ConnectorRevocation } from './ConnectorRevocation.js';
+import type { ConnectorUnpair } from 'nerva-connector-protocol/protocol/ConnectorUnpair.js';
 import { ConnectorClientHost } from './ConnectorClientHost.js';
 import {
     ConnectorClientConfiguration,
@@ -36,6 +38,7 @@ export class ConnectorClient implements AsyncDisposable {
     readonly #host: ConnectorClientHost | null;
     readonly #observe: (state: ConnectorClientState) => void;
     readonly #resources: AsyncDisposableStack;
+    readonly #capabilities: AsyncDisposableStack;
     readonly #log: ConnectorConnectionLog | null;
     /** Reports verified local full-computer consent, independently from server scope and online publication. */
     public get hostEnabled(): boolean {
@@ -49,6 +52,7 @@ export class ConnectorClient implements AsyncDisposable {
         host: ConnectorClientHost | null,
         observe: (state: ConnectorClientState) => void,
         resources: AsyncDisposableStack,
+        capabilities: AsyncDisposableStack,
         log: ConnectorConnectionLog | null,
         public readonly progress?: ConnectorStartupObserver,
     ) {
@@ -59,6 +63,7 @@ export class ConnectorClient implements AsyncDisposable {
         this.#host = host;
         this.#observe = observe;
         this.#resources = resources;
+        this.#capabilities = capabilities;
     }
     /**
      * Dedicated communication code loads neither Nexa source nor controller signing/SSH/account credentials.
@@ -88,20 +93,21 @@ export class ConnectorClient implements AsyncDisposable {
         );
         await ConnectorLogout.requireActive(dirname(identity.settings.privateKeyFile));
         await ConnectorHistoryMigration.requireComplete(identity);
+        const capabilities: AsyncDisposableStack = resources.use(new AsyncDisposableStack());
         if (identity.settings.files !== null) {
             progress?.({ stage: ConnectorStartupStage.FileAccess });
         }
         const files: ConnectorClientFiles | null =
             identity.settings.files === null
                 ? null
-                : resources.use(await ConnectorClientFiles.load(identity, activity));
+                : capabilities.use(await ConnectorClientFiles.load(identity, activity));
         if (identity.settings.execution !== null) {
             progress?.({ stage: ConnectorStartupStage.CommandAccess });
         }
         const execution: ConnectorClientExecution | null =
             identity.settings.execution === null
                 ? null
-                : resources.use(await ConnectorClientExecution.load(identity, activity));
+                : capabilities.use(await ConnectorClientExecution.load(identity, activity));
         const workspaces: ConnectorClientWorkspaces | null = await ConnectorClientWorkspaces.load(
             identity,
             files,
@@ -110,7 +116,7 @@ export class ConnectorClient implements AsyncDisposable {
             progress,
         );
         if (workspaces !== null) {
-            resources.use(workspaces);
+            capabilities.use(workspaces);
             if (files === null || execution === null) {
                 throw new Error(
                     'Joint workspace admission requires both existing capability owners',
@@ -125,7 +131,7 @@ export class ConnectorClient implements AsyncDisposable {
             activity,
         );
         if (host !== null) {
-            resources.use(host);
+            capabilities.use(host);
         }
         const client: ConnectorClient = new ConnectorClient(
             identity,
@@ -135,6 +141,7 @@ export class ConnectorClient implements AsyncDisposable {
             host,
             observe,
             resources.move(),
+            capabilities,
             log,
             progress,
         );
@@ -150,6 +157,7 @@ export class ConnectorClient implements AsyncDisposable {
         const stopped: AbortSignal = AbortSignal.any([signal, this.#stop.signal]);
         let attempt: number = 0;
         let failures: number = 0;
+        let revoked: boolean = false;
         using _stalls: Disposable | null = this.#log?.watchStalls() ?? null;
         this.#log?.record('started', {
             platform: process.platform,
@@ -182,10 +190,22 @@ export class ConnectorClient implements AsyncDisposable {
                     this.#workspaces,
                     this.#host,
                     this.#log,
+                    async (receipt: ConnectorUnpair): Promise<void> => {
+                        try {
+                            await ConnectorRevocation.record(this.identity, receipt);
+                            revoked = true;
+                        } finally {
+                            await this.#capabilities[Symbol.asyncDispose]();
+                        }
+                    },
                 );
                 this.#connection = connection;
                 const disconnect: ConnectorDisconnect = await connection.run(endpoint, stopped);
                 this.#connection = null;
+                if (connection.revocation !== null) {
+                    await this.#resources[Symbol.asyncDispose]();
+                    break;
+                }
                 if (
                     this.#files?.failed === true ||
                     this.#execution?.failed === true ||
@@ -225,7 +245,9 @@ export class ConnectorClient implements AsyncDisposable {
             this.#connection?.terminate();
             this.#log?.record('stopped');
             try {
-                this.#observe(ConnectorClientState.Stopped);
+                this.#observe(
+                    revoked ? ConnectorClientState.Revoked : ConnectorClientState.Stopped,
+                );
                 this.progress?.({ stage: ConnectorStartupStage.Stopped });
             } finally {
                 this.#done.resolve(undefined);

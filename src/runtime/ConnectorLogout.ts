@@ -17,6 +17,7 @@ import {
     type ConnectorPairSettings,
 } from './ConnectorPairConfiguration.js';
 import { ConnectorUnpairTransport } from './ConnectorUnpairTransport.js';
+import { ConnectorRevocation } from './ConnectorRevocation.js';
 import { ConnectorDeviceKey, type ConnectorDeviceIdentity } from './ConnectorDeviceKey.js';
 import {
     ConnectorPrivateDirectory,
@@ -59,6 +60,12 @@ export class ConnectorLogout {
                 throw new Error('Connector logout history contains a cycle');
             }
             visited.add(directory);
+            if (
+                !(await ProtectedFiles.exists(join(directory, 'logout-state'))) &&
+                (await ProtectedFiles.exists(join(directory, 'revoked-state')))
+            ) {
+                await this.#retireRevoked(configuration, signal);
+            }
             if (!(await ProtectedFiles.exists(join(directory, 'logout-state')))) {
                 return current;
             }
@@ -148,8 +155,46 @@ export class ConnectorLogout {
         );
         using key: SigningKey = identity.key;
         await ConnectorUnpairTransport.run(configuration, key, signal);
+        return await this.#successor(configuration, pairing, key, signal);
+    }
+
+    static async #retireRevoked(
+        configuration: ConnectorPairIdentity,
+        signal: AbortSignal,
+    ): Promise<void> {
+        const source: string = configuration.settings.stateDirectory;
+        await using resources: AsyncDisposableStack = new AsyncDisposableStack();
+        resources.use(
+            await ConnectorPrivateDirectory.open(source, ConnectorDirectoryPurpose.Runtime),
+        );
+        resources.use(
+            await ConnectorPrivateDirectory.open(source, ConnectorDirectoryPurpose.Identity),
+        );
+        await using pairing: ConnectorPrivateDirectory = await ConnectorPrivateDirectory.open(
+            source,
+            ConnectorDirectoryPurpose.Pairing,
+        );
+        const device: ConnectorDeviceIdentity = await ConnectorDeviceKey.load(
+            join(source, 'device-key.json'),
+        );
+        using key: SigningKey = device.key;
+        ConnectorRevocation.verify(
+            configuration.authority,
+            key.publicKey,
+            JSON.parse((await pairing.read('revoked-state', 16384)).toString('utf8')),
+        );
+        await this.#successor(configuration, pairing, key, signal);
+    }
+
+    static async #successor(
+        configuration: ConnectorPairIdentity,
+        pairing: ConnectorPrivateDirectory,
+        key: SigningKey,
+        signal: AbortSignal,
+    ): Promise<string> {
+        const source: string = configuration.settings.stateDirectory;
         signal.throwIfAborted();
-        const nextDirectory: string = this.#next(configuration, identity.publicKey);
+        const nextDirectory: string = this.#next(configuration, key.publicKey);
         const destination: string = join(dirname(source), nextDirectory);
         await ProtectedFiles.createDirectory(destination);
         await using next: ConnectorPrivateDirectory = await ConnectorPrivateDirectory.open(
@@ -188,7 +233,10 @@ export class ConnectorLogout {
 
     /** Existence is a fail-closed guard even when a retired record is corrupt or cannot be decoded. */
     public static async requireActive(directory: string): Promise<void> {
-        if (await ProtectedFiles.exists(join(directory, 'logout-state'))) {
+        if (
+            (await ProtectedFiles.exists(join(directory, 'logout-state'))) ||
+            (await ProtectedFiles.exists(join(directory, 'revoked-state')))
+        ) {
             throw new ConnectorLoggedOut();
         }
     }

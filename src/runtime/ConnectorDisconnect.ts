@@ -29,6 +29,8 @@ export const ConnectorDisconnect = {
     Execution: 'execution',
     /** This computer's system details could not be read or sent. */
     Inventory: 'inventory',
+    /** The pinned authority permanently retired this exact device identity. */
+    Revoked: 'revoked',
 } as const;
 
 /** Allowed values derive from the runtime mapping. */
