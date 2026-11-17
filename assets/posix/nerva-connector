@@ -3,4 +3,4 @@ set -eu
 directory=$(CDPATH= cd -P -- "$(dirname -- "$0")" && pwd)
 case "$directory" in *\\*) echo 'Move Nerva Connector to a folder without backslash characters; Node cannot load modules from that path.' >&2; exit 1 ;; esac
 export NODE_OPTIONS= NODE_PATH= NODE_EXTRA_CA_CERTS= NODE_TLS_REJECT_UNAUTHORIZED=1
-exec "$directory/node" "$directory/nerva-connector.mjs" connector "$@"
+exec "$directory/node" "$directory/nerva-connector-update.mjs" "$@"

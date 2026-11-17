@@ -12,8 +12,8 @@ import { createHash } from 'node:crypto';
  * Reuses an operator-selected existing Cargo target and copies only the intentional helper executables.
  *
  * @remarks
- * Linux builds the confined file helper and the execution/terminal helper. macOS builds only the
- * execution helper, which there serves host terminals; the confined lanes depend on Linux kernel features.
+ * Linux builds the confined file, execution/terminal and atomic update helpers. macOS builds the
+ * terminal and atomic update helpers; confined execution lanes depend on Linux kernel features.
  */
 const configuredTarget: string | undefined = process.env['CARGO_TARGET_DIR'];
 if (
@@ -26,8 +26,8 @@ if (
 }
 const helpers: readonly string[] =
     process.platform === 'linux'
-        ? ['nerva-connector-files', 'nerva-connector-exec']
-        : ['nerva-connector-exec'];
+        ? ['nerva-connector-files', 'nerva-connector-exec', 'nerva-connector-update']
+        : ['nerva-connector-exec', 'nerva-connector-update'];
 if (
     configuredTarget.length === 0 ||
     !configuredTarget.isWellFormed() ||

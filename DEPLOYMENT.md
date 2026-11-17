@@ -80,7 +80,8 @@ artifacts from a successful run to publish them through your HTTPS distribution 
 Linux installs offline for the current user in `~/.local/lib/nerva-connector`, or the `--destination` folder, and
 creates an applications-menu shortcut. No desktop shortcut is created with `--no-shortcuts`. It rejects symlink
 ancestry, unsafe writable ancestors and existing unrelated files. Updates replace only recognized program files;
-device state stays separately in `~/.local/share/nerva-connector`. Stop the connector before updating it.
+device state stays separately in `~/.local/share/nerva-connector`. Stop the connector before manually running
+another installer.
 
 The Mac disk image contains **Nerva Connector.app** and an **Applications** shortcut. Its application opens the
 existing local permission and pairing console in Terminal. The generated bundle is ad-hoc signed and verified,
@@ -89,6 +90,33 @@ apply your Developer ID Application signature and notarize the app before recrea
 the disk image using Apple's [distribution packaging instructions](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution).
 Keep signing credentials outside the repository. Grant Screen Recording and Accessibility to Terminal on the
 Mac where the connector runs; the package does not grant access itself.
+
+### Automatic desktop updates
+
+Current Mac and Linux desktop launchers include an update supervisor. It checks after one minute and every
+hour while open; `/updates` checks immediately. Finite commands such as `--help` do not check the network.
+The supervisor authenticates the RSA-signed feed before parsing it, bounds installer size, verifies the exact
+SHA-256 and native architecture, and prepares the new program while the old console stays usable. It drains
+the console before a native atomic directory exchange, checks the installed version and launcher, then
+restarts. Failed checks restore the previous complete program. Device keys, grants and history stay outside
+the installation. Updater diagnostics are in `updater.log` beside `connection.log`.
+
+`assets/posix/updates.json` pins the public authority and separate HTTPS Linux/Mac feeds. The private key stays
+on the publisher machine, outside CI and the repository. It must match that committed public key. Build both
+architectures from the same release, collect the finished installers and checksums in `build`, then sign:
+
+```sh
+npm run release:posix -- --platform linux --key /secure/update-key.pem
+npm run release:posix -- --platform darwin --key /secure/update-key.pem
+```
+
+Publish `build/posix-update/linux` and `build/posix-update/darwin` to their configured feed directories. Upload
+installers first, then `latest.json` and `latest.json.sig` together. An incomplete publication is rejected and
+retried at the next check. Raise `package.json`'s version for each release; equal or older versions never install.
+These RSA signatures authenticate updates independently of Apple's Developer ID and notarization requirements.
+The Mac app must be copied from its disk image to a writable local installation before it can update.
+Older desktop packages require one manual replacement to bootstrap the supervisor. Managed Linux services use
+the separate release process below.
 
 ## Linux managed releases
 

@@ -1,6 +1,6 @@
 {
     "name": "@nerva/connector",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "private": true,
     "type": "module",
     "license": "UNLICENSED",
@@ -51,6 +51,7 @@
         "build:macos-installer": "node script/build-posix-installer.ts --platform darwin",
         "create:windows-update-key": "node script/create-windows-update-key.ts",
         "release:windows": "node script/release-windows.ts",
+        "release:posix": "node script/release-posix.ts",
         "build:windows:qualification": "npm run check:circular && node script/build-windows-qualification.ts",
         "qualify:windows": "npm run check:circular && node script/build-windows-qualification.ts --run",
         "check:circular": "madge --circular --strict ."

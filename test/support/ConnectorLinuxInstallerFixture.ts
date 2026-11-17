@@ -39,6 +39,10 @@ export class ConnectorLinuxInstallerFixture implements AsyncDisposable {
                 join(fixture.application, 'nerva-connector.mjs'),
                 'process.stdout.write(JSON.stringify(process.argv.slice(2)));\n',
             );
+            await writeFile(
+                join(fixture.application, 'nerva-connector-update.mjs'),
+                'process.argv.splice(2, 0, "connector"); await import("./nerva-connector.mjs");\n',
+            );
             const launcher: Buffer = await readFile(
                 new URL('../../assets/posix/nerva-connector', import.meta.url),
             );

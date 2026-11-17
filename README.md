@@ -65,13 +65,13 @@ Terminal in **System Settings → Privacy & Security**, then quit and reopen the
 Download `Nerva-Connector-Setup-<version>-x64.run` (`-arm64.run` on ARM64 Linux), then run:
 
 ```sh
-sh ./Nerva-Connector-Setup-0.1.0-x64.run
+sh ./Nerva-Connector-Setup-0.1.2-x64.run
 ```
 
 It installs for your account without administrator rights, Node, npm or a compiler. Open **Nerva Connector** from
 the applications menu, or run `~/.local/lib/nerva-connector/nerva-connector`. A desktop terminal emulator is needed
 for the menu shortcut. To choose another program location, add `--destination "/absolute/path/Nerva Connector"`.
-Use `--no-shortcuts` on a machine without a desktop. Close the connector before installing an update.
+Use `--no-shortcuts` on a machine without a desktop. Close the connector before manually running another installer.
 
 ## First start
 
@@ -117,6 +117,7 @@ Type `/` to open the menu:
 | `/disable-host` | Turn off full computer access                       |
 | `/reconnect`    | Connect again now                                   |
 | `/startup`      | Windows: start in the background at sign-in, or not |
+| `/updates`      | macOS and Linux installers: check for updates now   |
 | `/log`          | Why recent connections ended, and the log file      |
 | `/system`       | This computer's processor, memory and graphics      |
 | `/pair`         | Link the computer, if it is not linked              |
@@ -128,9 +129,15 @@ Type `/` to open the menu:
 - **Windows:** updates install by themselves. Nerva Connector checks when it starts and every hour, installs a new
   version and starts again, keeping this computer's link and settings. Right-click its icon and choose **Check for
   updates** to check now, or run a newer setup file.
-- **macOS:** quit the connector, then replace the application with the newer disk image's copy.
-- **Linux:** close the connector and run the newer installer with the same `--destination`, if customized.
-  Both keep your account link, permissions and history.
+- **macOS and Linux:** current desktop installers check after one minute and every hour while the connector
+  is open. Use `/updates` to check now. They verify the publisher's signature, download in the background, then
+  restart the connector on the newer version. Custom installation locations are preserved. A failed installation
+  restores the previous program; your account link, permissions and history remain separate.
+
+Older Mac and Linux packages need one manual installation of the current package to enable automatic updates.
+On macOS, quit the connector and replace the app from the disk image. On Linux, close it and run the newer
+installer with the same `--destination`, if customized. Install the Mac app on your writable local disk first;
+an app opened directly from its read-only disk image cannot update itself.
 
 ## Uninstall
 

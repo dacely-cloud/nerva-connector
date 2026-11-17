@@ -1,0 +1,7 @@
+{
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA3ySMamBzLJU3vPneJcJ4\nCbiXIst6wVLM6Gvn4BZHlZOFESy/KpIibTl3I9rV3gzPb5KBEjjDq3dBLv0pnOel\n/DiV3x7XGcWX92AaYIjHb0IZUS63z/PLK8h3ztC5ecykScsR2y4e3MgKdFttLA8V\nR4xSI3yr6VxLugkCMaWR58XPWVep3Cw37hlHdw1NHx2UDNYS9mJ71j2Kp/ZX0fu5\ntzefO5oKrwYGDClkbLfyTRer6qath4js/SEi1oY2L0fsvZDDL8XbA/sTMyASYKhL\neMnQ1xFrjPV9QoMqds5fizF+e4ZBVmnmdSGQSIPiuNMz514GH0a74fEG4bffCEsZ\nKPZ/8IR95a8Od51DJbcgBEcUV7fnNPHIKWhc9X6dG2UuvHPl3JsoHZxmFyxWMoCr\nU+VHYOoNSRKujKJJurSGmdS73YD3cdJREsbt4tfr9g41EGxWg4B/lDGSLD5eBRGd\nWBcGJNSt5Mmbj8Bgm6qbPc28YgPU7QTaxB1P6zkClEzlAgMBAAE=\n-----END PUBLIC KEY-----\n",
+    "feeds": {
+        "linux": "https://nervalabs.com/downloads/connector/linux/",
+        "darwin": "https://nervalabs.com/downloads/connector/macos/"
+    }
+}

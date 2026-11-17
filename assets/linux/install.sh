@@ -60,7 +60,7 @@ actual=$(sha256sum "$work/payload.tar.gz"); actual=${actual%% *}
 [ "$(tar -tzf "$work/payload.tar.gz")" = '@NERVA_FILES_LINES@' ] || fail 'Unexpected installer package contents'
 mkdir "$work/next"
 tar -xzf "$work/payload.tar.gz" --no-same-owner --no-same-permissions -C "$work/next"
-chmod 700 "$work/next" "$work/next/node" "$work/next/nerva-connector" "$work/next/nerva-connector-exec" "$work/next/nerva-connector-files"
+chmod 700 "$work/next" "$work/next/node" "$work/next/nerva-connector" "$work/next/nerva-connector-exec" "$work/next/nerva-connector-files" "$work/next/nerva-connector-update"
 NODE_OPTIONS= NODE_PATH= NODE_EXTRA_CA_CERTS= NODE_TLS_REJECT_UNAUTHORIZED=1 "$work/next/node" --input-type=module -e 'if(process.platform!=="linux"||process.arch!=="@NERVA_ARCH@")process.exit(1)' || fail 'The bundled runtime cannot run on this system'
 if [ -e "$destination" ]; then
     mv -- "$destination" "$work/previous"

@@ -14,6 +14,7 @@ import { ConnectorLinuxInstaller } from './ConnectorLinuxInstaller.ts';
 import { ConnectorMacInstaller } from './ConnectorMacInstaller.ts';
 import { ConnectorPosixNodeRuntime } from './ConnectorPosixNodeRuntime.ts';
 import { ConnectorPosixArchitecture, ConnectorPosixPlatform } from './ConnectorPosixPlatform.ts';
+import { ConnectorPosixUpdateBuild } from './ConnectorPosixUpdateBuild.ts';
 
 /** Builds one native, self-contained desktop installer without copying installed dependencies or Cargo caches. */
 const supplied: readonly string[] = process.argv.slice(2);
@@ -63,8 +64,8 @@ try {
     await mkdir(application, { recursive: true, mode: 0o700 });
     const nativeNames: readonly string[] =
         platform === ConnectorPosixPlatform.Linux
-            ? ['nerva-connector-exec', 'nerva-connector-files']
-            : ['nerva-connector-exec'];
+            ? ['nerva-connector-exec', 'nerva-connector-files', 'nerva-connector-update']
+            : ['nerva-connector-exec', 'nerva-connector-update'];
     for (const file of nativeNames) {
         const source: string = resolve('build', file);
         const status: Awaited<ReturnType<typeof lstat>> = await lstat(source);
@@ -113,6 +114,17 @@ try {
         join(application, 'nerva-connector'),
         await readFile(resolve('assets/posix/nerva-connector')),
         0o700,
+    );
+    await ConnectorPosixUpdateBuild.build(
+        join(application, 'nerva-connector-update.mjs'),
+        await ConnectorPosixUpdateBuild.settings(
+            platform,
+            architecture,
+            version,
+            createHash('sha256')
+                .update(await readFile(join(application, 'nerva-connector-update')))
+                .digest('hex'),
+        ),
     );
     const runtime: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(execFile)(
         join(application, 'node'),

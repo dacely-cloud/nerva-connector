@@ -10,6 +10,8 @@ import {
 /** The console asks its installed supervisor to check without ever handling release keys, downloads or program writes. */
 export class ConnectorUpdateChannel implements Disposable {
     readonly #report: (rows: readonly string[]) => void;
+    readonly #closed: () => void;
+    readonly #disconnect: () => void = (): void => this.#closed();
     readonly #receive: (message: unknown) => void = (message: unknown): void => {
         const status: ConnectorUpdateStatus | null = ConnectorUpdateMessage.read(message);
         if (status !== null && status !== ConnectorUpdateStatus.Check) {
@@ -18,10 +20,12 @@ export class ConnectorUpdateChannel implements Disposable {
     };
 
     /** The caller owns drawing; message text comes exclusively from the fixed update-status catalog. */
-    public constructor(report: (rows: readonly string[]) => void) {
+    public constructor(report: (rows: readonly string[]) => void, closed: () => void) {
         this.#report = report;
+        this.#closed = closed;
         if (this.available) {
             process.on('message', this.#receive);
+            process.once('disconnect', this.#disconnect);
         }
     }
 
@@ -46,5 +50,6 @@ export class ConnectorUpdateChannel implements Disposable {
     /** Teardown detaches only this console's listener and lets normal shutdown release the IPC channel. */
     public [Symbol.dispose](): void {
         process.removeListener('message', this.#receive);
+        process.removeListener('disconnect', this.#disconnect);
     }
 }

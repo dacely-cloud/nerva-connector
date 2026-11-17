@@ -44,7 +44,8 @@ jobs:
         runs-on: ${{ matrix.runner }}
         timeout-minutes: 20
         env:
-            CARGO_TARGET_DIR: ${{ github.workspace }}/native/target
+            CARGO_TARGET_DIR: ${{ github.workspace }}/build
+            NERVA_POSIX_UPDATE_SMOKE: '1'
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
@@ -61,7 +62,7 @@ jobs:
                   npm run build:native
             - run: npm run build:${{ matrix.platform }}-installer
             - name: Exercise installation and native executable boundaries
-              run: npx vitest run test/ConnectorLinuxInstaller.test.ts test/ConnectorNativeFormat.test.ts test/ConnectorNativeExecutable.test.ts test/ConnectorBuildNotices.test.ts --maxWorkers=1
+              run: npx vitest run test/ConnectorAutomaticUpdates.test.ts test/ConnectorPosixUpdateFeed.test.ts test/ConnectorUpdateManifest.test.ts test/ConnectorUpdateDownload.test.ts test/ConnectorLinuxInstaller.test.ts test/ConnectorNativeFormat.test.ts test/ConnectorNativeExecutable.test.ts test/ConnectorBuildNotices.test.ts --maxWorkers=1
             - name: Install and launch the real Linux package offline
               if: matrix.platform == 'linux'
               shell: bash

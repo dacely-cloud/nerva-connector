@@ -114,6 +114,7 @@ export class ConnectorConsoleApp {
                     this.#model.details = rows;
                     this.#view?.draw();
                 },
+                (): void => this.#close(),
             );
             this.#updates = updates;
             this.#model.updates = updates.available;

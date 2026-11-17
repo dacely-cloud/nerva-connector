@@ -9,22 +9,12 @@ import { promisify } from 'node:util';
 import { ConnectorInstallerPaths } from '../src/install/ConnectorInstallerPaths.ts';
 import { ConnectorBuildArtifact } from './ConnectorBuildArtifact.ts';
 import type { ConnectorPosixArchitecture } from './ConnectorPosixPlatform.ts';
+import { ConnectorUpdateFiles } from '../src/update/ConnectorUpdateFiles.ts';
 
 /** Creates one offline, per-user Linux installer with a verified, closed set of program files. */
 export class ConnectorLinuxInstaller {
     /** Only these deliberately staged product files enter the compressed payload. */
-    public static readonly files: readonly string[] = [
-        'node',
-        'NODE-LICENSE.txt',
-        'nerva-connector.mjs',
-        'nerva-connector-host-worker.mjs',
-        'nerva-connector-exec',
-        'nerva-connector-files',
-        'THIRD-PARTY-NOTICES.txt',
-        'nerva-connector',
-        'nerva-connector-logo.png',
-        '.nerva-installation',
-    ];
+    public static readonly files: readonly string[] = ConnectorUpdateFiles.names('linux');
 
     /** Audits the entire staging directory before compression and removes its intermediate archive on every exit. */
     public static async build(
