@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -29,12 +30,8 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                     '-r:System.Web.Extensions',
                     '-main:WindowsHostTerminalFixture',
                     '-out:' + executable,
-                    ...[
-                        'HostJob.cs',
-                        'HostTerminal.cs',
-                        'HostTerminalConsole.cs',
-                        'HostTerminalProtocol.cs',
-                    ].map((name: string): string => resolve('native/windows', name)),
+                    ...ConnectorWindowsSources.hostJob,
+                    ...ConnectorWindowsSources.terminal,
                     resolve('test/support/WindowsHostTerminalFixture.cs'),
                 ],
                 options,

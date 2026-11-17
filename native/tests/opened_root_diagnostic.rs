@@ -60,7 +60,13 @@ fn response(output: &Output) -> Value {
 
 fn denied(output: Output, error: &str) {
     assert_eq!(output.status.code(), Some(1));
-    assert_eq!(response(&output), json!({"ok":false,"error":error}));
+    assert_eq!(
+        response(&output),
+        json!({
+            "ok": false,
+            "error": error
+        })
+    );
 }
 
 #[test]
@@ -133,7 +139,10 @@ fn output_files_never_receive_raw_root_material() {
         reader.read_to_end(&mut bytes).unwrap();
         assert_eq!(
             serde_json::from_slice::<Value>(&bytes).unwrap(),
-            json!({"ok":false,"error":"invalid"})
+            json!({
+                "ok": false,
+                "error": "invalid"
+            })
         );
     }
 }
@@ -142,11 +151,16 @@ fn expected(identity: &OpenedRootIdentity) -> Value {
     fn hex(bytes: &[u8]) -> String {
         bytes.iter().map(|value| format!("{value:02x}")).collect()
     }
-    json!({"ok":true,"identity":{
-        "filesystemUuid":hex(&identity.filesystem_uuid),
-        "device":identity.device.to_string(),"inode":identity.inode.to_string(),
-        "handleType":1,"handle":hex(&identity.handle),
-    }})
+    json!({
+        "ok": true,
+        "identity": {
+            "filesystemUuid": hex(&identity.filesystem_uuid),
+            "device": identity.device.to_string(),
+            "inode": identity.inode.to_string(),
+            "handleType": 1,
+            "handle": hex(&identity.handle),
+        }
+    })
 }
 
 #[test]

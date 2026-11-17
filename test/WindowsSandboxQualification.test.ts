@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -76,9 +77,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                     resolve('native/windows/sandbox/SandboxNative.cs'),
                     resolve('native/windows/sandbox/SandboxPolicy.cs'),
                     resolve('native/windows/sandbox/SandboxImageIdentity.cs'),
-                    resolve('native/windows/StateOwner.cs'),
-                    resolve('native/windows/ArtifactOperations.cs'),
-                    resolve('native/windows/GpuInventory.cs'),
+                    ...ConnectorWindowsSources.state,
                     resolve('test/support/WindowsSandboxPolicyFixture.cs'),
                 ],
             });

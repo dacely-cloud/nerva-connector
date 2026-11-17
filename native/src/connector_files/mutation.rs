@@ -202,9 +202,18 @@ mod tests {
         std::fs::write(&outside, b"private").unwrap();
         let outside_directory = owned.path().join("outside-directory");
         std::fs::create_dir(&outside_directory).unwrap();
+        let test_name = concat!(
+            "connector_files::mutation::tests::",
+            "writes_keep_kernel_denials_outside_selected_roots_and_private_staging"
+        );
         let result = Command::new(std::env::current_exe().unwrap())
-            .args(["--exact", "connector_files::mutation::tests::writes_keep_kernel_denials_outside_selected_roots_and_private_staging", "--nocapture"])
-            .env_clear().env("NERVA_CONNECTOR_RW_TEST_ROOT", &root).env("NERVA_CONNECTOR_RW_TEST_STAGE", &stage).env("NERVA_CONNECTOR_RW_TEST_OUTSIDE", &outside).output().unwrap();
+            .args(["--exact", test_name, "--nocapture"])
+            .env_clear()
+            .env("NERVA_CONNECTOR_RW_TEST_ROOT", &root)
+            .env("NERVA_CONNECTOR_RW_TEST_STAGE", &stage)
+            .env("NERVA_CONNECTOR_RW_TEST_OUTSIDE", &outside)
+            .output()
+            .unwrap();
         assert!(
             result.status.success(),
             "write confinement did not independently prove kernel denials"

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -87,7 +88,7 @@ it.skipIf(
             const executable: string = join(directory, 'desktop-pipe-fixture.exe');
             await ConnectorWindowsCompiler.compile({
                 sources: [
-                    resolve('native/windows/HostDesktop.cs'),
+                    ...ConnectorWindowsSources.desktop,
                     resolve('test/support/HostDesktopPipeFixture.cs'),
                 ],
                 entrypoint: 'HostDesktopPipeFixture',

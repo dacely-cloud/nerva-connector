@@ -28,6 +28,8 @@ export const ConnectorHostTool = {
     TerminalStop: 'terminal_stop',
     TerminalRelease: 'terminal_release',
     DesktopInfo: 'desktop_info',
+    ApplicationOpen: 'application_open',
+    DesktopSnapshot: 'desktop_snapshot',
     DesktopScreenshot: 'desktop_screenshot',
     DesktopPointer: 'desktop_pointer',
     DesktopKey: 'desktop_key',

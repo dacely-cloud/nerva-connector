@@ -9,6 +9,8 @@ export const HostOperation = {
     HttpClose: 'http-close',
     EnvironmentInspect: 'environment-inspect',
     DesktopInfo: 'desktop-info',
+    ApplicationOpen: 'application-open',
+    DesktopSnapshot: 'desktop-snapshot',
     Screenshot: 'screenshot',
     Pointer: 'pointer',
     Key: 'key',

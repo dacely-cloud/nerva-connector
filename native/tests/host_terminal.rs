@@ -194,7 +194,19 @@ impl Terminal {
         let mut child = command.spawn().unwrap();
         let input = child.stdin.take().unwrap();
         let output = child.stdout.take().unwrap();
-        parent.write_all(&serde_json::to_vec(&json!({ "token":TOKEN,"executable":"/usr/bin/python3","arguments":["-I","-B","-c",source],"windowsVerbatimArguments":false,"cols":80,"rows":24 })).unwrap()).unwrap();
+        parent
+            .write_all(
+                &serde_json::to_vec(&json!({
+                    "token": TOKEN,
+                    "executable": "/usr/bin/python3",
+                    "arguments": ["-I", "-B", "-c", source],
+                    "windowsVerbatimArguments": false,
+                    "cols": 80,
+                    "rows": 24
+                }))
+                .unwrap(),
+            )
+            .unwrap();
         parent.write_all(b"\n").unwrap();
         parent.set_nonblocking(true).unwrap();
         nonblocking(output.as_raw_fd());
@@ -289,8 +301,12 @@ impl Terminal {
 
     fn stop(&mut self) {
         self.capture_session();
-        self.send(json!({"token":TOKEN,"operation":"stop","id":"2"}));
-        self.wait(|value| matches!(value, Report::Control { id, ok:true, .. } if id == "2"));
+        self.send(json!({
+            "token": TOKEN,
+            "operation": "stop",
+            "id": "2"
+        }));
+        self.wait(|value| matches!(value, Report::Control { id, ok: true, .. } if id == "2"));
         self.wait(|value| {
             matches!(
                 value,
@@ -441,7 +457,9 @@ fn actual_probe_reports_a_real_available_linux_pty() {
     assert!(output.status.success());
     assert_eq!(
         serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap(),
-        json!({"supported":true})
+        json!({
+            "supported": true
+        })
     );
     assert!(output.stderr.is_empty());
 }
@@ -463,12 +481,18 @@ os._exit(7)
 "#,
     );
     terminal.output_contains(b"SIZE:80,24\n");
-    terminal.send(json!({"token":TOKEN,"operation":"resize","id":"1","cols":112,"rows":37}));
-    terminal.wait(|value| matches!(value, Report::Control { id, ok:true, .. } if id=="1"));
+    terminal.send(json!({
+        "token": TOKEN,
+        "operation": "resize",
+        "id": "1",
+        "cols": 112,
+        "rows": 37
+    }));
+    terminal.wait(|value| matches!(value, Report::Control { id, ok: true, .. } if id == "1"));
     terminal.input(b"R");
     terminal.output_contains(b"SIZE:112,37\n");
     terminal.input(b"interactive\0\xff\n");
-    terminal.wait(|value| matches!(value, Report::Input { accepted, .. } if accepted=="15"));
+    terminal.wait(|value| matches!(value, Report::Input { accepted, .. } if accepted == "15"));
     terminal.wait(|value| {
         matches!(
             value,

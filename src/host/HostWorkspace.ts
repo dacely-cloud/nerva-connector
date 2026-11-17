@@ -5,6 +5,9 @@ import { HostProgramWatch } from './HostProgramWatch.js';
 import { randomUUID } from 'node:crypto';
 import { stat, realpath } from 'node:fs/promises';
 import { HostDesktop } from './HostDesktop.js';
+import { HostOperationError } from './HostOperationError.js';
+import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
 import { HostEnvironmentInspection } from './HostEnvironmentInspection.js';
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostEnvironmentReport, HostEnvironmentRequest } from './HostEnvironmentTypes.js';
@@ -334,6 +337,44 @@ export class HostWorkspace implements AsyncDisposable {
                 processId: null,
             },
             (): Promise<HostDesktopInfo> => this.#desktopOwner().info(),
+        );
+    }
+
+    /** The current full-computer authority covers one installed application launch and its screen observation. */
+    public async openApplication(name: string): Promise<HostApplicationResult> {
+        if (
+            typeof name !== 'string' ||
+            name.trim().length === 0 ||
+            name.length > 4096 ||
+            /[\0\r\n]/u.test(name)
+        ) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Invalid application name',
+                true,
+            );
+        }
+        return await this.#run(
+            {
+                operation: HostOperation.ApplicationOpen,
+                path: null,
+                destinationPath: null,
+                processId: null,
+            },
+            (): Promise<HostApplicationResult> => this.#desktopOwner().openApplication(name),
+        );
+    }
+
+    /** Capture under fresh native authorization, without using a path or writing a screenshot artifact. */
+    public async desktopSnapshot(): Promise<HostDesktopFrame> {
+        return await this.#run(
+            {
+                operation: HostOperation.DesktopSnapshot,
+                path: null,
+                destinationPath: null,
+                processId: null,
+            },
+            (): Promise<HostDesktopFrame> => this.#desktopOwner().snapshot(),
         );
     }
 

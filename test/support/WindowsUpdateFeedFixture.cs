@@ -13,7 +13,10 @@ public static class NexaConnectorUpdateFeedFixture
     /// </summary>
     public static int Main(string[] arguments)
     {
-        if (arguments.Length != 5) return 87;
+        if (arguments.Length != 5)
+        {
+            return 87;
+        }
         try
         {
             NexaConnectorUpdate update = NexaConnectorUpdateFeed.Select(
@@ -21,8 +24,19 @@ public static class NexaConnectorUpdateFeedFixture
                 File.ReadAllText(arguments[1]),
                 File.ReadAllText(arguments[2]),
                 arguments[3],
-                arguments[4]);
-            Console.WriteLine(update == null ? "current" : update.Version + " " + update.Name + " " + update.Size.ToString() + " " + update.Sha256);
+                arguments[4]
+            );
+            Console.WriteLine(
+                update == null
+                    ? "current"
+                    : update.Version
+                        + " "
+                        + update.Name
+                        + " "
+                        + update.Size.ToString()
+                        + " "
+                        + update.Sha256
+            );
             return 0;
         }
         catch (InvalidDataException)

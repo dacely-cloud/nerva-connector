@@ -159,6 +159,18 @@ export class HostMcpWorkspaceCatalog {
                 ['path', 'mode'],
             ),
             this.#tool(
+                'application_open',
+                'Windows: resolve an installed Start menu application by name or AppID, open it through the user shell and return launch acceptance, observed window presence and one inline screenshot. Ambiguous or missing names never launch anything. No PowerShell, command shell, temporary files or task-lifetime process is used. A missing window or screenshot is explicit uncertainty, never permission to repeat the launch.',
+                { name: { type: 'string', minLength: 1, maxLength: 4096 } },
+                ['name'],
+            ),
+            this.#tool(
+                'desktop_snapshot',
+                'Windows: capture the current desktop once and return its bounded image inline, without creating a file or selecting a workspace.',
+                {},
+                [],
+            ),
+            this.#tool(
                 'desktop_pointer',
                 'Move, click, press or release a mouse button in the approved desktop scope. Coordinates use desktop_info physical pixels, independent of scaled screenshot pixels. Wayland coordinates start at 0,0 in the selected monitor; this does not grant control of other monitors.',
                 {

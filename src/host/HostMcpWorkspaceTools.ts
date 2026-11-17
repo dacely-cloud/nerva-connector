@@ -151,6 +151,12 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 );
             case 'desktop_info':
                 return this.#serialize(await this.workspace.desktopInfo());
+            case 'application_open':
+                return this.#serialize(
+                    await this.workspace.openApplication(this.#text(args['name'])),
+                );
+            case 'desktop_snapshot':
+                return this.#serialize(await this.workspace.desktopSnapshot());
             case 'desktop_screenshot': {
                 const mode: HostWriteMode = this.#writeMode(args['mode']);
                 if (mode !== HostWriteMode.Create && mode !== HostWriteMode.Replace) {

@@ -11,11 +11,21 @@ public static class NexaConnectorInstallerPayloadFixture
     /// <summary>Arguments: the setup program and an empty output directory. Prints the payload version.</summary>
     public static int Main(string[] arguments)
     {
-        if (arguments.Length != 2) return 87;
-        Assembly setup = Assembly.LoadFile(Path.GetFullPath(arguments[0]));
-        using (Stream payload = setup.GetManifestResourceStream(NexaConnectorInstallerPayload.ResourceName))
+        if (arguments.Length != 2)
         {
-            if (payload == null) return 4;
+            return 87;
+        }
+        Assembly setup = Assembly.LoadFile(Path.GetFullPath(arguments[0]));
+        using (
+            Stream payload = setup.GetManifestResourceStream(
+                NexaConnectorInstallerPayload.ResourceName
+            )
+        )
+        {
+            if (payload == null)
+            {
+                return 4;
+            }
             try
             {
                 Console.WriteLine(NexaConnectorInstallerPayload.ReadVersion(payload));

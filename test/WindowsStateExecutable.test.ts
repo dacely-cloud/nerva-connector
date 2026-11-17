@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';
@@ -34,9 +35,12 @@ it('state bootstrap uses a compiled helper without runtime compilation or embedd
     }
 });
 
-it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
-    'the actual C#5 program compiles and rejects unsafe Windows names and SID/DACL policies without invoking Windows APIs',
-    async (): Promise<void> => {
+it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs')).each([
+    ['WindowsStatePolicyFixture', /windows-state-policy-checks=\d+/u],
+    ['WindowsStateProtocolFixture', /windows-state-protocol-checks=\d+/u],
+] as const)(
+    'actual C#5 %s rejects unsafe input without invoking Windows APIs',
+    async (entrypoint: string, expected: RegExp): Promise<void> => {
         const directory: string = await mkdtemp(join(homedir(), '.nerva-windows-policy-'));
         try {
             const executable: string = join(directory, 'policy.exe');
@@ -51,21 +55,19 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                     '-target:exe',
                     '-langversion:5',
                     '-warnaserror',
-                    '-main:WindowsStatePolicyFixture',
+                    '-main:' + entrypoint,
                     '-r:System.Security',
                     '-r:System.Web.Extensions',
                     '-out:' + executable,
-                    resolve('native/windows/StateOwner.cs'),
-                    resolve('native/windows/GpuInventory.cs'),
-                    resolve('native/windows/ArtifactOperations.cs'),
-                    resolve('test/support/WindowsStatePolicyFixture.cs'),
+                    ...ConnectorWindowsSources.state,
+                    resolve('test/support', entrypoint + '.cs'),
                 ],
                 options,
             );
             const output: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
                 execFile,
             )('/usr/bin/mono', [executable], options);
-            expect(output.stdout.toString()).toMatch(/windows-state-policy-checks=\d+/u);
+            expect(output.stdout.toString()).toMatch(expected);
             expect(output.stderr.toString()).toBe('');
         } finally {
             await rm(directory, { recursive: true, force: true });

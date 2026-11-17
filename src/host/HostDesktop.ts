@@ -7,6 +7,9 @@ import { HostDesktopCapture } from './HostDesktopCapture.js';
 import { HostDesktopX11 } from './HostDesktopX11.js';
 import { HostDesktopWayland } from './HostDesktopWayland.js';
 import { HostDesktopWindows } from './HostDesktopWindows.js';
+import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
+import { HostOperationError } from './HostOperationError.js';
+import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
 import { HostDesktopMac } from './HostDesktopMac.js';
 import {
     HostDesktopPointerAction,
@@ -66,6 +69,36 @@ export class HostDesktop implements AsyncDisposable {
     public async info(): Promise<HostDesktopInfo> {
         return await this.#operate(async (): Promise<HostDesktopInfo> => {
             return await this.#driver.info();
+        });
+    }
+
+    /** Launch exactly one installed Windows application without shell scripts, then capture the screen once. */
+    public async openApplication(name: string): Promise<HostApplicationResult> {
+        return await this.#operate(async (): Promise<HostApplicationResult> => {
+            this.#active();
+            if (!(this.#driver instanceof HostDesktopWindows)) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Native application opening requires Windows',
+                    true,
+                );
+            }
+            return await this.#driver.openApplication(name);
+        });
+    }
+
+    /** Inline images are observations and retain no temporary files on the customer computer. */
+    public async snapshot(): Promise<HostDesktopFrame> {
+        return await this.#operate(async (): Promise<HostDesktopFrame> => {
+            this.#active();
+            if (!(this.#driver instanceof HostDesktopWindows)) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Inline desktop capture requires Windows',
+                    true,
+                );
+            }
+            return await this.#driver.snapshot();
         });
     }
 

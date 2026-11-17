@@ -303,9 +303,10 @@ mod tests {
         let (_directory, root, stage) = setup();
         let mut commitment = target(b"sample");
         commitment.size_bytes = "67108865".to_string();
-        assert!(
-            matches!(begin(&root, &stage, commitment), Ok(Output::UploadBegin { received_bytes, .. }) if received_bytes == "0")
-        );
+        assert!(matches!(
+            begin(&root, &stage, commitment),
+            Ok(Output::UploadBegin { received_bytes, .. }) if received_bytes == "0"
+        ));
         let mut commitment = target(b"sample");
         commitment.size_bytes = "67108865".to_string();
         assert!(abort(&root, &stage, commitment).is_ok());
@@ -330,12 +331,16 @@ mod tests {
         assert!(begin(&root, &stage, target(&bytes)).is_ok());
         assert!(send(&root, &stage, &bytes, 1, 1).is_err());
         assert!(send(&root, &stage, &bytes, 0, 65536).is_ok());
-        assert!(
-            matches!(begin(&root,&stage,target(&bytes)),Ok(Output::UploadBegin{received_bytes,..}) if received_bytes=="65536")
-        );
-        assert!(
-            matches!(status(&root,&stage,target(&bytes)),Ok(Output::UploadStatus{received_bytes,sha256,..}) if received_bytes=="65536" && sha256==format!("{:x}",Sha256::digest(&bytes[..65536])))
-        );
+        assert!(matches!(
+            begin(&root, &stage, target(&bytes)),
+            Ok(Output::UploadBegin { received_bytes, .. }) if received_bytes == "65536"
+        ));
+        let expected_hash = format!("{:x}", Sha256::digest(&bytes[..65536]));
+        assert!(matches!(
+            status(&root, &stage, target(&bytes)),
+            Ok(Output::UploadStatus { received_bytes, sha256, .. })
+                if received_bytes == "65536" && sha256 == expected_hash
+        ));
         assert!(!directory.path().join("destination").exists());
         assert!(commit(&root, &stage, target(&bytes)).is_err());
         let mut foreign = target(&bytes);
@@ -379,9 +384,10 @@ mod tests {
         std::fs::remove_dir(directory.path().join("nested")).unwrap();
         let mut captured = target(b"content");
         captured.path = "nested/destination".into();
-        assert!(
-            matches!(status(&root,&stage,captured),Ok(Output::UploadStatus{received_bytes,..}) if received_bytes=="0")
-        );
+        assert!(matches!(
+            status(&root, &stage, captured),
+            Ok(Output::UploadStatus { received_bytes, .. }) if received_bytes == "0"
+        ));
         let mut captured = target(b"content");
         captured.path = "nested/destination".into();
         assert!(matches!(

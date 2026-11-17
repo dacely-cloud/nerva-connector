@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';
@@ -32,13 +33,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                     '-r:System.Security',
                     '-r:System.Web.Extensions',
                     '-out:' + executable,
-                    ...[
-                        'StateOwner.cs',
-                        'GpuInventory.cs',
-                        'ArtifactOperations.cs',
-                        'ReleaseBootstrap.cs',
-                        'BootstrapProcess.cs',
-                    ].map((name: string): string => resolve('native/windows', name)),
+                    ...ConnectorWindowsSources.bootstrap,
                     resolve('test/support/WindowsBootstrapNativeFixture.cs'),
                 ],
                 options,

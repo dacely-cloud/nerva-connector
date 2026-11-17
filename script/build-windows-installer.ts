@@ -21,7 +21,7 @@ import {
  * Builds build/Nerva-Connector-Setup-<version>-<arch>.exe, the one file a Windows user downloads and runs.
  *
  * @remarks
- * Works on Windows with the .NET Framework C# compiler and on Linux or macOS with Mono's mcs. It builds the Windows
+ * Requires NSIS 3, plus the .NET Framework C# compiler on Windows or Mono's mcs on Linux/macOS. It builds the Windows
  * connector and its native helpers, adds the pinned official node.exe and its license, and compiles them into the
  * setup program. Earlier setup programs for the same architecture and every intermediate are removed; the Node
  * download stays cached in build/windows-installer/cache. When assets/windows/updates.json exists, installed copies

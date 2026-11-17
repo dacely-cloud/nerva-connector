@@ -7,7 +7,12 @@ use std::io::Read;
 use std::os::unix::fs::{MetadataExt, symlink};
 
 fn machine() -> Value {
-    json!({"kind":"machine","cwd":".","environment":[],"stdin":""})
+    json!({
+        "kind": "machine",
+        "cwd": ".",
+        "environment": [],
+        "stdin": ""
+    })
 }
 
 fn decode(value: &Value) -> io::Result<RuntimeInput> {
@@ -18,16 +23,44 @@ fn decode(value: &Value) -> io::Result<RuntimeInput> {
 
 #[test]
 fn variants_are_explicit_and_closed_without_missing_field_fallback() {
-    assert!(decode(&json!({"kind":"fixed"})).is_ok());
+    assert!(
+        decode(&json!({
+            "kind": "fixed"
+        }))
+        .is_ok()
+    );
     assert!(decode(&machine()).is_ok());
     for value in [
         json!({}),
-        json!({"kind":"other"}),
-        json!({"kind":"fixed","cwd":"."}),
-        json!({"kind":"machine","cwd":".","environment":[]}),
-        json!({"kind":"machine","cwd":".","stdin":""}),
-        json!({"kind":"machine","environment":[],"stdin":""}),
-        json!({"kind":"machine","cwd":".","environment":[],"stdin":"","terminal":true}),
+        json!({
+            "kind": "other"
+        }),
+        json!({
+            "kind": "fixed",
+            "cwd": "."
+        }),
+        json!({
+            "kind": "machine",
+            "cwd": ".",
+            "environment": []
+        }),
+        json!({
+            "kind": "machine",
+            "cwd": ".",
+            "stdin": ""
+        }),
+        json!({
+            "kind": "machine",
+            "environment": [],
+            "stdin": ""
+        }),
+        json!({
+            "kind": "machine",
+            "cwd": ".",
+            "environment": [],
+            "stdin": "",
+            "terminal": true
+        }),
     ] {
         assert!(decode(&value).is_err(), "{value}");
     }
@@ -35,9 +68,17 @@ fn variants_are_explicit_and_closed_without_missing_field_fallback() {
 
 #[test]
 fn pipe_requires_its_exact_guardian_incarnation_and_captured_limits() {
-    let pipe = json!({"kind":"pipe","cwd":".","environment":[],"stdin":"",
-        "incarnation":"a".repeat(64),"guardianProfile":format!("nerva-connector-guard-{}-{}","a".repeat(32),"b".repeat(64)),
-        "maximumInputBytes":"0","maximumControls":1,"executionDeadlineMs":"9223372036854775807"});
+    let pipe = json!({
+        "kind": "pipe",
+        "cwd": ".",
+        "environment": [],
+        "stdin": "",
+        "incarnation": "a".repeat(64),
+        "guardianProfile": format!("nerva-connector-guard-{}-{}","a".repeat(32),"b".repeat(64)),
+        "maximumInputBytes": "0",
+        "maximumControls": 1,
+        "executionDeadlineMs": "9223372036854775807"
+    });
     assert!(decode(&pipe).is_ok());
     for field in [
         "incarnation",

@@ -308,8 +308,17 @@ mod tests {
         std::fs::create_dir(root.join("directory")).unwrap();
         let outside = directory.path().join("outside");
         std::fs::write(&outside, b"private").unwrap();
-        let result = Command::new(std::env::current_exe().unwrap()).args(["--exact", "connector_files::confinement::tests::kernel_denies_ambient_read_write_network_and_execution", "--nocapture"])
-            .env_clear().env("NERVA_CONNECTOR_SANDBOX_TEST_ROOT", &root).env("NERVA_CONNECTOR_SANDBOX_TEST_OUTSIDE", &outside).output().unwrap();
+        let test_name = concat!(
+            "connector_files::confinement::tests::",
+            "kernel_denies_ambient_read_write_network_and_execution"
+        );
+        let result = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", test_name, "--nocapture"])
+            .env_clear()
+            .env("NERVA_CONNECTOR_SANDBOX_TEST_ROOT", &root)
+            .env("NERVA_CONNECTOR_SANDBOX_TEST_OUTSIDE", &outside)
+            .output()
+            .unwrap();
         assert!(
             result.status.success(),
             "confinement child did not prove its kernel denials"

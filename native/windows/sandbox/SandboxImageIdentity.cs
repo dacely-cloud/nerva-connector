@@ -12,14 +12,35 @@ internal sealed class SandboxImageIdentity
 
     internal SandboxImageIdentity(string nativeName, byte[] fileIdInformation)
     {
-        if (nativeName == null || nativeName.Length > 4095 || fileIdInformation == null || fileIdInformation.Length != 24) throw new ArgumentException("invalid image identity");
-        Match prefix = Regex.Match(nativeName, @"\A\\Device\\HarddiskVolume[0-9]+\\", RegexOptions.CultureInvariant);
-        if (!prefix.Success || prefix.Length == nativeName.Length) throw new ArgumentException("invalid image identity");
+        if (
+            nativeName == null
+            || nativeName.Length > 4095
+            || fileIdInformation == null
+            || fileIdInformation.Length != 24
+        )
+        {
+            throw new ArgumentException("invalid image identity");
+        }
+        Match prefix = Regex.Match(
+            nativeName,
+            @"\A\\Device\\HarddiskVolume[0-9]+\\",
+            RegexOptions.CultureInvariant
+        );
+        if (!prefix.Success || prefix.Length == nativeName.Length)
+        {
+            throw new ArgumentException("invalid image identity");
+        }
         try
         {
-            foreach (string name in nativeName.Substring(prefix.Length).Split(new char[] { '\\' })) NexaConnectorStateOwner.ValidateLeaf(name);
+            foreach (string name in nativeName.Substring(prefix.Length).Split(new char[] { '\\' }))
+            {
+                NexaConnectorStateOwner.ValidateLeaf(name);
+            }
         }
-        catch { throw new ArgumentException("invalid image identity"); }
+        catch
+        {
+            throw new ArgumentException("invalid image identity");
+        }
         NativeName = nativeName;
         identifier = (byte[])fileIdInformation.Clone();
     }
@@ -31,8 +52,17 @@ internal sealed class SandboxImageIdentity
 
     internal bool Matches(SandboxImageIdentity other)
     {
-        if (other == null || !MatchesName(other.NativeName)) return false;
-        for (int i = 0; i < identifier.Length; i++) if (identifier[i] != other.identifier[i]) return false;
+        if (other == null || !MatchesName(other.NativeName))
+        {
+            return false;
+        }
+        for (int i = 0; i < identifier.Length; i++)
+        {
+            if (identifier[i] != other.identifier[i])
+            {
+                return false;
+            }
+        }
         return true;
     }
 }

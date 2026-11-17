@@ -76,11 +76,23 @@ fn decoded(output: &Output) -> Value {
 
 fn denied(output: Output, code: &str) {
     assert_eq!(output.status.code(), Some(1));
-    assert_eq!(decoded(&output), json!({"ok":false,"error":code}));
+    assert_eq!(
+        decoded(&output),
+        json!({
+            "ok": false,
+            "error": code
+        })
+    );
 }
 
 fn fake_identity() -> Value {
-    json!({"filesystemUuid":"1".repeat(32),"device":"1","inode":"1","handleType":1,"handle":"0".repeat(16)})
+    json!({
+        "filesystemUuid": "1".repeat(32),
+        "device": "1",
+        "inode": "1",
+        "handleType": 1,
+        "handle": "0".repeat(16)
+    })
 }
 
 fn operation(
@@ -116,12 +128,19 @@ fn invoke(mut command: Command, payload: Value) -> Output {
 #[test]
 fn malformed_or_ambient_effect_context_never_becomes_an_unbound_request() {
     let root = File::open("/proc").unwrap();
-    let request = json!({"action":"stat","requestId":"probe","path":"."});
+    let request = json!({
+        "action": "stat",
+        "requestId": "probe",
+        "path": "."
+    });
     denied(
         operation(&root, None, None, true, request.clone()),
         "unavailable",
     );
-    let valid = json!({"root":fake_identity(),"staging":null});
+    let valid = json!({
+        "root": fake_identity(),
+        "staging": null
+    });
     denied(
         operation(
             &root,
@@ -133,8 +152,14 @@ fn malformed_or_ambient_effect_context_never_becomes_an_unbound_request() {
         "invalid",
     );
     let mut malformed = vec![
-        json!({"root":fake_identity()}),
-        json!({"root":fake_identity(),"staging":null,"path":"/ignored"}),
+        json!({
+            "root": fake_identity()
+        }),
+        json!({
+            "root": fake_identity(),
+            "staging": null,
+            "path": "/ignored"
+        }),
         Value::Null,
     ];
     for (field, value) in [
@@ -204,7 +229,11 @@ fn malformed_or_ambient_effect_context_never_becomes_an_unbound_request() {
             None,
             Some(write),
             true,
-            json!({"action":"stat","requestId":"probe","path":"."}),
+            json!({
+                "action": "stat",
+                "requestId": "probe",
+                "path": "."
+            }),
         ),
         "invalid",
     );
@@ -216,7 +245,11 @@ fn malformed_or_ambient_effect_context_never_becomes_an_unbound_request() {
             None,
             Some(child.into()),
             true,
-            json!({"action":"stat","requestId":"probe","path":"."}),
+            json!({
+                "action": "stat",
+                "requestId": "probe",
+                "path": "."
+            }),
         ),
         "invalid",
     );
@@ -267,7 +300,10 @@ fn local_capture_rejects_unsupported_roots_input_and_non_private_output() {
     read.read_to_end(&mut bytes).unwrap();
     assert_eq!(
         serde_json::from_slice::<Value>(&bytes).unwrap(),
-        json!({"ok":false,"error":"invalid"})
+        json!({
+            "ok": false,
+            "error": "invalid"
+        })
     );
     let mut child = command(&root, None, None)
         .arg("--capture-file-effect")
@@ -287,11 +323,21 @@ fn captured(root: &File, staging: Option<&File>) -> Value {
     let value = decoded(&output);
     assert_eq!(value.as_object().unwrap().len(), 3);
     assert_eq!(value["ok"], true);
-    json!({"root":value["root"],"staging":value["staging"]})
+    json!({
+        "root": value["root"],
+        "staging": value["staging"]
+    })
 }
 
 fn write_request() -> Value {
-    json!({"action":"write","requestId":"effect","path":"published","mode":"create","dataBase64":"aGVsbG8=","stagingId":"a".repeat(64)})
+    json!({
+        "action": "write",
+        "requestId": "effect",
+        "path": "published",
+        "mode": "create",
+        "dataBase64": "aGVsbG8=",
+        "stagingId": "a".repeat(64)
+    })
 }
 
 #[test]
@@ -317,7 +363,11 @@ fn bound_native_write_reuses_only_exact_captured_root_and_staging_descriptors() 
         None,
         Some(context_pipe(&ro)),
         true,
-        json!({"action":"stat","requestId":"probe","path":"."}),
+        json!({
+            "action": "stat",
+            "requestId": "probe",
+            "path": "."
+        }),
     );
     assert!(stat.status.success());
     assert_eq!(decoded(&stat)["ok"], true);
@@ -328,7 +378,11 @@ fn bound_native_write_reuses_only_exact_captured_root_and_staging_descriptors() 
         .env("NERVA_CONNECTOR_FILE_EFFECT", "required");
     let stat = invoke(
         readonly_command,
-        json!({"action":"stat","requestId":"probe","path":"."}),
+        json!({
+            "action": "stat",
+            "requestId": "probe",
+            "path": "."
+        }),
     );
     assert!(stat.status.success());
     assert_eq!(decoded(&stat)["ok"], true);
@@ -338,7 +392,11 @@ fn bound_native_write_reuses_only_exact_captured_root_and_staging_descriptors() 
             None,
             Some(context_pipe(&bytes)),
             true,
-            json!({"action":"stat","requestId":"probe","path":"."}),
+            json!({
+                "action": "stat",
+                "requestId": "probe",
+                "path": "."
+            }),
         ),
         "invalid",
     );

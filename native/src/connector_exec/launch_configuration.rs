@@ -75,23 +75,46 @@ mod tests {
 
     fn inner() -> Value {
         json!({
-            "admissionExpiresAtMs": "9223372036854775807", "apparmorProfile": format!("nerva-connector-exec-{}-{}", "a".repeat(32), "b".repeat(64)),
-            "program":"/usr/bin/probe", "arguments":[], "input":{"kind":"fixed"},
-            "allowedExecutables":["/usr/bin/probe"],
-            "executableDescriptors":[{"path":"/usr/bin/probe","descriptor":8}],
-            "workspaceAccess":"read-write", "parentNamespaces":{},
-            "maximumCpuSeconds":1, "maximumAddressBytes":"67108864", "maximumFileBytes":"0"
+            "admissionExpiresAtMs": "9223372036854775807",
+            "apparmorProfile": format!("nerva-connector-exec-{}-{}", "a".repeat(32), "b".repeat(64)),
+            "program": "/usr/bin/probe",
+            "arguments": [],
+            "input": {
+                "kind": "fixed"
+            },
+            "allowedExecutables": ["/usr/bin/probe"],
+            "executableDescriptors": [
+                {
+                    "path": "/usr/bin/probe",
+                    "descriptor": 8
+                }
+            ],
+            "workspaceAccess": "read-write",
+            "parentNamespaces": {},
+            "maximumCpuSeconds": 1,
+            "maximumAddressBytes": "67108864",
+            "maximumFileBytes": "0"
         })
     }
 
     fn envelope() -> Value {
-        json!({"configuration":inner(),"workspaceIdentity":{
-            "filesystemUuid":"00000000000000000000000000000001", "device":"1", "inode":"1",
-            "handleType":1, "handle":"0000000000000001"
-        }, "cgroupIdentity":{
-            "bootId":"00000000-0000-0000-0000-000000000001", "device":"1",
-            "filesystemId":"0000000000000001", "handleType":254,"handle":"0000000000000001"
-        }})
+        json!({
+            "configuration": inner(),
+            "workspaceIdentity": {
+                "filesystemUuid": "00000000000000000000000000000001",
+                "device": "1",
+                "inode": "1",
+                "handleType": 1,
+                "handle": "0000000000000001"
+            },
+            "cgroupIdentity": {
+                "bootId": "00000000-0000-0000-0000-000000000001",
+                "device": "1",
+                "filesystemId": "0000000000000001",
+                "handleType": 254,
+                "handle": "0000000000000001"
+            }
+        })
     }
 
     fn parsed(value: &Value) -> io::Result<LaunchConfiguration> {
@@ -152,7 +175,10 @@ mod tests {
                 paths
                     .iter()
                     .enumerate()
-                    .map(|(index, path)| json!({"path": path, "descriptor": 8 + index}))
+                    .map(|(index, path)| json!({
+                        "path": path,
+                        "descriptor": 8 + index
+                    }))
                     .collect::<Vec<_>>()
             );
             candidate["arguments"] = json!(["\u{1}".repeat(4096), "\u{2}".repeat(3904)]);

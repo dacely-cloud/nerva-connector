@@ -3,7 +3,7 @@
 
 import { execFile } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -11,10 +11,14 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { ConnectorWindowsInstaller } from '../script/ConnectorWindowsInstaller.ts';
 import { ConnectorWindowsResource } from '../script/ConnectorWindowsResource.ts';
 import { ConnectorWindowsCompiler } from '../script/ConnectorWindowsCompiler.ts';
+import { ConnectorWindowsUninstaller } from '../script/ConnectorWindowsUninstaller.ts';
 
 /** Mono runs the installer's own C# payload reader against a really built setup program. */
 const mono: boolean =
     process.platform === 'linux' && existsSync('/usr/bin/mcs') && existsSync('/usr/bin/mono');
+
+/** NSIS builds the standard native uninstaller instead of a payloadless copy of setup. */
+const nsis: boolean = existsSync(process.env['NERVA_MAKENSIS'] ?? '/usr/bin/makensis');
 
 let directory: string = '';
 
@@ -98,7 +102,7 @@ it('writes an icon group, an as-invoker manifest and version information into ev
     ).toThrow('versions');
 });
 
-it.skipIf(!mono)(
+it.skipIf(!mono || !nsis)(
     'a built setup program carries the launcher, the uninstaller and every file, and installs them byte for byte',
     async (): Promise<void> => {
         const built: { readonly path: string; readonly files: Map<string, Buffer> } = await setup();
@@ -118,6 +122,7 @@ it.skipIf(!mono)(
             [
                 ConnectorWindowsInstaller.launcher,
                 ConnectorWindowsInstaller.uninstaller,
+                ConnectorWindowsInstaller.uninstallerLicense,
                 ...built.files.keys(),
             ].toSorted(),
         );
@@ -127,11 +132,24 @@ it.skipIf(!mono)(
         const launcher: Buffer = await readFile(join(output, ConnectorWindowsInstaller.launcher));
         expect(launcher.subarray(0, 2).toString('latin1')).toBe('MZ');
         expect(launcher.includes(Buffer.from('Nerva Connector', 'utf16le'))).toBe(true);
+        const uninstaller: Buffer = await readFile(
+            join(output, ConnectorWindowsInstaller.uninstaller),
+        );
+        const pe: number = uninstaller.readUInt32LE(0x3c);
+        const optional: number = pe + 24;
+        expect(uninstaller.readUInt16LE(optional)).toBe(0x10b);
+        expect(uninstaller.readUInt32LE(optional + 96 + 14 * 8)).toBe(0);
+        expect(uninstaller.includes(Buffer.from('Nerva Connector Uninstaller', 'utf16le'))).toBe(
+            true,
+        );
+        expect(await readFile(join(output, ConnectorWindowsInstaller.uninstallerLicense))).toEqual(
+            await readFile(resolve('assets/windows/nsis-license.txt')),
+        );
     },
     120000,
 );
 
-it.skipIf(!mono)(
+it.skipIf(!mono || !nsis)(
     'a setup program whose payload was altered is refused as damaged and leaves no file behind',
     async (): Promise<void> => {
         const built: { readonly path: string; readonly files: Map<string, Buffer> } = await setup();
@@ -160,7 +178,65 @@ it.skipIf(!mono)(
     120000,
 );
 
+it.skipIf(process.platform !== 'win32' && !mono)(
+    'custom installation directories publish verified files, preserve unrelated data and remove intermediates',
+    async (): Promise<void> => {
+        const executable: string = join(directory, 'directory-policy.exe');
+        await ConnectorWindowsCompiler.compile({
+            sources: [
+                resolve('native/windows/installer/SetupDirectory.cs'),
+                resolve('native/windows/installer/InstallerPayload.cs'),
+                resolve('test/support/WindowsSetupDirectoryFixture.cs'),
+            ],
+            entrypoint: 'WindowsSetupDirectoryFixture',
+            destination: executable,
+        });
+        const root: string = join(directory, 'installations');
+        await mkdir(root);
+        const command: string = process.platform === 'win32' ? executable : '/usr/bin/mono';
+        const arguments_: string[] = process.platform === 'win32' ? [root] : [executable, root];
+        if (process.platform === 'linux') {
+            const links: string = join(directory, 'links');
+            const destination: string = join(links, 'destination');
+            await mkdir(destination, { recursive: true });
+            await symlink(destination, join(links, 'linked-parent'), 'dir');
+            await symlink(join(links, 'absent'), join(links, 'dangling'), 'dir');
+            arguments_.push(links);
+        }
+        const output: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
+            execFile,
+        )(command, arguments_, { timeout: 30000, maxBuffer: 16384 });
+        expect(output.stdout.toString()).toMatch(/windows-setup-directory-checks=\d+/u);
+        expect(output.stderr.toString()).toBe('');
+    },
+);
+
 /** The committed product icon. */
 function readFileSyncIcon(): Buffer {
     return readFileSync(resolve('assets/windows/nerva-connector.ico'));
 }
+
+it.skipIf(!nsis)(
+    'the native uninstaller compiler preserves literal spaces, quotes and dollar signs in build paths',
+    async (): Promise<void> => {
+        const work: string = join(directory, "work ' $");
+        await mkdir(work);
+        const destination: string = join(work, 'Uninstall Nerva Connector.exe');
+        await ConnectorWindowsUninstaller.build({
+            work,
+            destination,
+            version: '1.2.3',
+            files: ['Nerva Connector.exe', 'node.exe'],
+        });
+        const bytes: Buffer = await readFile(destination);
+        expect(bytes.subarray(0, 2).toString('latin1')).toBe('MZ');
+        await expect(
+            ConnectorWindowsUninstaller.build({
+                work,
+                destination,
+                version: '1.2.3',
+                files: ['node.exe', 'node.exe\nDelete "$INSTDIR\\other.txt"'],
+            }),
+        ).rejects.toThrow('plain installed file names');
+    },
+);

@@ -146,18 +146,20 @@ impl Command {
         match (self, other) {
             (
                 Self::Data {
-                    data_hash: a,
-                    byte_length: b,
-                    data_base64: c,
+                    data_hash,
+                    byte_length,
+                    data_base64,
                     ..
                 },
                 Self::Data {
-                    data_hash: x,
-                    byte_length: y,
-                    data_base64: z,
+                    data_hash: other_hash,
+                    byte_length: other_length,
+                    data_base64: other_data,
                     ..
                 },
-            ) => (a, b, c) == (x, y, z),
+            ) => {
+                data_hash == other_hash && byte_length == other_length && data_base64 == other_data
+            }
             (Self::End { .. }, Self::End { .. }) => true,
             _ => false,
         }
@@ -223,9 +225,17 @@ mod tests {
     use serde_json::{Value, json};
 
     fn data() -> Value {
-        json!({"kind":"data","incarnation":"a".repeat(64),"inputSequence":"0",
-            "offset":"0","deliveryExpiresAtMs":"9223372036854775807","inputHash":"b".repeat(64),"dataHash":digest(b"a\0b"),
-            "byteLength":"3","dataBase64":STANDARD.encode(b"a\0b")})
+        json!({
+            "kind": "data",
+            "incarnation": "a".repeat(64),
+            "inputSequence": "0",
+            "offset": "0",
+            "deliveryExpiresAtMs": "9223372036854775807",
+            "inputHash": "b".repeat(64),
+            "dataHash": digest(b"a\0b"),
+            "byteLength": "3",
+            "dataBase64": STANDARD.encode(b"a\0b")
+        })
     }
 
     #[test]
@@ -261,7 +271,14 @@ mod tests {
         assert!(decode(&serde_json::to_vec(&value).unwrap(), &"a".repeat(64)).is_ok());
         value["inputSequence"] = json!("1");
         assert!(decode(&serde_json::to_vec(&value).unwrap(), &"a".repeat(64)).is_err());
-        let end = json!({"kind":"end","incarnation":"a".repeat(64),"inputSequence":"1","offset":"65536","deliveryExpiresAtMs":"9223372036854775807","inputHash":"b".repeat(64)});
+        let end = json!({
+            "kind": "end",
+            "incarnation": "a".repeat(64),
+            "inputSequence": "1",
+            "offset": "65536",
+            "deliveryExpiresAtMs": "9223372036854775807",
+            "inputHash": "b".repeat(64)
+        });
         assert!(decode(&serde_json::to_vec(&end).unwrap(), &"a".repeat(64)).is_ok());
         let mut changed = end;
         changed["dataBase64"] = json!("");

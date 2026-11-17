@@ -59,7 +59,13 @@ fn response(output: &Output) -> Value {
 
 fn denied(output: Output, error: &str) {
     assert_eq!(output.status.code(), Some(1));
-    assert_eq!(response(&output), json!({"ok":false,"error":error}));
+    assert_eq!(
+        response(&output),
+        json!({
+            "ok": false,
+            "error": error
+        })
+    );
 }
 
 #[test]
@@ -142,7 +148,10 @@ fn actual_cgroup_capture_rejects_selectors_payload_and_nonprivate_output() {
     reader.read_to_end(&mut bytes).unwrap();
     assert_eq!(
         serde_json::from_slice::<Value>(&bytes).unwrap(),
-        json!({"ok":false,"error":"invalid"})
+        json!({
+            "ok": false,
+            "error": "invalid"
+        })
     );
     let file_helper = Command::new(env!("CARGO_BIN_EXE_nerva-connector-files"))
         .arg("--capture-cgroup")

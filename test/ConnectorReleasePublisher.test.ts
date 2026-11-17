@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import {
     mkdtemp,
     writeFile,
@@ -12,7 +13,7 @@ import {
     lstat,
     chmod,
 } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { expect, it, vi, type MockInstance } from 'vitest';
@@ -44,13 +45,9 @@ import { ConnectorReleasePlatform } from '../src/install/ConnectorRelease.js';
 /** This non-runnable PE-shaped fixture binds current reviewed C# source without compiling a native executable. */
 async function bootstrapCache(directory: string): Promise<WindowsStateArtifact> {
     const sources: readonly string[] = await Promise.all(
-        [
-            'StateOwner.cs',
-            'GpuInventory.cs',
-            'ArtifactOperations.cs',
-            'BootstrapProcess.cs',
-            'ReleaseBootstrap.cs',
-        ].map((name: string): Promise<string> => readFile(resolve('native/windows', name), 'utf8')),
+        ConnectorWindowsSources.bootstrap.map((path: string): Promise<string> =>
+            readFile(path, 'utf8'),
+        ),
     );
     const bytes: Buffer = Buffer.alloc(512, 0x41);
     bytes[0] = 0x4d;

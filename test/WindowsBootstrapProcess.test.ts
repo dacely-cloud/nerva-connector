@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -28,7 +29,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                     '-warnaserror',
                     '-main:WindowsBootstrapProcessFixture',
                     '-out:' + executable,
-                    resolve('native/windows/BootstrapProcess.cs'),
+                    ...ConnectorWindowsSources.bootstrapProcess,
                     resolve('test/support/WindowsBootstrapProcessFixture.cs'),
                 ],
                 options,

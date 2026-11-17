@@ -37,6 +37,20 @@ export class ConnectorActivityDescription {
     /** Most array items, such as program arguments or names, read into a subject. */
     static readonly #items: number = 256;
     static readonly #host: Readonly<Record<ConnectorHostTool, ConnectorActivityRule>> = {
+        [ConnectorHostTool.ApplicationOpen]: (
+            args: ConnectorActivityArguments,
+        ): ConnectorActivityDescribed =>
+            ConnectorActivityDescription.#entry(
+                ConnectorActivityKind.RunCommand,
+                'Opening an application',
+                args.text('name'),
+            ),
+        [ConnectorHostTool.DesktopSnapshot]: (): ConnectorActivityDescribed =>
+            ConnectorActivityDescription.#entry(
+                ConnectorActivityKind.Screen,
+                'Looking at the screen',
+                '',
+            ),
         [ConnectorHostTool.FileRead]: (
             args: ConnectorActivityArguments,
         ): ConnectorActivityDescribed =>

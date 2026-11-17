@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { resolve } from 'node:path';
+import { ConnectorWindowsSources } from './ConnectorWindowsSources.ts';
 import type { WindowsStateArtifact } from '../src/windows/WindowsStateArtifact.ts';
 import { ConnectorWindowsNativeBuild } from './ConnectorWindowsNativeBuild.ts';
 
@@ -33,9 +34,7 @@ export class ConnectorWindowsQualificationBuild {
             stem: 'nerva-connector-files-qualification',
             entrypoint: 'SandboxBroker',
             sources: [
-                resolve('native/windows/StateOwner.cs'),
-                resolve('native/windows/GpuInventory.cs'),
-                resolve('native/windows/ArtifactOperations.cs'),
+                ...ConnectorWindowsSources.state,
                 ...[
                     ...common,
                     'SandboxPath.cs',

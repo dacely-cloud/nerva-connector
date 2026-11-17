@@ -22,6 +22,7 @@ export class ConnectorHostFailure {
         ConnectorHostTool.ProcessRead,
         ConnectorHostTool.TerminalRead,
         ConnectorHostTool.DesktopInfo,
+        ConnectorHostTool.DesktopSnapshot,
     ]);
 
     /** Only observations or an operation owner's explicit pre-effect evidence establish definitive failure. */

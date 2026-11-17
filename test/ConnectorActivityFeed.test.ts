@@ -93,7 +93,7 @@ it('describes every host tool and lane operation with a kind and a specific plai
         ...Object.values(ConnectorHostTool),
         ...Object.values(ConnectorActivityLaneOperation),
     ];
-    expect(Object.values(ConnectorHostTool)).toHaveLength(32);
+    expect(Object.values(ConnectorHostTool)).toHaveLength(34);
     for (const name of names) {
         const described: ConnectorActivityDescribed = describe(name, {});
         expect(kinds).toContain(described.kind);
@@ -104,7 +104,7 @@ it('describes every host tool and lane operation with a kind and a specific plai
 });
 
 it('groups host tools into the expected kinds and names their subjects', (): void => {
-    const expected: Readonly<Record<string, ConnectorActivityKind>> = {
+    const expected: Readonly<Record<ConnectorHostTool, ConnectorActivityKind>> = {
         file_read: ConnectorActivityKind.ReadFile,
         file_digest: ConnectorActivityKind.ReadFile,
         file_stat: ConnectorActivityKind.ReadFile,
@@ -127,6 +127,8 @@ it('groups host tools into the expected kinds and names their subjects', (): voi
         terminal_stop: ConnectorActivityKind.Terminal,
         terminal_release: ConnectorActivityKind.Terminal,
         desktop_info: ConnectorActivityKind.Screen,
+        application_open: ConnectorActivityKind.RunCommand,
+        desktop_snapshot: ConnectorActivityKind.Screen,
         desktop_screenshot: ConnectorActivityKind.Screen,
         desktop_pointer: ConnectorActivityKind.Control,
         desktop_key: ConnectorActivityKind.Control,
@@ -141,6 +143,16 @@ it('groups host tools into the expected kinds and names their subjects', (): voi
     for (const tool of Object.values(ConnectorHostTool)) {
         expect(describe(tool, {}).kind).toBe(expected[tool]);
     }
+    expect(describe(ConnectorHostTool.ApplicationOpen, { name: 'Firefox' })).toEqual({
+        kind: ConnectorActivityKind.RunCommand,
+        title: 'Opening an application',
+        subject: 'Firefox',
+    });
+    expect(describe(ConnectorHostTool.DesktopSnapshot, {})).toEqual({
+        kind: ConnectorActivityKind.Screen,
+        title: 'Looking at the screen',
+        subject: '',
+    });
     expect(describe(ConnectorHostTool.FileRead, { path: '/home/me/notes.txt' })).toEqual({
         kind: ConnectorActivityKind.ReadFile,
         title: 'Reading a file',

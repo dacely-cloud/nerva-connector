@@ -8,7 +8,8 @@ outside the repository and outside the directories you publish.
 
 ### Setup program
 
-Build on Windows, or on Linux or macOS with Mono installed:
+Install NSIS 3 (`makensis`), then build with the .NET Framework compiler on Windows or Mono on Linux/macOS.
+`NERVA_MAKENSIS` can select an absolute path to the installed NSIS compiler:
 
 ```sh
 npm ci
@@ -19,11 +20,17 @@ npm run build:windows-installer -- --arch arm64
 The setup program bundles the Windows connector, its native helpers and the official Node.js `node.exe`, pinned by
 SHA-256 in `script/ConnectorWindowsNodeRuntime.ts`. It installs into `%LOCALAPPDATA%\Programs\Nerva Connector`
 without administrator rights and adds the Start menu entry, the shortcuts and the Settings → Apps entry.
+The setup window also accepts another writable installation folder; updates remember the selected location.
+A fresh destination must be empty so setup cannot replace unrelated files. To select it from the command line,
+use `Setup.exe "/D=D:\Apps\Nerva Connector"`.
 
-| Command                                         | Effect                 |
-| ----------------------------------------------- | ---------------------- |
-| `Nerva-Connector-Setup-<version>-x64.exe /S`    | Install without asking |
-| `"Uninstall Nerva Connector.exe" /uninstall /S` | Remove without asking  |
+The standard NSIS uninstaller removes the installed program files and preserves account links and settings
+in their separate data directory.
+
+| Command                                      | Effect                 |
+| -------------------------------------------- | ---------------------- |
+| `Nerva-Connector-Setup-<version>-x64.exe /S` | Install without asking |
+| `"Uninstall Nerva Connector.exe" /S`         | Remove without asking  |
 
 `Nerva Connector.exe` is the background program. It runs the connector in a console window that it hides and shows
 from the notification-area icon, starts it again if it crashes, and installs updates.
@@ -175,3 +182,32 @@ Without `--native-config`, file and command access stay off.
 npm pack ./build/npm --dry-run --ignore-scripts --json
 npm pack ./build/npm --ignore-scripts --pack-destination /path/to/output
 ```
+
+## Editing and checking native source
+
+C# and Rust use four spaces, LF line endings and a 100-column formatting width. The
+repository's `.editorconfig`, CSharpier configuration and `native/rustfmt.toml` are the
+shared formatting rules. VS Code recommends the CSharpier and Rust Analyzer extensions
+and formats both languages on save.
+
+Restore the pinned C# formatter with `dotnet tool restore` using a .NET 10 SDK. The
+formatter runs only during development; Windows helpers still compile as C# 5 for
+.NET Framework 4.x. `script/ConnectorWindowsSources.ts` lists each complete source group
+for builds and tests; include new helper files there.
+
+```sh
+npm run format:csharp
+npm run format:rust
+npm run format:native:check
+npm run benchmark:csharp
+```
+
+The benchmark runs the actual state parser on plain requests, escaped Windows paths and
+128 KiB write data, after checking valid and malformed requests. It prints seven timed
+rounds per workload and removes its temporary compiler output. Windows runs the fixture
+directly; other development hosts need Mono and `mcs`.
+
+Before opening the Rust workspace or running Cargo builds, tests or Clippy, export
+`CARGO_TARGET_DIR` pointing to an existing reusable target directory. Rust Analyzer
+inherits that environment, so editor checks and command-line builds share the same
+artifacts. Formatting alone creates no Cargo target directory.

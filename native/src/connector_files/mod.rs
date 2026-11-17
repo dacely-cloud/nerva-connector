@@ -485,7 +485,16 @@ mod tests {
             "upload-commit",
             "upload-abort",
         ] {
-            let mut payload = serde_json::json!({"action":action,"requestId":"upload","path":"destination","uploadId":"a".repeat(64),"bindingSha256":"b".repeat(64),"mode":"create","sizeBytes":"1","sha256":"c".repeat(64)});
+            let mut payload = serde_json::json!({
+                "action": action,
+                "requestId": "upload",
+                "path": "destination",
+                "uploadId": "a".repeat(64),
+                "bindingSha256": "b".repeat(64),
+                "mode": "create",
+                "sizeBytes": "1",
+                "sha256": "c".repeat(64)
+            });
             if action == "upload-chunk" {
                 payload["offset"] = serde_json::json!("0");
                 payload["dataBase64"] = serde_json::json!("eA==");

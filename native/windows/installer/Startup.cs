@@ -28,7 +28,8 @@ internal static class NexaConnectorStartup
         using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey))
         {
             string value = key == null ? null : key.GetValue(ValueName) as string;
-            return value != null && string.Equals(value, Command(launcher), StringComparison.OrdinalIgnoreCase);
+            return value != null
+                && string.Equals(value, Command(launcher), StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -37,8 +38,14 @@ internal static class NexaConnectorStartup
     {
         using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKey))
         {
-            if (enabled) key.SetValue(ValueName, Command(launcher), RegistryValueKind.String);
-            else key.DeleteValue(ValueName, false);
+            if (enabled)
+            {
+                key.SetValue(ValueName, Command(launcher), RegistryValueKind.String);
+            }
+            else
+            {
+                key.DeleteValue(ValueName, false);
+            }
         }
     }
 }

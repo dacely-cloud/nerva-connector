@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { resolve } from 'node:path';
+import { ConnectorWindowsSources } from './ConnectorWindowsSources.ts';
 import type { WindowsStateArtifact } from '../src/windows/WindowsStateArtifact.ts';
 import { ConnectorWindowsNativeBuild } from './ConnectorWindowsNativeBuild.ts';
 
@@ -13,11 +13,7 @@ export class ConnectorWindowsBuild {
             directory,
             stem: 'nerva-connector-state',
             entrypoint: 'NexaConnectorStateOwner',
-            sources: [
-                resolve('native/windows/StateOwner.cs'),
-                resolve('native/windows/GpuInventory.cs'),
-                resolve('native/windows/ArtifactOperations.cs'),
-            ],
+            sources: ConnectorWindowsSources.state,
         });
     }
 }

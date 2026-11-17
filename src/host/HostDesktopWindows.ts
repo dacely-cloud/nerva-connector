@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import {
+    HostApplication,
+    type HostApplicationResult,
+    type HostDesktopFrame,
+} from './HostApplication.js';
 import { HostDesktopCommand } from './HostDesktopCommand.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import {
@@ -83,6 +88,22 @@ export class HostDesktopWindows implements HostDesktopDriver {
             { operation: 'screenshot', maximumWidth, maximumHeight },
             HostDesktopLimits.imageBytes,
         );
+    }
+
+    /** Native Start menu resolution and one screen capture share the same bounded callback. */
+    public async openApplication(name: string): Promise<HostApplicationResult> {
+        const raw: unknown = JSON.parse(
+            (await this.#run({ operation: 'application-open', name }, 131072)).toString('utf8'),
+        );
+        return HostApplication.result(raw);
+    }
+
+    /** Read a desktop image directly, without creating an artifact or selecting a workspace. */
+    public async snapshot(): Promise<HostDesktopFrame> {
+        const raw: unknown = JSON.parse(
+            (await this.#run({ operation: 'snapshot' }, 131072)).toString('utf8'),
+        );
+        return HostApplication.frame(raw);
     }
 
     /** Win32 input uses explicit physical coordinates and named button actions. */

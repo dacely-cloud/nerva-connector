@@ -3,12 +3,14 @@
 
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
+import { ConnectorWindowsSources } from './ConnectorWindowsSources.ts';
 import { ConnectorWindowsCompiler } from './ConnectorWindowsCompiler.ts';
 import {
     ConnectorWindowsPayload,
     type ConnectorWindowsPayloadFile,
 } from './ConnectorWindowsPayload.ts';
 import { ConnectorWindowsResource } from './ConnectorWindowsResource.ts';
+import { ConnectorWindowsUninstaller } from './ConnectorWindowsUninstaller.ts';
 
 /** Where installed copies look for updates and the release key that must have signed them. */
 export interface ConnectorWindowsUpdateSettings {
@@ -40,8 +42,8 @@ export interface ConnectorWindowsInstallerInput {
  *
  * @remarks
  * Each program gets its own icon, manifest and version information. The background program, "Nerva Connector.exe",
- * also gets the update feed and release key as compiled constants. The uninstaller is the setup source without a
- * payload, so it never carries a second copy of the connector. Only the setup program is published; every
+ * also gets the update feed and release key as compiled constants. NSIS builds the standard native uninstaller
+ * with an explicit list of installed program files. Only the setup program is published; every
  * intermediate is written inside `work`, which is removed whether the build succeeds or fails.
  */
 export class ConnectorWindowsInstaller {
@@ -49,10 +51,11 @@ export class ConnectorWindowsInstaller {
     public static readonly launcher: string = 'Nerva Connector.exe';
     /** The uninstaller's installed name; Settings, Apps runs it. */
     public static readonly uninstaller: string = 'Uninstall Nerva Connector.exe';
+    /** License notices distributed with the native uninstall engine. */
+    public static readonly uninstallerLicense: string = 'NSIS-LICENSE.txt';
 
     /** Builds and publishes the setup program. */
     public static async build(input: ConnectorWindowsInstallerInput): Promise<void> {
-        const sources: string = resolve('native/windows/installer');
         const icon: Buffer = await readFile(resolve('assets/windows/nerva-connector.ico'));
         await mkdir(input.work, { recursive: true, mode: 0o700 });
         try {
@@ -61,12 +64,7 @@ export class ConnectorWindowsInstaller {
             const settings: string = join(input.work, 'UpdateSettings.cs');
             await writeFile(settings, this.settings(input), { mode: 0o600 });
             await ConnectorWindowsCompiler.compile({
-                sources: [
-                    join(sources, 'Supervisor.cs'),
-                    join(sources, 'Startup.cs'),
-                    join(sources, 'UpdateFeed.cs'),
-                    settings,
-                ],
+                sources: [...ConnectorWindowsSources.supervisor, settings],
                 entrypoint: 'NexaConnectorSupervisorProgram',
                 destination: launcher,
                 target: 'winexe',
@@ -79,29 +77,25 @@ export class ConnectorWindowsInstaller {
                     },
                 ],
             });
-            const setupSources: readonly string[] = [
-                join(sources, 'Setup.cs'),
-                join(sources, 'Shortcut.cs'),
-                join(sources, 'InstallerPayload.cs'),
-                join(sources, 'Startup.cs'),
-            ];
-            await ConnectorWindowsCompiler.compile({
-                sources: setupSources,
-                entrypoint: 'NexaConnectorSetup',
+            const setupSources: readonly string[] = ConnectorWindowsSources.setup;
+            await ConnectorWindowsUninstaller.build({
+                work: input.work,
                 destination: uninstaller,
-                target: 'winexe',
-                references: ['System.Windows.Forms'],
-                win32Resource: await this.#resource(
-                    input,
-                    icon,
-                    'Uninstall Nerva Connector',
-                    this.uninstaller,
-                ),
+                version: input.version,
+                files: [
+                    this.launcher,
+                    this.uninstallerLicense,
+                    ...input.files.map((file: ConnectorWindowsPayloadFile): string => file.name),
+                ],
             });
             const payload: string = join(input.work, 'payload.bin');
             await ConnectorWindowsPayload.write(payload, input.version, [
                 { name: this.launcher, source: launcher },
                 { name: this.uninstaller, source: uninstaller },
+                {
+                    name: this.uninstallerLicense,
+                    source: resolve('assets/windows/nsis-license.txt'),
+                },
                 ...input.files,
             ]);
             const partial: string = join(input.work, 'setup.exe');

@@ -10,7 +10,7 @@ the connector is open, and only in the ways you allow.
 
 1. Download `Nerva-Connector-Setup-<version>-x64.exe` (`-arm64.exe` for ARM PCs).
 2. Run it. If Windows says **Windows protected your PC**, click **More info**, then **Run anyway**.
-3. Click **Install**. No administrator rights are needed. Check **Start Nerva Connector in the background when I
+3. Choose a writable installation folder with **Browse…** if you want a custom location, then click **Install**. No administrator rights are needed. Check **Start Nerva Connector in the background when I
    sign in** if Nexa should be able to use this computer whenever it is on.
 
 Nerva Connector is added to the Start menu (and the desktop, if you leave that checked) and opens when setup

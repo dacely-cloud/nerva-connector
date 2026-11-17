@@ -206,10 +206,17 @@ mod tests {
 
     fn data(sequence: u64, offset: u64, bytes: &[u8]) -> Decoded {
         decode(
-            &serde_json::to_vec(&json!({"kind":"data","incarnation":"a".repeat(64),
-            "inputSequence":sequence.to_string(),"offset":offset.to_string(),"deliveryExpiresAtMs":"9223372036854775807",
-            "inputHash":digest(&[sequence as u8]),"dataHash":digest(bytes),
-            "byteLength":bytes.len().to_string(),"dataBase64":STANDARD.encode(bytes)}))
+            &serde_json::to_vec(&json!({
+                "kind": "data",
+                "incarnation": "a".repeat(64),
+                "inputSequence": sequence.to_string(),
+                "offset": offset.to_string(),
+                "deliveryExpiresAtMs": "9223372036854775807",
+                "inputHash": digest(&[sequence as u8]),
+                "dataHash": digest(bytes),
+                "byteLength": bytes.len().to_string(),
+                "dataBase64": STANDARD.encode(bytes)
+            }))
             .unwrap(),
             &"a".repeat(64),
         )
@@ -265,8 +272,14 @@ mod tests {
         assert_eq!(input.accepted, 0);
         let end = || {
             decode(
-                &serde_json::to_vec(&json!({"kind":"end","incarnation":"a".repeat(64),
-            "inputSequence":"1","offset":"0","deliveryExpiresAtMs":"9223372036854775807","inputHash":"c".repeat(64)}))
+                &serde_json::to_vec(&json!({
+                    "kind": "end",
+                    "incarnation": "a".repeat(64),
+                    "inputSequence": "1",
+                    "offset": "0",
+                    "deliveryExpiresAtMs": "9223372036854775807",
+                    "inputHash": "c".repeat(64)
+                }))
                 .unwrap(),
                 &"a".repeat(64),
             )

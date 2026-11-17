@@ -42,6 +42,8 @@ jobs:
             - run: npm run typecheck
             - run: npm run lint
             - run: npm run build
+            - name: Exercise native custom installation directory policy
+              run: npx vitest run test/WindowsInstaller.test.ts -t "custom installation directories"
             - name: Exercise state, workspace files, environment, process ownership, ConPTY, HTTP and stdio MCP
               env:
                   NERVA_WINDOWS_TERMINAL_SMOKE: '1'
