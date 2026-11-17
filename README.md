@@ -143,6 +143,10 @@ To remove the computer from your account as well, open the connector and type `/
 
 ## Troubleshooting
 
+**Screen snapshots ask for an updated approval.** Install the latest connector, then open `/settings`,
+choose **Full computer** and approve the review. Updates that add computer tools need a new local approval;
+your account link and activity history stay in place.
+
 **It keeps disconnecting.** Type `/log` to see why. The full log is at:
 
 - Windows: `%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`

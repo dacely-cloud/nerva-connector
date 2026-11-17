@@ -4,6 +4,8 @@
 import { realpath } from 'node:fs/promises';
 import { ConnectorHostGrant } from '../runtime/ConnectorHostGrant.js';
 import { type ConnectorHostLocalGrant } from '../runtime/ConnectorHostGrantTypes.js';
+import { ConnectorHostTool } from '../protocol/ConnectorHost.js';
+import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import {
     ConnectorClientConfiguration,
     type ConnectorClientIdentity,
@@ -33,11 +35,16 @@ export class ConnectorHostPermissionWizard {
         beforeActivate?: () => Promise<void>,
     ): Promise<boolean> {
         const tasks: string = await realpath(directory);
+        const updating: boolean =
+            (await ProtectedFiles.exists(configurationFile)) &&
+            (await this.#read(configurationFile))?.profile.enabled === true;
         questions.show({
-            title: 'Turn on full computer access?',
-            description: [
-                'You chose this during setup. Nexa needs your OK once more to turn it on.',
-            ],
+            title: updating ? 'Update full computer access?' : 'Turn on full computer access?',
+            description: updating
+                ? [
+                      'This connector update adds computer tools, including inline screen snapshots. Review and approve the updated access.',
+                  ]
+                : ['You chose this during setup. Nexa needs your OK once more to turn it on.'],
             details: [{ label: 'Task folder', value: tasks }],
         });
         const answer: ConnectorPromptResult = await questions.select({
@@ -50,12 +57,15 @@ export class ConnectorHostPermissionWizard {
                 {
                     value: ConnectorApproval.NotNow,
                     label: 'Not now',
-                    description:
-                        "This computer stays linked. Nexa can't use its programs or files.",
+                    description: updating
+                        ? 'Keep only the computer tools you already approved.'
+                        : "This computer stays linked. Nexa can't use its programs or files.",
                 },
                 {
                     value: ConnectorApproval.Allow,
-                    label: 'Turn on full computer access',
+                    label: updating
+                        ? 'Update full computer access'
+                        : 'Turn on full computer access',
                     description: ConnectorSetupWizard.fullComputerWarning(),
                     caution: true,
                 },
@@ -95,12 +105,16 @@ export class ConnectorHostPermissionWizard {
         await ConnectorHostGrant.install(identity, directory, true, signal);
     }
 
-    /** Reconnects reuse existing exact consent without prompting or changing its revision. */
+    /** Reconnects reuse current consent; an older tool list requires another explicit local review. */
     public static async matches(configurationFile: string, directory: string): Promise<boolean> {
         const grant: ConnectorHostLocalGrant | null = await this.#read(configurationFile);
         return (
             grant?.profile.enabled === true &&
             grant.journalInitialized &&
+            Object.values(ConnectorHostTool).every(
+                (tool: ConnectorHostTool): boolean =>
+                    tool.startsWith('terminal_') || grant.profile.tools.includes(tool),
+            ) &&
             grant.profile.directory === (await realpath(directory))
         );
     }
