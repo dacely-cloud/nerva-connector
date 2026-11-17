@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-License-Identifier: LicenseRef-Proprietary
+
+/** Reviewed public deployment identity is compiled into the standalone app; no network response may replace either verification key. */
+export class ConnectorCloudAuthority {
+    /** Persistent cloud gateway identity, independent of any user account or device. */
+    public static readonly id = 'nexa-cloud-connectors';
+    /** Both ML-DSA-44 and Ed25519 public components are mandatory for every server proof. */
+    public static readonly publicKey =
+        '1jXgnQbdvHxiGCQ1W09XZC4DgQWWvc7yJjuQP8RGAcjEPDzUNk7UtyAXLGNxeQNK_epps0htvnIzTzG7VX3qws77qQhDNKDR8Sp3KrI588a7ws8QGErqBCARYqqd1_RfrSRrXnWBup60af-O_fFmYYsWTIDwXYjzBygRwp2wgvXee5Oj-RBdjvxISsxBZRz9E5kLSRUtSqUPugvqNPVq9GQtsqCi9qD56xA1nO8VHAUEW3AIh9kuaZXbW5AM7Ttq2YmaLqXM_SawVQk4KzrR0dvvUxSo5wkwI3qf2OlK5MhjHwM8BRWEI5S4FvF9C8GPnFxZR03VnCSQicb1ceDM-aqGjT-c8bvhMT31VYM2BibhfEs6b9HwDBG7oAVm5nUrClSmTDB2vPxIq4KSvn3hvGflv4cW9DzTXMOaCVl9m6HFukcJHeLQS0onwlgEitdfvdZneXSM-_nInUTkLT4hBm6zMw3iZjHhznXX1W9iF5yUuG_sFKrF0L8iMCmVmsoy7XCrfnl0mJiqlEiLEcGISEy6LPgDJKe5vXQShase4Oye23kjmrt8U_xDAJvS5KKy8xpLaGn9z9aXioxc_nILRVROs5cygBX0SrLFxETwjfK6AAktFcIC52qomsz267ojDcsdTedHeflGPn37LJNO6fZnbR3oVJ60OzTZIX63fYJF0xT9iA32a0aByNvcSLrVYuv2R5YmiqrkXktxchmn39I4UuDIykCp54-RzSjofLftZPX9QRDO9ZyR9yy6nxpy30-TGAsNLcvwMSwitOH5kvtpKy19kaRUGvlx6FxL0smD_IFP2q4SWcEplAhSw5E0TlSA7QOnNQoIcX80tJA6ae2Wu8PibiPlbXcvIkIVeCvl17dVMpbnVTFCaGL-q1bvyl7aZl73N5VqOlz008PCm9rqxxDzTZHmDoeWv_H9GWUBJY-6u0XXHA1B3_WdNI7EXBXtFGQeNq7wOySWhg0OQbOmqxSaL_gdbEOPvVS07tM0BzVvYa8LTS2GqJJ90Wy2EosjD5M1Wf5h3R2nPXRVzPMIyIkIsPU1Cyec96T536co3oRT6pSbmM48CIUB5ioJynwvEAgE_XQ4Ki31Gn1Qls1tG8mjfwxAkgBSxvil84S5RBMLiohJVbuTcZh2SPrYPh7ml3z756oiElUcLob9Qy2pu6ZxjrmYCvMe5SS-jsglYJSa9_ygJinN7YlTBh5aH9u-kfB8-Oqwt9XH65GqHWz7XHnQKiWPjIRqpC41Guq6SThSUIVMtEBmqE8Lak1b38Tk9C8Mql6XL_z39CoAkH_D-UvWZNCBS3MITn1Ld1JOgrxvuM4tcPrKleoxQ5qhRUdMlTBTesz0t2xo_-mS_9Bixnz1Ui7RIerQWjgoeQw_Q6VD7DNRXu8QQBy-Zuhoas70amTVjZ9bE3KbNgipnf9scRzDoAKx_8E6lFiRY1RSwUDqk9KTHRPaJ5-YUM_wvmpuSTe_4m78mUlaCm1qCR7gSTPpqiTLL2XdZqbm-rZr60fqIKCOboZCXhpLD_U6WRV07qWDrw1MXo1FbMv07LWDg9UZptNC7Y-oKEA8LlSR0fFP1Vd-K20NnY3yyam_LGtD0QclNkbTP8H2YzNB1ocfO1JnpwgbqjPFzQb4NlBpXeKiJ74dWL7ZZ89Bl0Sj_UfAcGdH8zBXq2zkseN1kl7ZkA4Br8sIlqhkX2InWaMQUDdD-oE1I_5Hqicfq7Gp6695YmDbolOLZ5Url1BHXyv1b8xOad_v-9BSRPGdxS91Uzmn3PaHr2kk-5d5QNGv';
+    /** Device traffic shares the configured Nexa public hostname on a purpose-specific route. */
+    public static readonly endpoint = 'wss://ai.dacely.com/v1/connector/tunnel';
+    /** Pairing approval belongs to the signed-in website account. */
+    public static readonly verificationUri = 'https://nervalabs.com/chat/connectors';
+}

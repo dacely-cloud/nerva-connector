@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-License-Identifier: LicenseRef-Proprietary
+
+import type { ConnectorHostProfile } from '../protocol/ConnectorHost.js';
+
+/** A signed local grant binds one enrolled account device and its permanent host journal. */
+export interface ConnectorHostLocalGrant {
+    readonly authorityId: string;
+    readonly environmentId: string;
+    readonly enrollmentId: string;
+    readonly journalId: string;
+    readonly journalInitialized: boolean;
+    readonly profile: ConnectorHostProfile;
+    readonly signature: string;
+}

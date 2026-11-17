@@ -1,0 +1,68 @@
+name: Windows connector native runtime
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - .github/workflows/windows-state.yml
+            - native/windows/**
+            - src/**
+            - script/**
+            - test/**
+            - package.json
+            - package-lock.json
+            - tsconfig*.json
+            - .oxlintrc.json
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: windows-state-${{ github.ref }}
+    cancel-in-progress: true
+
+defaults:
+    run:
+        shell: cmd
+
+jobs:
+    state:
+        runs-on: windows-2025
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+              with:
+                  node-version: 26.12.1
+                  package-manager-cache: false
+            - run: npm ci --ignore-scripts --no-audit --no-fund
+            - run: npm run typecheck
+            - run: npm run lint
+            - run: npm run build
+            - name: Exercise state, workspace files, environment, process ownership, ConPTY, HTTP and stdio MCP
+              env:
+                  NERVA_WINDOWS_TERMINAL_SMOKE: '1'
+                  NERVA_WINDOWS_MCP_SMOKE: '1'
+                  NERVA_WINDOWS_WORKSPACE_SMOKE: '1'
+              run: |
+                  if not exist "%ProgramFiles%\OpenSSL\bin\openssl.exe" exit /b 1
+                  set "PATH=%ProgramFiles%\OpenSSL\bin;%PATH%"
+                  "%ProgramFiles%\OpenSSL\bin\openssl.exe" version || exit /b 1
+                  npx vitest run test/WindowsStateOwner.test.ts test/PairedStateMigration.test.ts test/ConnectorLogout.test.ts ^
+                  test/HostProcessLaunch.test.ts test/HostProcessLifetime.test.ts test/WindowsHostTerminal.real.test.ts ^
+                  test/HostHttp.test.ts test/WindowsHostMcp.real.test.ts ^
+                  test/WindowsHostWorkspace.real.test.ts ^
+                  --maxWorkers=1 --testTimeout=60000 --hookTimeout=30000 ^
+                  --reporter=json --outputFile=build/windows-state-validation.json
+            - name: Require actual Windows cases without skips
+              run: node script/WindowsRuntimeQualification.ts build/windows-state-validation.json
+            - name: Retain the finite qualification report
+              if: always() && hashFiles('build/windows-state-validation.json') != ''
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: windows-state-validation
+                  path: build/windows-state-validation.json
+                  retention-days: 3

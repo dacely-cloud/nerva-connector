@@ -1,0 +1,81 @@
+{
+    "name": "@nerva/connector",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "license": "UNLICENSED",
+    "engines": {
+        "node": "^24.17.0 || ^26.3.1"
+    },
+    "files": [
+        "build/nerva-connector.mjs",
+        "build/nerva-connector-files",
+        "build/nerva-connector-exec",
+        "build/nerva-connector-exec.json",
+        "build/nerva-connector-state.exe",
+        "build/nerva-connector-state.json",
+        "build/nerva-connector-host.exe",
+        "build/nerva-connector-host.json",
+        "build/nerva-connector-host-worker.mjs",
+        "native/Cargo.toml",
+        "native/Cargo.lock",
+        "native/THIRD-PARTY-NOTICES.txt",
+        "native/THIRD-PARTY-NOTICES.aarch64-apple-darwin.txt",
+        "native/THIRD-PARTY-NOTICES.x86_64-apple-darwin.txt",
+        "native/src",
+        "native/windows",
+        "README.md"
+    ],
+    "scripts": {
+        "start": "node build/nerva-connector.mjs connector",
+        "typecheck": "tsc -p tsconfig.json",
+        "lint": "oxlint --type-aware --deny-warnings src test script",
+        "format:check": "prettier --check src test script *.json *.md",
+        "test": "vitest run",
+        "check": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm test",
+        "benchmark": "vitest bench --run test/SigningKey.bench.ts",
+        "build": "node script/build-connector.ts",
+        "build:native": "node script/build-native.ts",
+        "prepare:native-notices": "python3 -I -B script/prepare-native-notices.py",
+        "prepare:release": "npm run check:circular && node script/prepare-release.ts",
+        "build:windows": "node script/build-connector.ts --windows",
+        "build:windows-installer": "node script/build-windows-installer.ts",
+        "create:windows-update-key": "node script/create-windows-update-key.ts",
+        "release:windows": "node script/release-windows.ts",
+        "build:windows:qualification": "npm run check:circular && node script/build-windows-qualification.ts",
+        "qualify:windows": "npm run check:circular && node script/build-windows-qualification.ts --run",
+        "check:circular": "madge --circular --strict ."
+    },
+    "dependencies": {
+        "@dacely/noble-post-quantum": "0.6.1",
+        "nerva-connector-protocol": "https://codeload.github.com/dacely-cloud/nerva-connector-protocol/tar.gz/4c316fcb0270fa47769a999bdbc32ecdad64bf49"
+    },
+    "devDependencies": {
+        "@types/node": "26.6.5",
+        "madge": "https://codeload.github.com/dacely-cloud/madge/tar.gz/065cb322d7fae520c5343d492f277c9f89f60938",
+        "oxlint": "1.87.0",
+        "oxlint-tsgolint": "7.0.2004",
+        "prettier": "3.9.10",
+        "rolldown": "1.2.12",
+        "typescript": "7.0.2",
+        "vitest": "5.0.3"
+    },
+    "bin": {
+        "nexa": "build/nerva-connector.mjs"
+    },
+    "madge": {
+        "baseDir": ".",
+        "fileExtensions": [
+            "ts",
+            "tsx",
+            "mts",
+            "cts",
+            "js",
+            "jsx",
+            "mjs",
+            "cjs"
+        ],
+        "respectGitIgnore": true,
+        "tsConfig": "./tsconfig.json"
+    }
+}
