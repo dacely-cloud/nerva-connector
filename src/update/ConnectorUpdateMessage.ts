@@ -19,19 +19,39 @@ export interface ConnectorUpdatePacket {
 
 /** Both ends narrow IPC input before acting and project only fixed user-facing messages. */
 export class ConnectorUpdateMessage {
+    /** Windows confirms only request delivery here; the supervisor's notification-area icon reports the actual result. */
+    public static windowsRequested(): readonly string[] {
+        return [
+            'Update check requested. The Windows notification-area icon will report the result.',
+            'A verified update installs and restarts Nerva Connector automatically.',
+        ];
+    }
+
     /** Unknown messages and extra properties cannot trigger an update or inject terminal output. */
     public static read(value: unknown): ConnectorUpdateStatus | null {
         if (
             typeof value !== 'object' ||
             value === null ||
-            Object.keys(value).length !== 1 ||
-            !('nervaConnectorUpdate' in value)
+            Object.getPrototypeOf(value) !== Object.prototype ||
+            Reflect.ownKeys(value).length !== 1
         ) {
             return null;
         }
+        const descriptor: PropertyDescriptor | undefined = Object.getOwnPropertyDescriptor(
+            value,
+            'nervaConnectorUpdate',
+        );
+        if (
+            descriptor === undefined ||
+            descriptor.enumerable !== true ||
+            !Object.hasOwn(descriptor, 'value')
+        ) {
+            return null;
+        }
+        const candidate: unknown = descriptor.value;
         return (
             Object.values(ConnectorUpdateStatus).find(
-                (status: ConnectorUpdateStatus): boolean => status === value.nervaConnectorUpdate,
+                (status: ConnectorUpdateStatus): boolean => status === candidate,
             ) ?? null
         );
     }

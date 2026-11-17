@@ -30,6 +30,10 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         Environment.SetEnvironmentVariable("NODE_OPTIONS", null);
         Environment.SetEnvironmentVariable("NODE_PATH", null);
         Environment.SetEnvironmentVariable("NERVA_CONNECTOR_SUPERVISOR", self);
+        Environment.SetEnvironmentVariable(
+            "NERVA_CONNECTOR_UPDATE_EVENT",
+            NexaConnectorSupervisorUpdates.Configured ? updateEvent : null
+        );
         NexaConnectorSupervisorNative.StartupInfo startup =
             new NexaConnectorSupervisorNative.StartupInfo();
         startup.cb = Marshal.SizeOf(typeof(NexaConnectorSupervisorNative.StartupInfo));

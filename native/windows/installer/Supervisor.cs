@@ -40,6 +40,9 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     private bool quitting;
     private string pendingUpdate;
     private int checking;
+    private int interactiveCheck;
+    private readonly string updateEvent =
+        NexaConnectorUpdateCommand.EventPrefix + Guid.NewGuid().ToString("N");
     private int failures;
     private DateTime started;
     private int findAttempts;
@@ -143,6 +146,16 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         };
         Listen(NexaConnectorSupervisorProgram.ShowEventName, Show);
         Listen(NexaConnectorSupervisorProgram.QuitEventName, Quit);
+        if (NexaConnectorSupervisorUpdates.Configured)
+        {
+            Listen(
+                updateEvent,
+                delegate
+                {
+                    Check(true);
+                }
+            );
+        }
         showWhenFound = open;
         Start();
         if (NexaConnectorSupervisorUpdates.Configured)
@@ -189,51 +202,59 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     /// <summary>Looks for a newer signed version off the UI thread; an interactive check reports its result.</summary>
     private void Check(bool interactive)
     {
+        if (interactive)
+        {
+            Interlocked.Exchange(ref interactiveCheck, 1);
+        }
         if (Interlocked.Exchange(ref checking, 1) == 1)
         {
+            return;
+        }
+        if (quitting || pendingUpdate != null)
+        {
+            Interlocked.Exchange(ref checking, 0);
             return;
         }
         ThreadPool.QueueUserWorkItem(
             delegate
             {
                 string downloaded = null;
-                string message = null;
+                bool failed = false;
                 try
                 {
                     downloaded = NexaConnectorSupervisorUpdates.Download(log);
-                    if (downloaded == null && interactive)
-                    {
-                        message = "Nerva Connector is up to date.";
-                    }
                 }
                 catch (Exception failure)
                 {
                     log.Write("update check failed: " + failure.Message);
-                    if (interactive)
-                    {
-                        message = "Couldn't check for updates. Try again later.";
-                    }
-                }
-                finally
-                {
-                    Interlocked.Exchange(ref checking, 0);
+                    failed = true;
                 }
                 ui.BeginInvoke(
                     new Action(
                         delegate
                         {
-                            if (message != null)
+                            try
                             {
-                                tray.ShowBalloonTip(
-                                    5000,
-                                    "Nerva Connector",
-                                    message,
-                                    ToolTipIcon.Info
-                                );
+                                bool report = Interlocked.Exchange(ref interactiveCheck, 0) == 1;
+                                if (report && downloaded == null)
+                                {
+                                    tray.ShowBalloonTip(
+                                        5000,
+                                        "Nerva Connector",
+                                        failed
+                                            ? "Couldn't check for updates. Try again later."
+                                            : "Nerva Connector is up to date.",
+                                        ToolTipIcon.Info
+                                    );
+                                }
+                                if (downloaded != null)
+                                {
+                                    Update(downloaded);
+                                }
                             }
-                            if (downloaded != null)
+                            finally
                             {
-                                Update(downloaded);
+                                Interlocked.Exchange(ref checking, 0);
                             }
                         }
                     )

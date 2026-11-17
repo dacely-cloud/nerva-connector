@@ -29,7 +29,7 @@ export const ConnectorConsoleCommand = {
     DisableHost: 'disable-host',
     System: 'system',
     Startup: 'startup',
-    Updates: 'updates',
+    Update: 'update',
     Log: 'log',
     Logout: 'logout',
     Help: 'help',
@@ -61,7 +61,7 @@ export class ConnectorConsoleModel {
     public folder: string | null = null;
     /** Whether the installed Windows connector starts in the background at sign-in; `null` where that is not offered. */
     public startup: boolean | null = null;
-    /** Installed Mac/Linux launchers expose their private automatic-update channel. */
+    /** Installed Windows, Mac and Linux launchers expose their private signed-update request channel. */
     public updates: boolean = false;
     /** `performance.now()` time of the next automatic retry, for the visible countdown. */
     public retryAt: number | null = null;

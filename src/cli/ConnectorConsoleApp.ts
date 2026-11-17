@@ -222,13 +222,20 @@ export class ConnectorConsoleApp {
                 await this.#showLog();
             } else if (command === ConnectorConsoleCommand.Startup) {
                 await this.#toggleStartup();
-            } else if (command === ConnectorConsoleCommand.Updates) {
-                this.#updates?.check();
-                this.#model.details = ['Checking for updates…'];
+            } else if (command === ConnectorConsoleCommand.Update) {
+                await this.#updates?.check(this.#stop.signal);
             } else {
                 this.#model.details = [];
             }
         } catch (caught: unknown) {
+            if (command === ConnectorConsoleCommand.Update) {
+                this.#log.record('update-request-failed');
+                this.#model.details = [
+                    "Couldn't request an update. Reopen Nerva Connector from its installed shortcut and try /update again.",
+                    'If it still fails, run the current installer to repair the update launcher.',
+                ];
+                return;
+            }
             const reason: ConnectorFailureReason = ConnectorFailure.classify({
                 error: caught,
                 stage: null,

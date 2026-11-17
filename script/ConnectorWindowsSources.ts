@@ -45,6 +45,7 @@ export class ConnectorWindowsSources {
 
     /** Authenticated host process broker and its owned control/output streams. */
     public static readonly hostProcess: readonly string[] = [
+        'ConnectorUpdateCommand.cs',
         'HostProcess.cs',
         'HostProcessStreams.cs',
         'HostLaunch.cs',
@@ -97,5 +98,7 @@ export class ConnectorWindowsSources {
         'SupervisorNative.cs',
         'Startup.cs',
         'UpdateFeed.cs',
-    ].map((name: string): string => resolve('native/windows/installer', name));
+    ]
+        .map((name: string): string => resolve('native/windows/installer', name))
+        .concat(resolve('native/windows/ConnectorUpdateCommand.cs'));
 }

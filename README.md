@@ -117,7 +117,7 @@ Type `/` to open the menu:
 | `/disable-host` | Turn off full computer access                       |
 | `/reconnect`    | Connect again now                                   |
 | `/startup`      | Windows: start in the background at sign-in, or not |
-| `/updates`      | macOS and Linux installers: check for updates now   |
+| `/update`       | Check for an update and install it automatically    |
 | `/log`          | Why recent connections ended, and the log file      |
 | `/system`       | This computer's processor, memory and graphics      |
 | `/pair`         | Link the computer, if it is not linked              |
@@ -126,11 +126,12 @@ Type `/` to open the menu:
 
 ## Update
 
-- **Windows:** updates install by themselves. Nerva Connector checks when it starts and every hour, installs a new
+- **Windows:** updates install by themselves. Nerva Connector checks after one minute and every hour, installs a new
   version and starts again, keeping this computer's link and settings. Right-click its icon and choose **Check for
-  updates** to check now, or run a newer setup file.
+  updates**, or type `/update`, to check now. The notification-area icon reports the result; a verified update
+  installs and restarts the connector automatically. You can also run a newer setup file.
 - **macOS and Linux:** current desktop installers check after one minute and every hour while the connector
-  is open. Use `/updates` to check now. They verify the publisher's signature, download in the background, then
+  is open. Use `/update` to check now. They verify the publisher's signature, download in the background, then
   restart the connector on the newer version. Custom installation locations are preserved. A failed installation
   restores the previous program; your account link, permissions and history remain separate.
 

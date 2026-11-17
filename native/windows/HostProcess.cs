@@ -17,6 +17,10 @@ public static partial class NexaConnectorHostProcess
 {
     public static int Main(string[] arguments)
     {
+        if (arguments.Length == 2 && arguments[0] == "--connector-update")
+        {
+            return NexaConnectorUpdateCommand.Request(arguments[1]);
+        }
         if (arguments.Length == 1 && arguments[0] == "--desktop")
         {
             return NexaConnectorHostDesktop.Run();

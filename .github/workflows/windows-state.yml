@@ -44,8 +44,8 @@ jobs:
             - run: npm run build
             - name: Exercise native custom installation directory policy
               run: npx vitest run test/WindowsInstaller.test.ts -t "custom installation directories"
-            - name: Qualify native screen encoding and physical input layouts
-              run: npx vitest run test/ConnectorDesktopFrame.test.ts test/HostDesktopCoordinates.test.ts test/HostApplication.test.ts test/HostDesktopDiagnostics.test.ts --maxWorkers=1
+            - name: Qualify native screen encoding, physical input and manual updates
+              run: npx vitest run test/ConnectorDesktopFrame.test.ts test/HostDesktopCoordinates.test.ts test/HostApplication.test.ts test/HostDesktopDiagnostics.test.ts test/ConnectorUpdateCommand.test.ts --maxWorkers=1
             - name: Exercise state, workspace files, environment, process ownership, ConPTY, HTTP and stdio MCP
               env:
                   NERVA_WINDOWS_TERMINAL_SMOKE: '1'

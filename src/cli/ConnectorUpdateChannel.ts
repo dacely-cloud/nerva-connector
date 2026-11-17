@@ -6,9 +6,11 @@ import {
     ConnectorUpdateStatus,
     type ConnectorUpdatePacket,
 } from '../update/ConnectorUpdateMessage.js';
+import { WindowsBackgroundUpdate } from '../windows/WindowsBackgroundUpdate.js';
 
 /** The console asks its installed supervisor to check without ever handling release keys, downloads or program writes. */
 export class ConnectorUpdateChannel implements Disposable {
+    readonly #windows: WindowsBackgroundUpdate | null = WindowsBackgroundUpdate.find();
     readonly #report: (rows: readonly string[]) => void;
     readonly #closed: () => void;
     readonly #disconnect: () => void = (): void => this.#closed();
@@ -23,23 +25,30 @@ export class ConnectorUpdateChannel implements Disposable {
     public constructor(report: (rows: readonly string[]) => void, closed: () => void) {
         this.#report = report;
         this.#closed = closed;
-        if (this.available) {
+        if (typeof process.send === 'function' && process.connected) {
             process.on('message', this.#receive);
             process.once('disconnect', this.#disconnect);
         }
     }
 
-    /** Only installed POSIX launchers provide the private Node IPC channel. */
+    /** Installed POSIX launchers provide private Node IPC; the Windows launcher provides a bounded native event. */
     public get available(): boolean {
-        return typeof process.send === 'function' && process.connected;
+        return this.#windows !== null || (typeof process.send === 'function' && process.connected);
     }
 
     /** Coalesced checks remain in the supervisor, independent of this console's connection and local approvals. */
-    public check(): void {
+    public async check(signal: AbortSignal): Promise<void> {
+        signal.throwIfAborted();
+        if (this.#windows !== null) {
+            await this.#windows.check(signal);
+            this.#report(ConnectorUpdateMessage.windowsRequested());
+            return;
+        }
         if (!this.available || process.send === undefined) {
             throw new Error('Automatic updates require the installed connector launcher');
         }
         const packet: ConnectorUpdatePacket = { nervaConnectorUpdate: ConnectorUpdateStatus.Check };
+        this.#report(ConnectorUpdateMessage.rows(ConnectorUpdateStatus.Checking));
         process.send(packet, (failure: Error | null): void => {
             if (failure !== null) {
                 this.#report(ConnectorUpdateMessage.rows(ConnectorUpdateStatus.Failed));

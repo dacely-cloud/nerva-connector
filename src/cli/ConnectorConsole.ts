@@ -54,7 +54,7 @@ export class ConnectorConsole implements Disposable {
             description: 'Show why recent connections ended',
         },
         {
-            command: ConnectorConsoleCommand.Updates,
+            command: ConnectorConsoleCommand.Update,
             description: 'Check for an update and install it automatically',
         },
         {
@@ -135,7 +135,7 @@ export class ConnectorConsole implements Disposable {
                 (choice.command !== ConnectorConsoleCommand.Permissions || platform === 'linux') &&
                 (choice.command !== ConnectorConsoleCommand.DisableHost || model.host) &&
                 (choice.command !== ConnectorConsoleCommand.Startup || model.startup !== null) &&
-                (choice.command !== ConnectorConsoleCommand.Updates || model.updates),
+                (choice.command !== ConnectorConsoleCommand.Update || model.updates),
         );
     }
 
