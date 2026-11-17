@@ -63,10 +63,11 @@ it('newline normalization cannot conceal changed dependencies, invalid encoding,
     }).toThrow('malformed');
 });
 
-it('Intel Linux and both Mac architectures have reviewed notices for their own helper dependency graph', async (): Promise<void> => {
+it('both Linux and Mac architectures have reviewed notices for their own helper dependency graph', async (): Promise<void> => {
     const lock: Buffer = await readFile('native/Cargo.lock');
     for (const [platform, architecture, target] of [
         ['linux', 'x64', 'x86_64-unknown-linux-gnu'],
+        ['linux', 'arm64', 'aarch64-unknown-linux-gnu'],
         ['win32', 'x64', 'x86_64-unknown-linux-gnu'],
         ['darwin', 'arm64', 'aarch64-apple-darwin'],
         ['darwin', 'x64', 'x86_64-apple-darwin'],

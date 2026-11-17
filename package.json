@@ -20,6 +20,7 @@
         "native/Cargo.toml",
         "native/Cargo.lock",
         "native/THIRD-PARTY-NOTICES.txt",
+        "native/THIRD-PARTY-NOTICES.aarch64-unknown-linux-gnu.txt",
         "native/THIRD-PARTY-NOTICES.aarch64-apple-darwin.txt",
         "native/THIRD-PARTY-NOTICES.x86_64-apple-darwin.txt",
         "native/src",
