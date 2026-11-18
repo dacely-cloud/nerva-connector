@@ -42,6 +42,7 @@ import { ConnectorConnectionLog } from '../runtime/ConnectorConnectionLog.js';
 import { ConnectorLogSummary } from './ConnectorLogSummary.js';
 import { WindowsBackgroundStartup } from '../windows/WindowsBackgroundStartup.js';
 import { ConnectorUpdateChannel } from './ConnectorUpdateChannel.js';
+import { ConnectorConsoleView } from './ConnectorConsoleScreen.js';
 
 /** Foreground application: first-run setup and linking, then the console's slash commands. */
 export class ConnectorConsoleApp {
@@ -223,7 +224,8 @@ export class ConnectorConsoleApp {
             } else if (command === ConnectorConsoleCommand.Startup) {
                 await this.#toggleStartup();
             } else if (command === ConnectorConsoleCommand.Update) {
-                await this.#updates?.check(this.#stop.signal);
+                this.#view?.show(ConnectorConsoleView.Home);
+                this.#updates?.check(this.#stop.signal);
             } else {
                 this.#model.details = [];
             }

@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Net;
 using System.Text;
 
 /// <summary>Finds, downloads and verifies updates in %LOCALAPPDATA%\Nerva Connector\Updates.</summary>
@@ -40,102 +39,106 @@ internal static class NexaConnectorSupervisorUpdates
         }
     }
 
-    /// <summary>Downloads and verifies a newer setup program, returning its path, or null when this version is current.</summary>
-    internal static string Download(NexaConnectorSupervisorLog log)
+    /// <summary>Downloads and verifies a newer setup program; native signature checks retain installation authority.</summary>
+    internal static string Download(string directory, NexaConnectorSupervisorLog log)
     {
-        ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
         Uri feed = new Uri(NexaConnectorUpdateSettings.FeedUrl);
-        byte[] latest = Fetch(new Uri(feed, "latest.json"), 65536);
-        string signature = Encoding.ASCII.GetString(Fetch(new Uri(feed, "latest.json.sig"), 8192));
-        NexaConnectorUpdate update = NexaConnectorUpdateFeed.Select(
-            latest,
-            signature,
-            NexaConnectorUpdateSettings.PublicKeyXml,
-            NexaConnectorUpdateSettings.Architecture,
-            NexaConnectorUpdateSettings.Version
-        );
-        if (update == null)
-        {
-            return null;
-        }
-        log.Write("update " + update.Version + " found");
         string updates = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Nerva Connector",
             "Updates"
         );
         Directory.CreateDirectory(updates);
-        string destination = Path.Combine(updates, update.Name);
-        if (NexaConnectorUpdateFeed.Matches(destination, update))
+        string check = Path.Combine(updates, "check-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(check);
+        try
         {
-            return destination;
-        }
-        string partial = destination + ".partial";
-        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(feed, update.Name));
-        request.Timeout = 600000;
-        request.ReadWriteTimeout = 120000;
-        using (WebResponse response = request.GetResponse())
-        using (Stream input = response.GetResponseStream())
-        using (
-            FileStream output = new FileStream(
-                partial,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None
-            )
-        )
-        {
-            byte[] buffer = new byte[81920];
-            long total = 0;
-            int read;
-            while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+            byte[] latest = Fetch(
+                directory,
+                new Uri(feed, "latest.json"),
+                Path.Combine(check, "latest.json"),
+                65536,
+                "manifest",
+                log
+            );
+            string signature = Encoding.ASCII.GetString(
+                Fetch(
+                    directory,
+                    new Uri(feed, "latest.json.sig"),
+                    Path.Combine(check, "latest.json.sig"),
+                    8192,
+                    "signature",
+                    log
+                )
+            );
+            NexaConnectorUpdate update = NexaConnectorUpdateFeed.Select(
+                latest,
+                signature,
+                NexaConnectorUpdateSettings.PublicKeyXml,
+                NexaConnectorUpdateSettings.Architecture,
+                NexaConnectorUpdateSettings.Version
+            );
+            if (update == null)
+                return null;
+            log.Write("update " + update.Version + " found");
+            string destination = Path.Combine(updates, update.Name);
+            if (NexaConnectorUpdateFeed.Matches(destination, update))
+                return destination;
+            string partial = Path.Combine(check, update.Name + ".partial");
+            try
             {
-                total += read;
-                if (total > update.Size)
-                {
-                    throw new InvalidDataException("The update is larger than its signed size.");
-                }
-                output.Write(buffer, 0, read);
+                NexaConnectorSupervisorUpdateTransport.Fetch(
+                    directory,
+                    new Uri(feed, update.Name),
+                    partial,
+                    update.Size,
+                    600000,
+                    "installer",
+                    log
+                );
+                if (!NexaConnectorUpdateFeed.Matches(partial, update))
+                    throw new InvalidDataException(
+                        "update verify stage=installer code=SIZE_OR_HASH_MISMATCH"
+                    );
+                if (File.Exists(destination))
+                    File.Delete(destination);
+                File.Move(partial, destination);
+                return destination;
+            }
+            finally
+            {
+                if (File.Exists(partial))
+                    File.Delete(partial);
             }
         }
-        if (!NexaConnectorUpdateFeed.Matches(partial, update))
+        finally
         {
-            File.Delete(partial);
-            throw new InvalidDataException(
-                "The downloaded update does not match its signed size and SHA-256."
-            );
+            Directory.Delete(check, true);
         }
-        if (File.Exists(destination))
-        {
-            File.Delete(destination);
-        }
-        File.Move(partial, destination);
-        return destination;
     }
 
-    private static byte[] Fetch(Uri address, int maximum)
+    /// <summary>Metadata is bounded by Node before writing and checked again before native verification reads it.</summary>
+    private static byte[] Fetch(
+        string directory,
+        Uri address,
+        string destination,
+        int maximum,
+        string stage,
+        NexaConnectorSupervisorLog log
+    )
     {
-        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(address);
-        request.Timeout = 30000;
-        request.ReadWriteTimeout = 30000;
-        request.CachePolicy = new System.Net.Cache.RequestCachePolicy(
-            System.Net.Cache.RequestCacheLevel.NoCacheNoStore
+        NexaConnectorSupervisorUpdateTransport.Fetch(
+            directory,
+            address,
+            destination,
+            maximum,
+            20000,
+            stage,
+            log
         );
-        using (WebResponse response = request.GetResponse())
-        using (Stream input = response.GetResponseStream())
-        using (MemoryStream output = new MemoryStream())
-        {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                if (output.Length + read > maximum)
-                {
-                    throw new InvalidDataException("The update feed is too large.");
-                }
-                output.Write(buffer, 0, read);
-            }
-            return output.ToArray();
-        }
+        FileInfo info = new FileInfo(destination);
+        if (!info.Exists || info.Length > maximum)
+            throw new InvalidDataException("update fetch stage=" + stage + " code=BODY_LIMIT");
+        return File.ReadAllBytes(destination);
     }
 }

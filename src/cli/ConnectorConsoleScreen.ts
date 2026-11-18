@@ -20,6 +20,7 @@ import {
 import { ConnectorTerminalText } from './ConnectorTerminalText.js';
 import { ConnectorTheme } from './ConnectorTheme.js';
 import type { ConnectorScreenFrame } from './ConnectorScreenPainter.js';
+import { version } from '../../package.json' with { type: 'json' };
 
 /** The two console views: a calm summary, and the full list of what happened. */
 export const ConnectorConsoleView = {
@@ -305,6 +306,7 @@ export class ConnectorConsoleScreen {
             this.#split(
                 [
                     { text: ConnectorTheme.product, color: ConnectorTheme.strong },
+                    { text: ' v' + version, color: ConnectorTheme.muted },
                     { text: ' / Activity', color: ConnectorTheme.accentSoft },
                 ],
                 activity.total === 1
@@ -467,6 +469,7 @@ export class ConnectorConsoleScreen {
     static #wordmark(computer: string): ConnectorLockupLine {
         return [
             { text: ConnectorTheme.product, color: ConnectorTheme.strong },
+            { text: ' v' + version, color: ConnectorTheme.muted },
             { text: ' / ' + computer, color: ConnectorTheme.accentSoft },
         ];
     }

@@ -11,6 +11,8 @@ import { WindowsBackgroundUpdate } from '../windows/WindowsBackgroundUpdate.js';
 /** The console asks its installed supervisor to check without ever handling release keys, downloads or program writes. */
 export class ConnectorUpdateChannel implements Disposable {
     readonly #windows: WindowsBackgroundUpdate | null = WindowsBackgroundUpdate.find();
+    readonly #stop: AbortController = new AbortController();
+    #windowsChecking: boolean = false;
     readonly #report: (rows: readonly string[]) => void;
     readonly #closed: () => void;
     readonly #disconnect: () => void = (): void => this.#closed();
@@ -37,11 +39,16 @@ export class ConnectorUpdateChannel implements Disposable {
     }
 
     /** Coalesced checks remain in the supervisor, independent of this console's connection and local approvals. */
-    public async check(signal: AbortSignal): Promise<void> {
+    public check(signal: AbortSignal): void {
         signal.throwIfAborted();
         if (this.#windows !== null) {
-            await this.#windows.check(signal);
-            this.#report(ConnectorUpdateMessage.windowsRequested());
+            if (!this.#windowsChecking) {
+                this.#windowsChecking = true;
+                void this.#checkWindows(
+                    this.#windows,
+                    AbortSignal.any([this.#stop.signal, signal]),
+                );
+            }
             return;
         }
         if (!this.available || process.send === undefined) {
@@ -56,8 +63,31 @@ export class ConnectorUpdateChannel implements Disposable {
         });
     }
 
+    async #checkWindows(windows: WindowsBackgroundUpdate, signal: AbortSignal): Promise<void> {
+        try {
+            this.#report(ConnectorUpdateMessage.rows(ConnectorUpdateStatus.Checking));
+            const status: ConnectorUpdateStatus = await windows.check(signal);
+            if (!signal.aborted) {
+                this.#report(
+                    status === ConnectorUpdateStatus.Failed
+                        ? ["Couldn't check or download an update. See supervisor.log for details."]
+                        : ConnectorUpdateMessage.rows(status),
+                );
+            }
+        } catch {
+            if (!signal.aborted) {
+                this.#report([
+                    "Couldn't reach the Windows updater. Reopen Nerva Connector and try /update again.",
+                ]);
+            }
+        } finally {
+            this.#windowsChecking = false;
+        }
+    }
+
     /** Teardown detaches only this console's listener and lets normal shutdown release the IPC channel. */
     public [Symbol.dispose](): void {
+        this.#stop.abort();
         process.removeListener('message', this.#receive);
         process.removeListener('disconnect', this.#disconnect);
     }

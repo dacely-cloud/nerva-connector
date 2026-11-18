@@ -113,13 +113,16 @@ public static class NexaConnectorSetup
                     choices.StartAtSignIn = NexaConnectorSetupLayout.StartsAtSignIn;
                     Install(payload, choices, null);
                 }
-                catch (Exception)
+                catch (Exception failure)
                 {
+                    NexaConnectorSupervisorLog
+                        .ForCurrentUser()
+                        .Write("silent setup failed: " + failure.Message);
                     code = 1;
                 }
                 if (restart && File.Exists(NexaConnectorSetupLayout.Launcher))
                 {
-                    Launch(true);
+                    Launch(true, true);
                 }
                 return code;
             }
@@ -209,7 +212,7 @@ public static class NexaConnectorSetup
     }
 
     /// <summary>Starts the installed Nerva Connector, in the background or with its window open.</summary>
-    internal static void Launch(bool background)
+    internal static void Launch(bool background, bool afterUpdate = false)
     {
         ProcessStartInfo start = new ProcessStartInfo(
             NexaConnectorSetupLayout.Launcher,
@@ -217,6 +220,10 @@ public static class NexaConnectorSetup
         );
         start.UseShellExecute = false;
         start.WorkingDirectory = NexaConnectorSetupLayout.Folder;
+        if (afterUpdate)
+        {
+            start.EnvironmentVariables["NERVA_CONNECTOR_AFTER_UPDATE"] = "1";
+        }
         Process.Start(start).Dispose();
     }
 

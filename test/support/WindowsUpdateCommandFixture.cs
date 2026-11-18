@@ -37,14 +37,32 @@ internal static class NexaConnectorUpdateCommandFixture
                     out created
                 )
             )
+            using (
+                NexaConnectorUpdateCommand.Replies replies = new NexaConnectorUpdateCommand.Replies(
+                    name
+                )
+            )
             {
                 if (!created)
                     throw new InvalidOperationException("update-fixture-event-not-owned");
-                if (
-                    NexaConnectorHostProcess.Main(new string[] { "--connector-update", name }) != 0
-                    || !requested.WaitOne(5000)
-                )
+                Thread reply = new Thread(
+                    delegate()
+                    {
+                        bool received = requested.WaitOne(5000);
+                        replies.Send(
+                            received
+                                ? NexaConnectorUpdateCommand.Result.Current
+                                : NexaConnectorUpdateCommand.Result.Failed
+                        );
+                    }
+                );
+                reply.IsBackground = true;
+                reply.Start();
+                if (NexaConnectorHostProcess.Main(new string[] { "--connector-update", name }) != 0)
+                {
                     throw new InvalidOperationException("update-request-not-delivered");
+                }
+                reply.Join();
             }
             if (NexaConnectorHostProcess.Main(new string[] { "--connector-update", name }) != 2)
                 throw new InvalidOperationException("missing-supervisor-accepted");

@@ -148,7 +148,7 @@ try {
         throw new Error('Connector artifact must depend only on the Node runtime');
     }
     for (const moduleId of Object.keys(chunk.modules)) {
-        if (moduleId.startsWith('\0')) {
+        if (moduleId.startsWith('\0') || moduleId === resolve('package.json')) {
             continue;
         }
         if (

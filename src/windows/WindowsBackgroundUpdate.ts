@@ -4,11 +4,14 @@
 import { existsSync } from 'node:fs';
 import { HostDesktopCommand } from '../host/HostDesktopCommand.js';
 import { HostWindowsBuild } from '../host/HostWindowsBuild.js';
+import { ConnectorUpdateStatus } from '../update/ConnectorUpdateMessage.js';
 import { WindowsBackgroundStartup } from './WindowsBackgroundStartup.js';
 
 /** The installed Windows supervisor retains signed release authority; the console can only request its check. */
 export class WindowsBackgroundUpdate {
     static readonly #prefix: string = 'Local\\NervaConnector.Update.';
+    /** Allows the native helper to finish its 750-second wait before it is terminated. */
+    static readonly #replyTimeoutMs: number = 755000;
     readonly #event: string;
     private constructor(event: string) {
         this.#event = event;
@@ -32,22 +35,27 @@ export class WindowsBackgroundUpdate {
         return new WindowsBackgroundUpdate(event);
     }
 
-    /** Cancellation prevents admission; after the fixed event is submitted, the supervisor owns the asynchronous check. */
-    public async check(signal: AbortSignal): Promise<void> {
+    /** Requests a check through the pinned helper and accepts only its finite supervisor result. */
+    public async check(signal: AbortSignal): Promise<ConnectorUpdateStatus> {
         signal.throwIfAborted();
         const helper: string = await HostWindowsBuild.verifiedExecutable();
         signal.throwIfAborted();
-        try {
-            await HostDesktopCommand.run(
-                helper,
-                ['--connector-update', this.#event],
-                process.env,
-                4096,
-            );
-        } catch {
-            throw new Error(
-                'Could not reach the installed Windows updater. Reopen Nerva Connector and try /update again.',
-            );
+        const result: Buffer = await HostDesktopCommand.run(
+            helper,
+            ['--connector-update', this.#event],
+            process.env,
+            4096,
+            undefined,
+            { signal, timeoutMs: WindowsBackgroundUpdate.#replyTimeoutMs },
+        );
+        const status: string = result.toString('utf8').trim();
+        switch (status) {
+            case ConnectorUpdateStatus.Current:
+            case ConnectorUpdateStatus.Installing:
+            case ConnectorUpdateStatus.Failed:
+                return status;
+            default:
+                throw new Error('The Windows updater returned an unknown status');
         }
     }
 }

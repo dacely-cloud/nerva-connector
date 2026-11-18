@@ -51,7 +51,8 @@ npm run release:windows -- --key /secure/update-key.pem
 ```
 
 Upload the contents of `build/windows-update` to the feed URL, the setup programs before `latest.json` and
-`latest.json.sig`. Installed copies take only a newer version whose `latest.json` was signed by that key. A build
+`latest.json.sig`. The Windows supervisor checks at startup and hourly, using the bundled Node runtime over
+TLS 1.3. Installed copies take only a newer version whose `latest.json` was signed by that key. A build
 without `assets/windows/updates.json` never checks for updates.
 
 ## macOS and Linux desktop installers
@@ -95,7 +96,7 @@ Mac where the connector runs; the package does not grant access itself.
 
 Current Mac and Linux desktop launchers include an update supervisor. It checks after one minute and every
 hour while open; `/update` checks immediately. The installed Windows console offers the same command through
-its signed native supervisor; Windows reports the check result through its notification-area icon. Finite
+its signed native supervisor and shows the result in the console. Finite
 commands such as `--help` do not check the network.
 The supervisor authenticates the RSA-signed feed before parsing it, bounds installer size, verifies the exact
 SHA-256 and native architecture, and prepares the new program while the old console stays usable. It drains

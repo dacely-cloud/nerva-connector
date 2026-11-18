@@ -84,24 +84,32 @@ it('Windows requests only its SHA-pinned helper and reserved event, never an exe
         .mockResolvedValue('verified-fixed-helper.exe');
     const run: MockInstance<typeof HostDesktopCommand.run> = vi
         .spyOn(HostDesktopCommand, 'run')
-        .mockResolvedValue(Buffer.alloc(0));
+        .mockResolvedValue(Buffer.from('current\n'));
     try {
-        await adapter.check(new AbortController().signal);
+        expect(await adapter.check(new AbortController().signal)).toBe(
+            ConnectorUpdateStatus.Current,
+        );
         expect(verified).toHaveBeenCalledTimes(1);
         expect(run).toHaveBeenCalledTimes(1);
         const call: Parameters<typeof HostDesktopCommand.run> | undefined = run.mock.calls[0];
         expect(call?.[0]).toBe('verified-fixed-helper.exe');
         expect(call?.[1]).toEqual(['--connector-update', event]);
         expect(call?.[3]).toBe(4096);
+        run.mockResolvedValueOnce(Buffer.from('failed\n'));
+        expect(await adapter.check(new AbortController().signal)).toBe(
+            ConnectorUpdateStatus.Failed,
+        );
+        run.mockResolvedValueOnce(Buffer.from('current\nother output'));
+        await expect(adapter.check(new AbortController().signal)).rejects.toThrow('unknown status');
         verified.mockRejectedValueOnce(new Error('Untrusted helper'));
         await expect(adapter.check(new AbortController().signal)).rejects.toThrow(
             'Untrusted helper',
         );
-        expect(run).toHaveBeenCalledTimes(1);
+        expect(run).toHaveBeenCalledTimes(3);
         const stop: AbortController = new AbortController();
         stop.abort();
         await expect(adapter.check(stop.signal)).rejects.toThrow();
-        expect(verified).toHaveBeenCalledTimes(2);
+        expect(verified).toHaveBeenCalledTimes(4);
     } finally {
         verified.mockRestore();
         run.mockRestore();
@@ -203,6 +211,7 @@ it.skipIf(
             );
             expect(result.stdout.toString()).toContain('bounded_update_names=true');
             if (process.platform === 'win32') {
+                expect(result.stdout.toString().split(/\r?\n/u)).toContain('current');
                 expect(result.stdout.toString()).toContain('native_update_dispatch=true');
             }
         } finally {

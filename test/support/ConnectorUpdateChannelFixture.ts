@@ -27,5 +27,5 @@ using channel: ConnectorUpdateChannel = new ConnectorUpdateChannel(
         completed.resolve(undefined);
     },
 );
-await channel.check(new AbortController().signal);
+channel.check(new AbortController().signal);
 await completed.promise;

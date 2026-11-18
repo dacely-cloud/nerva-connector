@@ -12,7 +12,6 @@ using System.Windows.Forms;
 /// <summary>The notification-area icon, the connector process and the update checks, all on the UI thread.</summary>
 internal sealed partial class NexaConnectorSupervisor : ApplicationContext
 {
-    private static readonly TimeSpan FirstCheck = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
     private readonly string directory;
     private readonly string self;
@@ -32,7 +31,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     {
         return true;
     };
-    private System.Threading.Timer checks;
+    private readonly System.Windows.Forms.Timer checks;
     private IntPtr process = IntPtr.Zero;
     private int processId;
     private IntPtr window = IntPtr.Zero;
@@ -40,15 +39,17 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     private bool showWhenFound;
     private bool quitting;
     private string pendingUpdate;
-    private int checking;
-    private int interactiveCheck;
+    private bool checking;
+    private bool notifyUpdateCheck;
+    private bool replyToUpdateCheck;
     private readonly string updateEvent =
         NexaConnectorUpdateCommand.EventPrefix + Guid.NewGuid().ToString("N");
+    private readonly NexaConnectorUpdateCommand.Replies updateReplies;
     private int failures;
     private DateTime started;
     private int findAttempts;
 
-    internal NexaConnectorSupervisor(string directory, string self, bool open)
+    internal NexaConnectorSupervisor(string directory, string self, bool open, bool checkOnLaunch)
     {
         this.directory = directory;
         this.self = self;
@@ -56,7 +57,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Nerva Connector"
         );
-        log = new NexaConnectorSupervisorLog(Path.Combine(data, "Logs", "supervisor.log"));
+        log = NexaConnectorSupervisorLog.ForCurrentUser();
         NexaConnectorSupervisorUpdates.Clean(data);
         ui.CreateControl();
         IntPtr unused = ui.Handle;
@@ -124,7 +125,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         };
         tray.ContextMenuStrip = menu;
         tray.Icon = smallIcon;
-        tray.Text = "Nerva Connector";
+        tray.Text = "Nerva Connector " + NexaConnectorUpdateSettings.Version;
         tray.MouseClick += delegate(object sender, MouseEventArgs click)
         {
             if (click.Button == MouseButtons.Left)
@@ -148,11 +149,12 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         Listen(NexaConnectorSupervisorProgram.QuitEventName, Quit);
         if (NexaConnectorSupervisorUpdates.Configured)
         {
+            updateReplies = new NexaConnectorUpdateCommand.Replies(updateEvent);
             Listen(
                 updateEvent,
                 delegate
                 {
-                    Check(true);
+                    Check(false, true);
                 }
             );
         }
@@ -160,15 +162,24 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         Start();
         if (NexaConnectorSupervisorUpdates.Configured)
         {
-            checks = new System.Threading.Timer(
-                delegate
-                {
-                    Check(false);
-                },
-                null,
-                FirstCheck,
-                CheckInterval
-            );
+            checks = new System.Windows.Forms.Timer();
+            checks.Interval = (int)CheckInterval.TotalMilliseconds;
+            checks.Tick += delegate
+            {
+                Check(false);
+            };
+            checks.Start();
+            if (checkOnLaunch)
+            {
+                ui.BeginInvoke(
+                    new Action(
+                        delegate
+                        {
+                            Check(false);
+                        }
+                    )
+                );
+            }
         }
     }
 
@@ -179,6 +190,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             if (checks != null)
             {
                 checks.Dispose();
+                updateReplies.Dispose();
             }
             hider.Dispose();
             finder.Dispose();
@@ -199,68 +211,104 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         startAtSignIn.Checked = enabled;
     }
 
-    /// <summary>Looks for a newer signed version off the UI thread; an interactive check reports its result.</summary>
-    private void Check(bool interactive)
+    /// <summary>Coalesces tray, console and automatic checks while the update worker runs.</summary>
+    private void Check(bool notify, bool reply = false)
     {
-        if (interactive)
-        {
-            Interlocked.Exchange(ref interactiveCheck, 1);
-        }
-        if (Interlocked.Exchange(ref checking, 1) == 1)
-        {
-            return;
-        }
         if (quitting || pendingUpdate != null)
         {
-            Interlocked.Exchange(ref checking, 0);
+            if (reply)
+            {
+                updateReplies.Send(
+                    pendingUpdate != null
+                        ? NexaConnectorUpdateCommand.Result.Installing
+                        : NexaConnectorUpdateCommand.Result.Failed
+                );
+            }
             return;
         }
+        notifyUpdateCheck |= notify;
+        replyToUpdateCheck |= reply;
+        if (checking)
+        {
+            return;
+        }
+        checking = true;
         ThreadPool.QueueUserWorkItem(
             delegate
             {
+                log.Write(
+                    "checking for updates (installed " + NexaConnectorUpdateSettings.Version + ")"
+                );
                 string downloaded = null;
                 bool failed = false;
                 try
                 {
-                    downloaded = NexaConnectorSupervisorUpdates.Download(log);
+                    downloaded = NexaConnectorSupervisorUpdates.Download(directory, log);
+                    if (downloaded == null)
+                    {
+                        log.Write(
+                            "no newer update for " + NexaConnectorUpdateSettings.Architecture
+                        );
+                    }
                 }
                 catch (Exception failure)
                 {
                     log.Write("update check failed: " + failure.Message);
                     failed = true;
                 }
-                ui.BeginInvoke(
-                    new Action(
-                        delegate
-                        {
-                            try
+                try
+                {
+                    ui.BeginInvoke(
+                        new Action(
+                            delegate
                             {
-                                bool report = Interlocked.Exchange(ref interactiveCheck, 0) == 1;
-                                if (report && downloaded == null)
-                                {
-                                    tray.ShowBalloonTip(
-                                        5000,
-                                        "Nerva Connector",
-                                        failed
-                                            ? "Couldn't check for updates. Try again later."
-                                            : "Nerva Connector is up to date.",
-                                        ToolTipIcon.Info
-                                    );
-                                }
-                                if (downloaded != null)
-                                {
-                                    Update(downloaded);
-                                }
+                                Checked(downloaded, failed);
                             }
-                            finally
-                            {
-                                Interlocked.Exchange(ref checking, 0);
-                            }
-                        }
-                    )
-                );
+                        )
+                    );
+                }
+                catch (InvalidOperationException)
+                {
+                    /* The supervisor window has already closed. */
+                }
             }
         );
+    }
+
+    private void Checked(string downloaded, bool failed)
+    {
+        checking = false;
+        bool notify = notifyUpdateCheck;
+        bool reply = replyToUpdateCheck;
+        notifyUpdateCheck = false;
+        replyToUpdateCheck = false;
+        if (quitting)
+        {
+            return;
+        }
+        if (reply)
+        {
+            updateReplies.Send(
+                failed ? NexaConnectorUpdateCommand.Result.Failed
+                : downloaded == null ? NexaConnectorUpdateCommand.Result.Current
+                : NexaConnectorUpdateCommand.Result.Installing
+            );
+        }
+        if (notify && downloaded == null)
+        {
+            tray.ShowBalloonTip(
+                5000,
+                "Nerva Connector",
+                failed
+                    ? "Couldn't check for updates. See supervisor.log."
+                    : "Nerva Connector is up to date.",
+                failed ? ToolTipIcon.Warning : ToolTipIcon.Info
+            );
+        }
+        if (downloaded != null)
+        {
+            Update(downloaded);
+        }
     }
 
     /// <summary>Stops the connector for a verified setup program; the install starts when it has stopped.</summary>

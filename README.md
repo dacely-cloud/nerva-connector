@@ -106,8 +106,9 @@ selected under Windows Terminal → Settings → Startup → Default terminal ap
 starts hidden at sign-in uses the classic console when you open it from the tray. Right-click the tray icon
 to check for updates, turn **Start when I sign in** on or off, or quit. `/quit` closes it too.
 
-The screen shows whether the computer is connected, what Nexa is doing right now, which programs it started are
-still running, and the latest 100 completed requests from this run. Press Tab or type `/activity` to
+The console header shows the installed version. The screen also shows whether the computer is connected,
+what Nexa is doing, which programs it started are still running, and the latest 100 completed requests
+from this run. Press Tab or type `/activity` to
 browse history. Use ↑/↓ to scroll line by line, Page Up/Page Down to move a page, and Home/End to jump
 to the newest or oldest lines. In terminals that send arrow keys for mouse-wheel scrolling in full-screen
 apps, the wheel scrolls the history too.
@@ -130,10 +131,10 @@ Type `/` to open the menu:
 
 ## Update
 
-- **Windows:** updates install by themselves. Nerva Connector checks after one minute and every hour, installs a new
+- **Windows:** updates install by themselves. Nerva Connector checks at startup and every hour, installs a new
   version and starts again, keeping this computer's link and settings. Right-click its icon and choose **Check for
-  updates**, or type `/update`, to check now. The notification-area icon reports the result; a verified update
-  installs and restarts the connector automatically. You can also run a newer setup file.
+  updates**, or type `/update`, to check now. The result appears where you requested it. If an older installer has
+  a TLS error in `supervisor.log`, run the current setup file once to repair the updater.
 - **macOS and Linux:** current desktop installers check after one minute and every hour while the connector
   is open. Use `/update` to check now. They verify the publisher's signature, download in the background, then
   restart the connector on the newer version. Custom installation locations are preserved. A failed installation

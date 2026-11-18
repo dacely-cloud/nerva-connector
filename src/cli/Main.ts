@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
+import { WindowsUpdateFetch } from '../windows/WindowsUpdateFetch.js';
+import { WindowsUpdateFetchError } from '../windows/WindowsUpdateFetchError.js';
 import { HostMcpCommand } from './HostMcpCommand.js';
 import { ConnectorHostAccessCommand } from './ConnectorHostAccessCommand.js';
 import { ConnectorLogout } from '../runtime/ConnectorLogout.js';
@@ -95,6 +97,7 @@ import {
 
 /** Named local entry points separate confined grants from explicitly authorized host-user MCP access. */
 enum ConnectorLocalCommand {
+    WindowsUpdateFetch = '--windows-update-fetch',
     Connector = 'connector',
     HostMcp = 'host-mcp',
     HostAccess = 'host-access',
@@ -160,7 +163,9 @@ process.once('SIGINT', (): void => stop.abort());
 process.once('SIGTERM', (): void => stop.abort());
 try {
     ConnectorNodeRuntime.assertCurrent();
-    if (args[0] === ConnectorLocalCommand.HostMcp.valueOf()) {
+    if (args.length === 1 && args[0] === ConnectorLocalCommand.WindowsUpdateFetch.valueOf()) {
+        await WindowsUpdateFetch.command(process.stdin, process.stdout, stop.signal);
+    } else if (args[0] === ConnectorLocalCommand.HostMcp.valueOf()) {
         await HostMcpCommand.run(args, stop.signal);
     } else if (args[0] === ConnectorLocalCommand.HostAccess.valueOf()) {
         await ConnectorHostAccessCommand.run(args, stop.signal);
@@ -541,7 +546,8 @@ try {
 } catch (caught: unknown) {
     progress.pause();
     process.stderr.write(
-        (caught instanceof ConnectorRuntimeUnsupported ||
+        (caught instanceof WindowsUpdateFetchError ||
+        caught instanceof ConnectorRuntimeUnsupported ||
         caught instanceof WindowsStateError ||
         caught instanceof ConnectorPermissionError ||
         caught instanceof JointWorkspaceInstallationError ||

@@ -16,6 +16,19 @@ internal sealed class NexaConnectorSupervisorLog
         this.path = path;
     }
 
+    /// <summary>The installed launcher and silent setup write to the same local diagnostic log.</summary>
+    internal static NexaConnectorSupervisorLog ForCurrentUser()
+    {
+        return new NexaConnectorSupervisorLog(
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Nerva Connector",
+                "Logs",
+                "supervisor.log"
+            )
+        );
+    }
+
     /// <summary>Appends one timestamped line; logging never stops the connector.</summary>
     internal void Write(string message)
     {

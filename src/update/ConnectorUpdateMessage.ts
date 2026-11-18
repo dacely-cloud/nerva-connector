@@ -19,14 +19,6 @@ export interface ConnectorUpdatePacket {
 
 /** Both ends narrow IPC input before acting and project only fixed user-facing messages. */
 export class ConnectorUpdateMessage {
-    /** Windows confirms only request delivery here; the supervisor's notification-area icon reports the actual result. */
-    public static windowsRequested(): readonly string[] {
-        return [
-            'Update check requested. The Windows notification-area icon will report the result.',
-            'A verified update installs and restarts Nerva Connector automatically.',
-        ];
-    }
-
     /** Unknown messages and extra properties cannot trigger an update or inject terminal output. */
     public static read(value: unknown): ConnectorUpdateStatus | null {
         if (

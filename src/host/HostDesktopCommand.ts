@@ -7,6 +7,12 @@ import { delimiter, join } from 'node:path';
 import { HostDesktopLimits } from './HostDesktopTypes.js';
 import { HostDesktopError } from './HostDesktopError.js';
 
+/** Lifetime limits for a fixed helper whose operation may outlast a desktop action. */
+export interface HostDesktopCommandLifetime {
+    readonly signal: AbortSignal;
+    readonly timeoutMs: number;
+}
+
 /** Fixed installed desktop tools run without shell interpretation and with bounded buffered output. */
 export class HostDesktopCommand {
     /** Resolve an installed tool in the actual session PATH; never install dependencies implicitly. */
@@ -36,7 +42,9 @@ export class HostDesktopCommand {
         environment: NodeJS.ProcessEnv,
         maximum: number,
         input?: string,
+        lifetime?: HostDesktopCommandLifetime,
     ): Promise<Buffer> {
+        lifetime?.signal.throwIfAborted();
         if (
             !Number.isSafeInteger(maximum) ||
             maximum < 1 ||
@@ -55,7 +63,8 @@ export class HostDesktopCommand {
                     {
                         env: environment,
                         encoding: 'buffer',
-                        timeout: HostDesktopLimits.timeoutMs,
+                        timeout: lifetime?.timeoutMs ?? HostDesktopLimits.timeoutMs,
+                        ...(lifetime === undefined ? {} : { signal: lifetime.signal }),
                         killSignal: 'SIGKILL',
                         maxBuffer: maximum,
                         windowsHide: true,
