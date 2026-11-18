@@ -44,6 +44,7 @@ export class NativeSocketDispatcher {
     #upgraded: boolean = false;
     #aborted: boolean = false;
     #reason: Error | null = null;
+    #rejectedHttpStatus: number | null = null;
     #paused: boolean = false;
     /** Node's native parser reads these limits from its connection-specific dispatcher. */
     public readonly webSocketOptions: NativeWebSocketLimits;
@@ -85,9 +86,13 @@ export class NativeSocketDispatcher {
     public get paused(): boolean {
         return this.#paused;
     }
-    /** Safe local cancellation reasons contain no response payload or credentials. */
+    /** The original native failure is available for code-based diagnostics. */
     public get reason(): Error | null {
         return this.#reason;
+    }
+    /** The verified HTTP response status when the peer rejected the upgrade. */
+    public get rejectedHttpStatus(): number | null {
+        return this.#rejectedHttpStatus;
     }
     /** The owner includes actual socket backlog in its finite send admission. */
     public get bufferedAmount(): number {
@@ -153,6 +158,7 @@ export class NativeSocketDispatcher {
                     status >= 100 &&
                     status <= 599
                 ) {
+                    this.#rejectedHttpStatus = status;
                     this.progress?.({ stage: ConnectorStartupStage.Rejected, httpStatus: status });
                 }
                 response.destroy();
@@ -171,6 +177,9 @@ export class NativeSocketDispatcher {
                             throw new Error('Native WebSocket upgrade violated its contract');
                         }
                         this.#socket = socket;
+                        socket.once('error', (error: Error): void => {
+                            this.#reason ??= error;
+                        });
                         this.#upgraded = true;
                         this.#clearTimer();
                         this.rawHeaders = response.rawHeaders;
@@ -206,7 +215,7 @@ export class NativeSocketDispatcher {
             return;
         }
         this.#aborted = true;
-        this.#reason = error;
+        this.#reason ??= error;
         this.#clearTimer();
         if (this.#upgraded) {
             this.#socket?.destroy();

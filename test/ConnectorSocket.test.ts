@@ -77,23 +77,44 @@ it('native WebSocket verifies a private CA, disables compression and decodes tex
 });
 
 it.each([
-    { trusted: false, hostname: 'localhost' },
-    { trusted: true, hostname: '127.0.0.1' },
+    { trusted: false, hostname: 'localhost', error: 'DEPTH_ZERO_SELF_SIGNED_CERT' },
+    { trusted: true, hostname: '127.0.0.1', error: 'ERR_TLS_CERT_ALTNAME_INVALID' },
 ])(
     'native client refuses missing CA or wrong certificate hostname: $trusted/$hostname',
     async (settings): Promise<void> => {
         await using fixture: SocketFixture = await SocketFixture.create();
         const client: ConnectorSocket = fixture.connect(settings.trusted, settings.hostname);
         const finished: Promise<void> = closed(client);
+        const failure: Promise<Error> = socketFailure(client);
         let opened: boolean = false;
         client.once('open', (): void => {
             opened = true;
         });
         await finished;
+        expect((await failure).message).toContain(settings.error);
         expect(opened).toBe(false);
         expect(fixture.requests).toHaveLength(0);
     },
 );
+
+/** The emitted Error is the same value the connection log will summarize. */
+function socketFailure(socket: ConnectorSocket): Promise<Error> {
+    const result: PromiseWithResolvers<Error> = Promise.withResolvers<Error>();
+    socket.once('error', (error: Error): void => result.resolve(error));
+    return result.promise;
+}
+
+it('reports an established connection ending without a WebSocket close frame', async (): Promise<void> => {
+    await using fixture: SocketFixture = await SocketFixture.create();
+    const client: ConnectorSocket = fixture.connect();
+    const failure: Promise<Error> = socketFailure(client);
+    const finished: Promise<void> = closed(client);
+    await once(client, 'open');
+    const peer: Duplex = await fixture.upgraded.promise;
+    peer.destroy();
+    await finished;
+    expect((await failure).message).toContain('without a WebSocket close frame');
+});
 
 it.each(['payload', 'fragments'] as const)(
     'native parser closes a peer exceeding its %s budget before delivering a message',
@@ -192,7 +213,10 @@ it('a real HTTP 502 retains its safe status through retry without displaying res
         32,
         (event: ConnectorStartupProgress): void => display.update(event),
     );
+    const failure: Promise<Error> = socketFailure(client);
     await closed(client);
+    expect((await failure).message).toContain('HTTP 502');
+    expect((await failure).message).not.toContain('private-upstream-detail');
     expect(lines.at(-1)).toContain('Server rejected tunnel · HTTP 502');
     display.update({ stage: ConnectorStartupStage.Closing });
     display.update({ stage: ConnectorStartupStage.Retry, retryAfterMs: 3000 });

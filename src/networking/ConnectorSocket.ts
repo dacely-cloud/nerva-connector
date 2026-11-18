@@ -25,9 +25,30 @@ export interface ConnectorSocketOptions {
 
 /** Uses Node's built-in WebSocket client with a per-connection verified HTTPS dispatcher; no third-party client or native addon is used. */
 export class ConnectorSocket extends EventEmitter<ConnectorSocketEvents> {
+    static readonly #knownNetworkCodes: ReadonlySet<string> = new Set([
+        'CERT_HAS_EXPIRED',
+        'CERT_NOT_YET_VALID',
+        'DEPTH_ZERO_SELF_SIGNED_CERT',
+        'EAI_AGAIN',
+        'ECONNABORTED',
+        'ECONNREFUSED',
+        'ECONNRESET',
+        'EHOSTUNREACH',
+        'ENETRESET',
+        'ENETUNREACH',
+        'ENOTFOUND',
+        'EPIPE',
+        'ETIMEDOUT',
+        'HPE_HEADER_OVERFLOW',
+        'SELF_SIGNED_CERT_IN_CHAIN',
+        'UNABLE_TO_GET_ISSUER_CERT',
+        'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+        'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+    ]);
     readonly #socket: WebSocket;
     readonly #dispatcher: NativeSocketDispatcher;
     readonly #maximumPayload: number;
+    #opened: boolean = false;
     #closing: NodeJS.Timeout | null = null;
 
     /** One current native parser API is required; unsafe or unsupported bundled runtimes fail explicitly. */
@@ -63,6 +84,7 @@ export class ConnectorSocket extends EventEmitter<ConnectorSocketEvents> {
                 this.terminate();
                 return;
             }
+            this.#opened = true;
             this.emit('open');
         });
         candidate.addEventListener('message', (event: MessageEvent): void => {
@@ -86,8 +108,9 @@ export class ConnectorSocket extends EventEmitter<ConnectorSocketEvents> {
             this.emit('message', data, binary);
         });
         candidate.addEventListener('error', (): void => {
+            const failure: Error = this.#failure();
             this.#dispatcher.abort();
-            this.emit('error', new Error('Native connector WebSocket failed'));
+            this.emit('error', failure);
         });
         candidate.addEventListener(
             'close',
@@ -99,6 +122,32 @@ export class ConnectorSocket extends EventEmitter<ConnectorSocketEvents> {
                 this.emit('close', event.code, event.reason);
             },
             { once: true },
+        );
+    }
+
+    /** Retain allowlisted codes and the HTTP status. Raw socket error text may contain peer data. */
+    #failure(): Error {
+        const status: number | null = this.#dispatcher.rejectedHttpStatus;
+        if (status !== null) {
+            return new Error('Server rejected the secure tunnel (HTTP ' + String(status) + ')');
+        }
+        const reason: Error | null = this.#dispatcher.reason;
+        const code: unknown = reason !== null && 'code' in reason ? reason.code : undefined;
+        if (
+            typeof code === 'string' &&
+            (ConnectorSocket.#knownNetworkCodes.has(code) ||
+                /^ERR_(?:TLS|SSL)_[A-Z0-9_]{1,80}$/u.test(code))
+        ) {
+            const phase: string = this.#opened ? 'lost its connection' : 'could not connect';
+            return new Error('Secure tunnel ' + phase + ' (' + code + ')');
+        }
+        if (reason?.message === 'Native WebSocket upgrade expired') {
+            return new Error('Opening the secure tunnel timed out');
+        }
+        return new Error(
+            this.#opened
+                ? 'Secure tunnel dropped without a WebSocket close frame'
+                : 'Secure tunnel failed before the WebSocket connection opened',
         );
     }
 
