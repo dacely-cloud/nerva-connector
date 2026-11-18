@@ -38,8 +38,11 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             new NexaConnectorSupervisorNative.StartupInfo();
         startup.cb = Marshal.SizeOf(typeof(NexaConnectorSupervisorNative.StartupInfo));
         startup.lpTitle = "Nerva Connector";
-        startup.dwFlags = 0x1;
-        startup.wShowWindow = 0;
+        if (!showWhenFound)
+        {
+            startup.dwFlags = NexaConnectorSupervisorNative.UseShowWindow;
+            startup.wShowWindow = NexaConnectorSupervisorNative.HideWindow;
+        }
         NexaConnectorSupervisorNative.ProcessInformation created;
         StringBuilder command = new StringBuilder(
             "\"" + node + "\" \"" + application + "\" connector"
@@ -51,7 +54,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
                 IntPtr.Zero,
                 IntPtr.Zero,
                 false,
-                0x10,
+                NexaConnectorSupervisorNative.CreateNewConsole,
                 IntPtr.Zero,
                 directory,
                 ref startup,
@@ -68,6 +71,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         processId = created.dwProcessId;
         started = DateTime.UtcNow;
         window = IntPtr.Zero;
+        classicWindow = false;
         findAttempts = 0;
         finder.Start();
         IntPtr watched = process;
@@ -95,7 +99,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         log.Write("connector started");
     }
 
-    /// <summary>Finds the connector's console window once it exists, removes its close button and gives it the Nerva icon.</summary>
+    /// <summary>Finds the console and applies tray behavior only to the classic console window.</summary>
     private void FindWindow()
     {
         if (process == IntPtr.Zero || findAttempts++ > 100)
@@ -115,6 +119,12 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         }
         finder.Stop();
         window = found;
+        classicWindow = NexaConnectorSupervisorNative.IsClassicConsole(window);
+        if (!classicWindow)
+        {
+            showWhenFound = false;
+            return;
+        }
         IntPtr system = NexaConnectorSupervisorNative.GetSystemMenu(window, false);
         if (system != IntPtr.Zero)
         {
@@ -153,13 +163,17 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             window,
             NexaConnectorSupervisorNative.IsIconic(window) ? 9 : 5
         );
-        NexaConnectorSupervisorNative.SetForegroundWindow(window);
+        if (classicWindow)
+        {
+            NexaConnectorSupervisorNative.SetForegroundWindow(window);
+        }
     }
 
     private void HideIfMinimized()
     {
         if (
-            window != IntPtr.Zero
+            classicWindow
+            && window != IntPtr.Zero
             && NexaConnectorSupervisorNative.IsWindowVisible(window)
             && NexaConnectorSupervisorNative.IsIconic(window)
         )
@@ -177,8 +191,15 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         }
         if (NexaConnectorSupervisorNative.AttachConsole(processId))
         {
-            NexaConnectorSupervisorNative.GenerateConsoleCtrlEvent(0, 0);
-            NexaConnectorSupervisorNative.FreeConsole();
+            try
+            {
+                NexaConnectorSupervisorNative.SetConsoleCtrlHandler(ignoreControl, true);
+                NexaConnectorSupervisorNative.GenerateConsoleCtrlEvent(0, 0);
+            }
+            finally
+            {
+                NexaConnectorSupervisorNative.FreeConsole();
+            }
         }
         IntPtr stopping = process;
         System.Windows.Forms.Timer deadline = new System.Windows.Forms.Timer();
@@ -204,6 +225,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         NexaConnectorSupervisorNative.CloseHandle(process);
         process = IntPtr.Zero;
         window = IntPtr.Zero;
+        classicWindow = false;
         finder.Stop();
         log.Write("connector stopped with code " + code.ToString());
         if (pendingUpdate != null)

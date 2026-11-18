@@ -58,14 +58,20 @@ export interface ConnectorConsoleScreenState {
 
 /** One complete viewport, plus how far the activity history can scroll. */
 export interface ConnectorConsoleFrame extends ConnectorScreenFrame {
-    /** The furthest first history card the activity view can show; 0 when everything fits. */
+    /** The furthest first history row the activity view can show; 0 when everything fits. */
     readonly scrollLimit: number;
+    /** The clamped position after a resize or a change in history. */
+    readonly scroll: number;
+    /** The number of history rows visible in one page. */
+    readonly scrollPage: number;
 }
 
 /** The rows above the prompt and the history scroll limit they imply. */
 interface ConnectorConsoleBody {
     readonly lines: ConnectorStyledRow[];
     readonly scrollLimit: number;
+    readonly scroll: number;
+    readonly scrollPage: number;
 }
 
 /** Rows taken from a list of cards, and how many cards they show. */
@@ -98,12 +104,17 @@ export class ConnectorConsoleScreen {
                 1,
         );
         const height: number = Math.max(6, Number.isSafeInteger(rows) && rows > 0 ? rows : 24);
-        const footer: ConnectorStyledRow[] = this.#footer(state, width);
+        const footer: ConnectorStyledRow[] = this.#footer(state, width, height);
         const budget: number = height - footer.length;
         const body: ConnectorConsoleBody =
             state.view === ConnectorConsoleView.Activity
                 ? this.#activityView(state, width, budget, now)
-                : { lines: this.#home(state, width, budget, now, monotonic), scrollLimit: 0 };
+                : {
+                      lines: this.#home(state, width, budget, now, monotonic),
+                      scrollLimit: 0,
+                      scroll: 0,
+                      scrollPage: 0,
+                  };
         const shown: ConnectorStyledRow[] = body.lines.slice(0, Math.max(0, budget));
         while (shown.length < budget) {
             shown.push(this.#blank());
@@ -129,6 +140,8 @@ export class ConnectorConsoleScreen {
                 ),
             cursorVisible: true,
             scrollLimit: body.scrollLimit,
+            scroll: body.scroll,
+            scrollPage: body.scrollPage,
         };
     }
 
@@ -266,7 +279,7 @@ export class ConnectorConsoleScreen {
         const left: number = budget - lines.length - 2;
         if (activity.recent.length > 0 && left >= 1) {
             lines.push(this.#blank());
-            lines.push(this.#heading('Recent', 'Tab to see everything', width));
+            lines.push(this.#heading('Recent', 'Tab to browse history', width));
             lines.push(
                 ...this.#take(
                     activity.recent
@@ -289,7 +302,6 @@ export class ConnectorConsoleScreen {
     ): ConnectorConsoleBody {
         const activity: ConnectorActivitySnapshot = state.activity;
         const lines: ConnectorStyledRow[] = [
-            this.#blank(),
             this.#split(
                 [
                     { text: ConnectorTheme.product, color: ConnectorTheme.strong },
@@ -300,32 +312,21 @@ export class ConnectorConsoleScreen {
                     : activity.total.toString() + ' requests so far',
                 width,
             ),
-            ConnectorLogo.line([{ text: '─'.repeat(width), color: ConnectorTheme.faint }], width),
-            this.#heading(
-                'Right now',
-                activity.running.length === 0 ? '' : this.#agents(activity.running) + ' working',
-                width,
-            ),
         ];
-        if (activity.running.length === 0) {
+        const liveRoom: number = Math.max(0, Math.floor((budget - 5) / 2));
+        if (liveRoom > 0 && activity.running.length > 0) {
             lines.push(
-                ConnectorLogo.line(
-                    [{ text: 'Nothing is running.', color: ConnectorTheme.dim }],
-                    width,
-                ),
+                this.#heading('Right now', this.#agents(activity.running) + ' working', width),
+                ...this.#take(
+                    activity.running.map(
+                        (entry: ConnectorActivityEntry): readonly ConnectorStyledRow[] =>
+                            ConnectorActivityText.entry(entry, width, now, state.tick),
+                    ),
+                    liveRoom - 1,
+                ).rows,
             );
         }
-        lines.push(
-            ...this.#take(
-                activity.running.map(
-                    (entry: ConnectorActivityEntry): readonly ConnectorStyledRow[] =>
-                        ConnectorActivityText.entry(entry, width, now, state.tick),
-                ),
-                Math.max(1, Math.floor((budget - lines.length) / 2)),
-            ).rows,
-        );
-        if (activity.programs.length > 0) {
-            lines.push(this.#blank());
+        if (liveRoom > 0 && activity.programs.length > 0) {
             lines.push(this.#heading('Programs running', '', width));
             lines.push(
                 ...this.#take(
@@ -333,35 +334,29 @@ export class ConnectorConsoleScreen {
                         (program: ConnectorActivityProgram): readonly ConnectorStyledRow[] =>
                             ConnectorActivityText.program(program, width, now),
                     ),
-                    Math.max(1, Math.floor((budget - lines.length) / 2)),
+                    liveRoom - 1,
                 ).rows,
             );
         }
-        lines.push(this.#blank());
-        const room: number = Math.max(1, budget - lines.length - 1);
-        const cards: readonly (readonly ConnectorStyledRow[])[] = activity.recent.map(
+        const scrollPage: number = Math.max(1, budget - lines.length - 1);
+        const history: readonly ConnectorStyledRow[] = activity.recent.flatMap(
             (entry: ConnectorActivityEntry): readonly ConnectorStyledRow[] =>
                 ConnectorActivityText.entry(entry, width, now, state.tick),
         );
-        let scrollLimit: number = cards.length;
-        let tail: number = 0;
-        while (scrollLimit > 0 && tail + (cards[scrollLimit - 1]?.length ?? 0) <= room) {
-            scrollLimit -= 1;
-            tail += cards[scrollLimit]?.length ?? 0;
-        }
-        scrollLimit = Math.min(scrollLimit, Math.max(0, cards.length - 1));
-        const start: number = Math.max(0, Math.min(state.scroll, scrollLimit));
-        const shown: ConnectorConsoleCards = this.#take(cards.slice(start), room);
+        const scrollLimit: number = Math.max(0, history.length - scrollPage);
+        const scroll: number = Math.max(0, Math.min(state.scroll, scrollLimit));
+        const end: number = Math.min(history.length, scroll + scrollPage);
         lines.push(
             this.#heading(
                 'History',
                 scrollLimit === 0
                     ? ''
-                    : (start + 1).toString() +
+                    : (scroll + 1).toString() +
                           '–' +
-                          (start + shown.count).toString() +
+                          end.toString() +
                           ' of ' +
-                          cards.length.toString(),
+                          history.length.toString() +
+                          ' lines',
                 width,
             ),
         );
@@ -378,8 +373,8 @@ export class ConnectorConsoleScreen {
                 ),
             );
         }
-        lines.push(...shown.rows);
-        return { lines, scrollLimit };
+        lines.push(...history.slice(scroll, end));
+        return { lines, scrollLimit, scroll, scrollPage };
     }
 
     /**
@@ -410,7 +405,11 @@ export class ConnectorConsoleScreen {
     }
 
     /** The rule, the prompt, the matching menu rows and the key hints, in that order. */
-    static #footer(state: ConnectorConsoleScreenState, width: number): ConnectorStyledRow[] {
+    static #footer(
+        state: ConnectorConsoleScreenState,
+        width: number,
+        height: number,
+    ): ConnectorStyledRow[] {
         const lines: ConnectorStyledRow[] = [
             ConnectorLogo.line([{ text: '─'.repeat(width), color: ConnectorTheme.faint }], width),
             ConnectorLogo.line(
@@ -421,24 +420,31 @@ export class ConnectorConsoleScreen {
                 width,
             ),
         ];
-        state.choices.forEach((choice: ConnectorConsoleChoice, index: number): void => {
-            const focused: boolean = index === state.input.selected;
-            lines.push(
-                ConnectorLogo.line(
-                    [
-                        {
-                            text: (focused ? '› /' : '  /') + choice.command.padEnd(15),
-                            color: focused ? ConnectorTheme.selected : ConnectorTheme.text,
-                        },
-                        {
-                            text: choice.description,
-                            color: focused ? ConnectorTheme.text : ConnectorTheme.muted,
-                        },
-                    ],
-                    width,
-                ),
-            );
-        });
+        const limit: number =
+            state.view === ConnectorConsoleView.Activity
+                ? Math.max(0, height - 6)
+                : state.choices.length;
+        const first: number = Math.max(0, state.input.selected - limit + 1);
+        state.choices
+            .slice(first, first + limit)
+            .forEach((choice: ConnectorConsoleChoice, index: number): void => {
+                const focused: boolean = first + index === state.input.selected;
+                lines.push(
+                    ConnectorLogo.line(
+                        [
+                            {
+                                text: (focused ? '› /' : '  /') + choice.command.padEnd(15),
+                                color: focused ? ConnectorTheme.selected : ConnectorTheme.text,
+                            },
+                            {
+                                text: choice.description,
+                                color: focused ? ConnectorTheme.text : ConnectorTheme.muted,
+                            },
+                        ],
+                        width,
+                    ),
+                );
+            });
         lines.push(
             ConnectorLogo.line(
                 [
@@ -447,8 +453,8 @@ export class ConnectorConsoleScreen {
                             state.choices.length > 0
                                 ? '↑↓ choose · Enter run · Tab complete · Esc close'
                                 : state.view === ConnectorConsoleView.Activity
-                                  ? '↑↓ scroll · Tab or Esc back · / menu · Ctrl+C quit'
-                                  : '/ menu · Tab activity · Ctrl+C quit',
+                                  ? '↑↓ / PgUp PgDn scroll · Home/End · Tab or Esc back'
+                                  : '/ menu · Tab activity history · Ctrl+C quit',
                         color: ConnectorTheme.dim,
                     },
                 ],

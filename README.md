@@ -101,18 +101,22 @@ Open the connector:
 - **macOS:** Applications → **Nerva Connector**.
 - **Linux:** open **Nerva Connector** from the applications menu, or run its installed `nerva-connector` launcher.
 
-On Windows the connector keeps running in the background when you minimize its window; the icon next to the
-clock brings it back. Right-click the icon to check for updates, turn **Start when I sign in** on or off, or quit.
-`/quit` closes it too.
+On Windows, a fresh launch from Start uses your default terminal app, including Windows Terminal when
+selected under Windows Terminal → Settings → Startup → Default terminal application. A connector that
+starts hidden at sign-in uses the classic console when you open it from the tray. Right-click the tray icon
+to check for updates, turn **Start when I sign in** on or off, or quit. `/quit` closes it too.
 
 The screen shows whether the computer is connected, what Nexa is doing right now, which programs it started are
-still running, and what it did recently. Press Tab to see the full history.
+still running, and the latest 100 completed requests from this run. Press Tab or type `/activity` to
+browse history. Use ↑/↓ to scroll line by line, Page Up/Page Down to move a page, and Home/End to jump
+to the newest or oldest lines. In terminals that send arrow keys for mouse-wheel scrolling in full-screen
+apps, the wheel scrolls the history too.
 
 Type `/` to open the menu:
 
 | Command         | What it does                                        |
 | --------------- | --------------------------------------------------- |
-| `/activity`     | Everything Nexa did on this computer                |
+| `/activity`     | Browse recent activity on this computer             |
 | `/settings`     | Change the name, the folder or what Nexa can do     |
 | `/disable-host` | Turn off full computer access                       |
 | `/reconnect`    | Connect again now                                   |

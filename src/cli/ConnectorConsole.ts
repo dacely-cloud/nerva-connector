@@ -25,7 +25,7 @@ export class ConnectorConsole implements Disposable {
     public static readonly commands: readonly ConnectorConsoleChoice[] = Object.freeze([
         {
             command: ConnectorConsoleCommand.Activity,
-            description: 'See everything Nexa did on this computer',
+            description: 'Browse recent activity on this computer',
         },
         {
             command: ConnectorConsoleCommand.Settings,
@@ -83,6 +83,7 @@ export class ConnectorConsole implements Disposable {
     #view: ConnectorConsoleView = ConnectorConsoleView.Home;
     #scroll: number = 0;
     #scrollLimit: number = 0;
+    #scrollPage: number = 0;
     #tick: number = 0;
     #timer: NodeJS.Timeout | null = null;
     #period: number = 0;
@@ -188,7 +189,9 @@ export class ConnectorConsole implements Disposable {
             Date.now(),
             performance.now(),
         );
+        this.#scroll = frame.scroll;
         this.#scrollLimit = frame.scrollLimit;
+        this.#scrollPage = frame.scrollPage;
         const output: string = this.#painter.paint(frame, columns, rows);
         if (output !== '') {
             process.stdout.write(output);
@@ -304,7 +307,13 @@ export class ConnectorConsole implements Disposable {
             }
         } else if (key.name === 'pageup' || key.name === 'pagedown') {
             if (this.#view === ConnectorConsoleView.Activity) {
-                this.#scrollBy(key.name === 'pageup' ? -10 : 10);
+                this.#scrollBy(key.name === 'pageup' ? -this.#scrollPage : this.#scrollPage);
+            }
+        } else if (key.name === 'home' || key.name === 'end') {
+            if (this.#view === ConnectorConsoleView.Activity && this.#text === '') {
+                this.#scroll = key.name === 'home' ? 0 : this.#scrollLimit;
+            } else {
+                this.#cursor = key.name === 'home' ? 0 : this.#text.length;
             }
         } else if (key.name === 'escape') {
             if (this.#text !== '') {

@@ -315,8 +315,41 @@ it('activity rows show agents and plain actions, hide secrets and control charac
     ).lines.join('\n');
     expect(history).toContain('History');
     expect(history).toContain('32 requests so far');
-    expect(history).toMatch(/6–\d+ of 31/u);
+    expect(history).toMatch(/6–\d+ of \d+ lines/u);
     expect(history).not.toContain('file29');
+});
+
+it('short activity views can scroll to the end of a single long entry', (): void => {
+    const feed: ConnectorActivityFeed = new ConnectorActivityFeed();
+    feed.begin({
+        jobId: 'job-a',
+        toolName: 'process_start',
+        argumentsJson: JSON.stringify({
+            command: 'Write-Output ' + 'wrapped content '.repeat(30) + 'LAST-WORD',
+        }),
+    }).finish(true, null);
+    const model: ConnectorConsoleModel = connected();
+    const activity: ConnectorActivitySnapshot = feed.snapshot();
+    const first: ConnectorConsoleRender = render(
+        model,
+        activity,
+        { view: ConnectorConsoleView.Activity },
+        32,
+        9,
+    );
+    expect(first.frame.scrollPage).toBe(4);
+    expect(first.frame.scrollLimit).toBeGreaterThan(first.frame.scrollPage);
+    expect(first.text).toContain('Write-Output');
+    expect(first.text).not.toContain('LAST-WORD');
+    const last: ConnectorConsoleRender = render(
+        model,
+        activity,
+        { view: ConnectorConsoleView.Activity, scroll: first.frame.scrollLimit },
+        32,
+        9,
+    );
+    expect(last.text).toContain('LAST-WORD');
+    expect(last.lines).toHaveLength(9);
 });
 
 it.skipIf(process.platform !== 'linux')(

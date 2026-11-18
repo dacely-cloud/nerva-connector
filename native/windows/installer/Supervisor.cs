@@ -36,6 +36,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     private IntPtr process = IntPtr.Zero;
     private int processId;
     private IntPtr window = IntPtr.Zero;
+    private bool classicWindow;
     private bool showWhenFound;
     private bool quitting;
     private string pendingUpdate;
@@ -60,7 +61,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         ui.CreateControl();
         IntPtr unused = ui.Handle;
         GC.KeepAlive(unused);
-        NexaConnectorSupervisorNative.SetConsoleCtrlHandler(ignoreControl, true);
         using (
             Stream icon = Assembly
                 .GetExecutingAssembly()
@@ -191,7 +191,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         base.Dispose(disposing);
     }
 
-    /// <summary>Starts the connector in a new console window that stays hidden until it is shown.</summary>
+    /// <summary>Toggles background startup at sign-in.</summary>
     private void ToggleStartup()
     {
         bool enabled = !NexaConnectorStartup.Enabled(self);

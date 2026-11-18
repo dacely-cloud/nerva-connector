@@ -12,8 +12,8 @@ using System.Windows.Forms;
 /// </summary>
 /// <remarks>
 /// The connector runs in its own console window, which this program hides and shows: clicking the Nerva icon opens it
-/// ready for commands, and minimizing it hides it again. Its close button is removed so the window cannot end the
-/// connector by accident; /quit in the connector, or Quit in the icon's menu, ends both. A connector that stops with an
+/// ready for commands. A foreground launch uses the user's default terminal. A classic console minimizes to the tray
+/// and has no close button; /quit in the connector, or Quit in the icon's menu, ends both. A connector that stops with an
 /// error is started again after a short wait. Only one copy runs per user: starting another just opens the window.
 ///
 /// With --background it starts without opening the window; the Run value written by /startup, the setup program and
