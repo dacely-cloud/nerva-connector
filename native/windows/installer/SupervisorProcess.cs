@@ -38,11 +38,10 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             new NexaConnectorSupervisorNative.StartupInfo();
         startup.cb = Marshal.SizeOf(typeof(NexaConnectorSupervisorNative.StartupInfo));
         startup.lpTitle = "Nerva Connector";
-        if (!showWhenFound)
-        {
-            startup.dwFlags = NexaConnectorSupervisorNative.UseShowWindow;
-            startup.wShowWindow = NexaConnectorSupervisorNative.HideWindow;
-        }
+        // A hidden launch keeps Windows from handing this window to the default terminal.
+        // The tray supervisor shows its own window once the close button has been disabled.
+        startup.dwFlags = NexaConnectorSupervisorNative.UseShowWindow;
+        startup.wShowWindow = NexaConnectorSupervisorNative.HideWindow;
         NexaConnectorSupervisorNative.ProcessInformation created;
         StringBuilder command = new StringBuilder(
             "\"" + node + "\" \"" + application + "\" connector"
@@ -71,7 +70,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         processId = created.dwProcessId;
         started = DateTime.UtcNow;
         window = IntPtr.Zero;
-        classicWindow = false;
         findAttempts = 0;
         finder.Start();
         IntPtr watched = process;
@@ -99,7 +97,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         log.Write("connector started");
     }
 
-    /// <summary>Finds the console and applies tray behavior only to the classic console window.</summary>
+    /// <summary>Finds the connector's window, disables its close button and applies the app icon.</summary>
     private void FindWindow()
     {
         if (process == IntPtr.Zero || findAttempts++ > 100)
@@ -119,12 +117,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         }
         finder.Stop();
         window = found;
-        classicWindow = NexaConnectorSupervisorNative.IsClassicConsole(window);
-        if (!classicWindow)
-        {
-            showWhenFound = false;
-            return;
-        }
         IntPtr system = NexaConnectorSupervisorNative.GetSystemMenu(window, false);
         if (system != IntPtr.Zero)
         {
@@ -163,17 +155,13 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             window,
             NexaConnectorSupervisorNative.IsIconic(window) ? 9 : 5
         );
-        if (classicWindow)
-        {
-            NexaConnectorSupervisorNative.SetForegroundWindow(window);
-        }
+        NexaConnectorSupervisorNative.SetForegroundWindow(window);
     }
 
     private void HideIfMinimized()
     {
         if (
-            classicWindow
-            && window != IntPtr.Zero
+            window != IntPtr.Zero
             && NexaConnectorSupervisorNative.IsWindowVisible(window)
             && NexaConnectorSupervisorNative.IsIconic(window)
         )
@@ -225,7 +213,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         NexaConnectorSupervisorNative.CloseHandle(process);
         process = IntPtr.Zero;
         window = IntPtr.Zero;
-        classicWindow = false;
         finder.Stop();
         log.Write("connector stopped with code " + code.ToString());
         if (pendingUpdate != null)

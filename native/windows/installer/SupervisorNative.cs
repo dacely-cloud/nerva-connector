@@ -14,14 +14,6 @@ internal static class NexaConnectorSupervisorNative
 
     internal delegate bool ConsoleHandler(uint type);
 
-    /// <summary>A delegated console handle is a proxy and does not own the terminal window's chrome.</summary>
-    internal static bool IsClassicConsole(IntPtr window)
-    {
-        StringBuilder name = new StringBuilder(32);
-        return GetClassNameW(window, name, name.Capacity) != 0
-            && string.Equals(name.ToString(), "ConsoleWindowClass", StringComparison.Ordinal);
-    }
-
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct StartupInfo
     {
@@ -79,9 +71,6 @@ internal static class NexaConnectorSupervisorNative
 
     [DllImport("kernel32.dll")]
     internal static extern IntPtr GetConsoleWindow();
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
-    private static extern int GetClassNameW(IntPtr window, StringBuilder name, int capacity);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

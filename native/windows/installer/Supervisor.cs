@@ -35,7 +35,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     private IntPtr process = IntPtr.Zero;
     private int processId;
     private IntPtr window = IntPtr.Zero;
-    private bool classicWindow;
     private bool showWhenFound;
     private bool quitting;
     private string pendingUpdate;

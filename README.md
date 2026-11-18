@@ -101,10 +101,9 @@ Open the connector:
 - **macOS:** Applications → **Nerva Connector**.
 - **Linux:** open **Nerva Connector** from the applications menu, or run its installed `nerva-connector` launcher.
 
-On Windows, a fresh launch from Start uses your default terminal app, including Windows Terminal when
-selected under Windows Terminal → Settings → Startup → Default terminal application. A connector that
-starts hidden at sign-in uses the classic console when you open it from the tray. Right-click the tray icon
-to check for updates, turn **Start when I sign in** on or off, or quit. `/quit` closes it too.
+On Windows, Nerva Connector opens its own classic console window. Minimize it to keep the connection running
+in the background. Click the Nerva icon next to the clock to reopen it. Right-click the icon to check for
+updates, turn **Start when I sign in** on or off, or quit. You can also type `/quit` to stop the connector.
 
 The console header shows the installed version. The screen also shows whether the computer is connected,
 what Nexa is doing, which programs it started are still running, and the latest 100 completed requests
