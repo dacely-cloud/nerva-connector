@@ -9,7 +9,7 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import {
     ConnectorFileFailure,
     type ConnectorFileRead,
@@ -23,7 +23,7 @@ import type {
     ConnectorFileAcknowledged,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
-import { ConnectorFileProof } from '../../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ExecutionJobsCodec } from '../../src/execution/ExecutionJobsCodec.js';
 import {
     type ExecutionRequest,
@@ -32,14 +32,14 @@ import {
     type ExecutionCompletion,
     type ExecutionAcknowledgment,
     type ExecutionAcknowledged,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionTermination } from '../../src/execution/ExecutionTypes.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import { ExecutionTermination } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import type {
     ExecutionOutputUpdate,
     ExecutionOutputAck,
-} from '../../src/execution/ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 
 /** Generated public descriptor captures are synthetic protocol fixtures; no local grant, native command or backend admission is asserted. */
 export class AuthorizedOperationFixture extends JointWorkspaceFixture {

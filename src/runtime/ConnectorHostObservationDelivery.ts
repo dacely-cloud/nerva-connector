@@ -3,7 +3,7 @@
 
 import { performance } from 'node:perf_hooks';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorHostObservationCodec as Codec } from '../protocol/ConnectorHostObservationCodec.js';
+import { ConnectorHostObservationCodec as Codec } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCodec.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
     ConnectorHostObservationLimits as Limits,

@@ -3,13 +3,13 @@
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ExecutionOutputCodec } from './ExecutionOutputCodec.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import {
     ExecutionTermination,
     ExecutionFailure,
     ExecutionSetupFailure,
     type ExecutionResult,
-} from './ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Untrusted remote or retained results must have finite canonical bytes and internally consistent terminal state. */
 export class ExecutionResultCodec {

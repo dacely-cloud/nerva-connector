@@ -6,7 +6,7 @@ import { mkdir, open, readFile, writeFile, rmdir, statfs, type FileHandle } from
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
-import type { ExecutionResourceLimits } from './ExecutionTypes.js';
+import type { ExecutionResourceLimits } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type { ExecutionCgroupIdentity } from './ExecutionCgroupIdentity.js';
 import { ExecutionCgroupIdentityCodec } from './ExecutionCgroupIdentityCodec.js';
 import type { ConnectorCapturedExecutionEffect } from '../runtime/ConnectorEffectContext.js';

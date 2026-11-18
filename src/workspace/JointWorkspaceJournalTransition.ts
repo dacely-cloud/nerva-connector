@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import {
     JointWorkspaceJournalLimits,
     type JointWorkspaceJournalSnapshot,

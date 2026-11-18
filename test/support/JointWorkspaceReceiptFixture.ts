@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { JointWorkspaceAssembly } from '../../src/workspace/JointWorkspaceAssembly.js';
-import { JointWorkspaceProof } from '../../src/workspace/JointWorkspaceProof.js';
-import { JointWorkspacePublicationProof } from '../../src/workspace/JointWorkspacePublicationProof.js';
-import { JointWorkspaceReceiptProof } from '../../src/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import type {
     JointWorkspaceReceiptBody,
     JointWorkspaceReceiptExpected,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
 import { JointWorkspaceFixture } from './JointWorkspaceFixture.js';
+import { SigningKey } from '../../src/identity/SigningKey.js';
 
 /** Public synthetic lease data and fresh disposable keys qualify receipt protocol only, never backend commit or physical capture. */
 export class JointWorkspaceReceiptFixture extends JointWorkspaceFixture {
     public readonly nowMs: bigint = 10000n;
     public readonly publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         this.device,
         {
             enrollmentId: this.expected.enrollmentId,

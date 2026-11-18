@@ -29,7 +29,7 @@ import type {
     ExecutionCompletion,
     ExecutionAcknowledgment,
     ExecutionAcknowledged,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { QualificationInput } from './QualificationInput.js';
 
 /** Finite audited customer-only peer exercises normal dual authentication and durable command ownership over pinned SSH. */

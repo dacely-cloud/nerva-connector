@@ -29,14 +29,3 @@ export interface ConnectorStorageCodec<TState> {
     read(raw: unknown, sourceSha256: string): TState;
     encode(state: TState): string;
 }
-
-/** One finite original dispatch, independent of a reconnect lease, identifies the permitted local effect. */
-export interface ConnectorOperationDispatch<TRequest> {
-    readonly jobId: string;
-    readonly sequence: bigint;
-    readonly dispatchId: string;
-    readonly requestHash: string;
-    readonly authorization: ConnectorAuthorization;
-    readonly admissionHash: string;
-    readonly request: TRequest;
-}

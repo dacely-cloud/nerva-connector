@@ -4,12 +4,12 @@
 import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import type {
     ExecutionCompletion,
     ExecutionAcknowledgment,
     ExecutionPermit,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionInteractiveReady } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import { ExecutionInputJournalValidation } from './ExecutionInputJournalValidation.js';
 import {

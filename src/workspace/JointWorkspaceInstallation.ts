@@ -35,7 +35,7 @@ import type {
 } from './JointWorkspaceJournalTypes.js';
 import { JointWorkspaceCapture } from './JointWorkspaceCapture.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceRequestProtection } from './JointWorkspaceRequestProtection.js';
 
 /** Local completion publishes only explicit mappings and signed descriptor metadata; it is never backend activation. */

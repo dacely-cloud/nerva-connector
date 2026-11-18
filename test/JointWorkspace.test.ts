@@ -9,7 +9,7 @@ import {
 } from '../src/workspace/JointWorkspaceAssembly.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceCommitment } from '../src/workspace/JointWorkspaceCommitment.js';
 import type {
     JointWorkspaceBinding,
@@ -24,6 +24,7 @@ import {
     SignaturePurpose,
 } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import type { WorkspaceIdentity } from '../src/workspace/WorkspaceIdentity.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 it.each([ConnectorFileMode.ReadOnly, ConnectorFileMode.ReadWrite])(
     'assembles a complete immutable %s descriptor from equal captured roots with different aliases',
@@ -39,7 +40,7 @@ it.each([ConnectorFileMode.ReadOnly, ConnectorFileMode.ReadWrite])(
         expect(descriptor.binding.revision).toBe(9007199254740993n);
         expect(descriptor.binding.fileRootId).not.toBe(descriptor.binding.executionRootId);
         expect(descriptor.binding.access).toBe(access);
-        expect(JointWorkspaceProof.verify(fixture.expected, descriptor)).toBe(true);
+        expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, descriptor)).toBe(true);
         expect(JointWorkspaceCodec.decode(JointWorkspaceCodec.encode(descriptor))).toEqual(
             descriptor,
         );
@@ -172,13 +173,13 @@ it('binds every immutable field and fixed lane position while keeping randomized
         },
     ];
     for (const binding of changed) {
-        expect(JointWorkspaceProof.verify(fixture.expected, { ...descriptor, binding })).toBe(
-            false,
-        );
+        expect(
+            JointWorkspaceProof.verify(SigningKey, fixture.expected, { ...descriptor, binding }),
+        ).toBe(false);
         expect(JointWorkspaceProof.bindingSha256(binding) === hash).toBe(false);
     }
     const resigned: JointWorkspaceDescriptor = JointWorkspaceProof.sign(fixture.device, original);
-    expect(JointWorkspaceProof.verify(fixture.expected, resigned)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, resigned)).toBe(true);
     expect(JointWorkspaceProof.bindingSha256(resigned.binding)).toBe(hash);
 });
 
@@ -199,7 +200,7 @@ it('requires both signature components, a distinct purpose and the receiver-sele
         }
         signature[index] = previous ^ 1;
         expect(
-            JointWorkspaceProof.verify(fixture.expected, {
+            JointWorkspaceProof.verify(SigningKey, fixture.expected, {
                 ...descriptor,
                 signature: signature.toString('base64url'),
             }),
@@ -209,7 +210,9 @@ it('requires both signature components, a distinct purpose and the receiver-sele
         SignaturePurpose.Inventory,
         JointWorkspaceProof.transcript(descriptor.binding),
     );
-    expect(JointWorkspaceProof.verify(fixture.expected, { ...descriptor, signature })).toBe(false);
+    expect(
+        JointWorkspaceProof.verify(SigningKey, fixture.expected, { ...descriptor, signature }),
+    ).toBe(false);
     const scopes: readonly JointWorkspaceScope[] = [
         { ...fixture.expected, authorityId: 'other-authority' },
         { ...fixture.expected, environmentId: 'other-environment' },
@@ -217,7 +220,7 @@ it('requires both signature components, a distinct purpose and the receiver-sele
         { ...fixture.expected, devicePublicKey: other.device.publicKey },
     ];
     for (const scope of scopes) {
-        expect(JointWorkspaceProof.verify(scope, descriptor)).toBe(false);
+        expect(JointWorkspaceProof.verify(SigningKey, scope, descriptor)).toBe(false);
     }
 });
 
@@ -233,11 +236,11 @@ it('requires an authenticated strictly newer revision within the expected scope,
         ...first.binding,
         revision: first.binding.revision + 1n,
     });
-    expect(JointWorkspaceProof.supersedes(fixture.expected, first, next)).toBe(true);
-    expect(JointWorkspaceProof.supersedes(fixture.expected, next, first)).toBe(false);
-    expect(JointWorkspaceProof.supersedes(fixture.expected, first, first)).toBe(false);
+    expect(JointWorkspaceProof.supersedes(SigningKey, fixture.expected, first, next)).toBe(true);
+    expect(JointWorkspaceProof.supersedes(SigningKey, fixture.expected, next, first)).toBe(false);
+    expect(JointWorkspaceProof.supersedes(SigningKey, fixture.expected, first, first)).toBe(false);
     expect(
-        JointWorkspaceProof.supersedes(fixture.expected, first, {
+        JointWorkspaceProof.supersedes(SigningKey, fixture.expected, first, {
             ...next,
             signature: first.signature,
         }),

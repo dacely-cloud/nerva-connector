@@ -13,7 +13,7 @@ import type { ConnectorClientFiles } from '../src/runtime/ConnectorClientFiles.j
 import { ConnectorClientState } from '../src/runtime/ConnectorClientState.js';
 import type { ConnectorActivityHandle } from '../src/runtime/ConnectorActivity.js';
 import type { ConnectorCapturedFileEffect } from '../src/runtime/ConnectorEffectContext.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ConnectorFilesystem } from '../src/runtime/ConnectorFilesystem.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import type { ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
@@ -137,7 +137,7 @@ async function start(
         permits: (): number =>
             verify.mock.calls.filter(
                 (call: Parameters<typeof ConnectorFileProof.verify>): boolean =>
-                    call[1] === SignaturePurpose.OperationFilePermit,
+                    call[2] === SignaturePurpose.OperationFilePermit,
             ).length,
     };
 }

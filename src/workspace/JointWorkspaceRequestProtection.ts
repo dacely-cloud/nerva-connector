@@ -8,7 +8,7 @@ import {
     type ConnectorFilePolicyDefinition,
 } from '../runtime/ConnectorFilePolicy.js';
 import type { ExecutionPolicy } from '../execution/ExecutionPolicy.js';
-import type { ExecutionRootPolicy } from '../execution/ExecutionPolicyTypes.js';
+import type { ExecutionRootPolicy } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import type { ConnectorFileRootPolicy } from '../runtime/ConnectorFileRoots.js';
 
 /** The local approval request must remain outside existing customer data/staging grants rather than being editable by their tools. */

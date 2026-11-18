@@ -3,7 +3,7 @@
 
 import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorLinkCodec } from '../protocol/ConnectorLinkCodec.js';
+import { ConnectorLinkCodec } from 'nerva-connector-protocol/protocol/ConnectorLinkCodec.js';
 import type { ConnectorTrustedAuthority } from './ConnectorAuthorityPin.js';
 import { createHash } from 'node:crypto';
 import { ConnectorSocket } from '../networking/ConnectorSocket.js';
@@ -23,7 +23,7 @@ import {
     ConnectorLinkFailure,
     ConnectorLinkLimits,
     type ConnectorLinkProof,
-} from '../protocol/ConnectorLink.js';
+} from 'nerva-connector-protocol/protocol/ConnectorLink.js';
 
 /** Pairing uses only the bounded linking lane, never an enrolled session or a file permit. */
 export type ConnectorPairReply =

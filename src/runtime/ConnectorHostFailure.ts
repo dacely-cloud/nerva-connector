@@ -8,7 +8,7 @@ import {
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
     type ConnectorHostResponse,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** Public error codes and effect certainty remain separate; native diagnostics never cross the paired relay. */
 export class ConnectorHostFailure {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionInputCodec } from '../src/execution/ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { expect, it } from 'vitest';
 import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
 import {
@@ -11,9 +11,9 @@ import {
 import {
     type ExecutionProgramPolicy,
     type ExecutionPolicyDefinition,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Explicit position grants exercise arguments a program could otherwise interpret as options or code. */
 const program: ExecutionProgramPolicy = {

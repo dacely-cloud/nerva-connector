@@ -34,13 +34,13 @@ import {
     ExecutionAppArmorProfile,
     type ExecutionAppArmorDefinition,
 } from '../src/execution/ExecutionAppArmorProfile.js';
-import { ExecutionInteractiveRuleCodec } from '../src/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import { ExecutionInputKind } from 'nerva-connector-protocol/execution/ExecutionInput.js';
 import {
     type ExecutionPolicyDefinition,
     type ExecutionProgramPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 
 /** Composition is exercised for both production mode sets without invoking native payloads. */

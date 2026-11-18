@@ -9,12 +9,12 @@ import { dirname, join } from 'node:path';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { SigningKey } from '../identity/SigningKey.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostPlatform,
     ConnectorHostTool,
     type ConnectorHostProfile,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';

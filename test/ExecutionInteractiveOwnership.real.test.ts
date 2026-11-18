@@ -23,13 +23,16 @@ import {
 } from '../src/execution/ExecutionInputJournalTypes.js';
 import type { ExecutionInteractiveDeliveryReply } from '../src/execution/ExecutionInteractiveOwnershipTypes.js';
 import { ExecutionInteractiveRetirementPending } from '../src/execution/ExecutionInteractiveRetirementPending.js';
-import { ExecutionTermination, type ExecutionResult } from '../src/execution/ExecutionTypes.js';
+import {
+    ExecutionTermination,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionInteractiveProof } from 'nerva-connector-protocol/execution/ExecutionInteractiveProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import type {
     ExecutionCompletion,
     ExecutionAcknowledgment,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import {
     ExecutionInputDelivery,
     type ExecutionInteractiveDeliveryClient,

@@ -23,22 +23,22 @@ import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
 import { ExecutionPairPreparation } from '../src/execution/ExecutionPairPreparation.js';
 import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import { ExecutionInteractiveRuleCodec } from '../src/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import { ExecutionInputKind } from 'nerva-connector-protocol/execution/ExecutionInput.js';
 import { ExecutionMachineFixture } from './support/ExecutionMachineFixture.js';
 import {
     type ExecutionPolicyDefinition,
     type ExecutionProgramPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { type ExecutionPublication } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionPublication } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import type { ExecutionInteractiveInvocationRule } from 'nerva-connector-protocol/execution/ExecutionInteractiveInvocation.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type { ExecutionDeliveryLink } from '../src/execution/ExecutionDeliveryLink.js';
 import type { ConnectorClientFrame } from '../src/protocol/ConnectorTransport.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { SigningKey } from '../src/identity/SigningKey.js';
 

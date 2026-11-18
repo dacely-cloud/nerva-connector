@@ -16,7 +16,7 @@ import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connecto
 import {
     ConnectorHostTool as Tool,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import type { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import type { ConnectorHostObservationOwned as Owned } from '../src/runtime/ConnectorHostObservationOwners.js';

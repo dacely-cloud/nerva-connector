@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import type { Duplex } from 'node:stream';
 import { ExecutionMachineBoundary } from 'nerva-connector-protocol/execution/ExecutionMachineBoundary.js';
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { ExecutionNativePipeCodec as Codec } from './ExecutionNativePipeCodec.js';
 import {
     ExecutionNativePipeCommandKind,

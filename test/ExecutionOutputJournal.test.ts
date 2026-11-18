@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ConnectorEffectKind } from '../src/runtime/ConnectorEffectContext.js';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -15,14 +15,17 @@ import {
 } from '../src/runtime/ConnectorOperationJournal.js';
 import { ConnectorJournalState } from '../src/runtime/ConnectorJournalState.js';
 import { ConnectorPrivateDirectory } from '../src/runtime/ConnectorPrivateDirectory.js';
-import type { ConnectorOperationDispatch } from '../src/runtime/ConnectorOperationCodec.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionResultCodec } from '../src/execution/ExecutionResultCodec.js';
-import { ExecutionFailure, type ExecutionResult } from '../src/execution/ExecutionTypes.js';
+import {
+    ExecutionFailure,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Each case owns its encrypted journal and device key, without native execution or test storage fallbacks. */
 class OutputFixture implements AsyncDisposable {

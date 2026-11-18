@@ -11,7 +11,7 @@ import {
     type ConnectorMigrationOriginal,
 } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigration.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
-import { ConnectorAdmissionMigrationProof } from '../protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import type { ConnectorJournalMigrationSource } from './ConnectorJournalMigrationSource.js';
@@ -19,13 +19,14 @@ import {
     ConnectorJournalSchema,
     ConnectorJournalState,
     type ConnectorJournalSnapshot,
-    type ConnectorJournalReceipt,
     type ConnectorJournalPending,
 } from './ConnectorJournalState.js';
+import { type ConnectorJournalReceipt } from 'nerva-connector-protocol/protocol/ConnectorJournalReceipt.js';
 import {
     ConnectorOperationPurpose,
     type ConnectorOperationCodec,
 } from './ConnectorOperationCodec.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Only a verified authority approval can add explicit admission fields to an exact stopped historical source. */
 export class ConnectorApprovedJournalMigration {
@@ -50,7 +51,14 @@ export class ConnectorApprovedJournalMigration {
             enrollmentId: identity.settings.enrollmentId,
             devicePublicKey: identity.publicKey,
         };
-        if (!ConnectorAdmissionMigrationProof.verifyApproval(expected, captured.plan, captured)) {
+        if (
+            !ConnectorAdmissionMigrationProof.verifyApproval(
+                SigningKey,
+                expected,
+                captured.plan,
+                captured,
+            )
+        ) {
             throw new Error('Historical admission migration approval is invalid');
         }
         const lane: ConnectorMigrationLane = this.lane(purpose);

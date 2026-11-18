@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ConnectorEffectKind, type ConnectorEffectContext } from './ConnectorEffectContext.js';
 import { ConnectorEffectContextCodec } from './ConnectorEffectContextCodec.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import { ConnectorFilesCodec } from 'nerva-connector-protocol/protocol/ConnectorFilesCodec.js';
 import type { ConnectorFileOperation } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import type { ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ConnectorFileProof } from './ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import {
     ConnectorOperationPurpose,
     type ConnectorOperationCodec,

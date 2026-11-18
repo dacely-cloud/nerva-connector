@@ -12,11 +12,14 @@ import {
     type ExecutionInputJournalRecordState,
 } from './ExecutionInputJournalTypes.js';
 import type { ExecutionInputJournalOwner } from './ExecutionInputJournalOwner.js';
-import type { ExecutionPermit, ExecutionRequest } from './ExecutionJobs.js';
+import type {
+    ExecutionPermit,
+    ExecutionRequest,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionInteractiveReady } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
-import type { ExecutionResult } from './ExecutionTypes.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 
 /** Captured main mode, original and incarnation authenticate input recovery and terminal evidence. */
 export class ExecutionInteractiveMain {

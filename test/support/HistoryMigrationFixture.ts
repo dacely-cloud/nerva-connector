@@ -5,14 +5,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import { ConnectorJournalStore } from '../../src/runtime/ConnectorJournalStore.js';
-import { type ExecutionRequest } from '../../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJournalCodec } from '../../src/execution/ExecutionJournalCodec.js';
 import { ExecutionJobsCodec } from '../../src/execution/ExecutionJobsCodec.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionResultCodec } from '../../src/execution/ExecutionResultCodec.js';
-import { ExecutionFailure, type ExecutionResult } from '../../src/execution/ExecutionTypes.js';
+import {
+    ExecutionFailure,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { FileHistoryFixture } from './FileHistoryFixture.js';
 import {
     OriginalJournalFixtureCodec,

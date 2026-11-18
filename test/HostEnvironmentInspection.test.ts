@@ -6,7 +6,10 @@ import { expect, it } from 'vitest';
 import { HostEnvironmentInspection } from '../src/host/HostEnvironmentInspection.js';
 import { HostEnvironmentValidation } from '../src/host/HostEnvironmentValidation.js';
 import type { HostEnvironmentReport } from '../src/host/HostEnvironmentTypes.js';
-import { ConnectorHostErrorCode, ConnectorHostPlatform } from '../src/protocol/ConnectorHost.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostPlatform,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     HostEnvironmentFixture,
     type HostEnvironmentFixtureSource,

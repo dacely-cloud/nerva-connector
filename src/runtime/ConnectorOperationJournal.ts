@@ -13,13 +13,11 @@ import {
     ConnectorJournalState,
     type ConnectorJournalSnapshot,
     type ConnectorJournalPending,
-    type ConnectorJournalReceipt,
 } from './ConnectorJournalState.js';
+import { type ConnectorJournalReceipt } from 'nerva-connector-protocol/protocol/ConnectorJournalReceipt.js';
 import type { ConnectorProgressCodec } from './ConnectorProgressCodec.js';
-import type {
-    ConnectorOperationCodec,
-    ConnectorOperationDispatch,
-} from './ConnectorOperationCodec.js';
+import type { ConnectorOperationCodec } from './ConnectorOperationCodec.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 
 /** Only a newly persisted Started record permits invoking the authorized effect in this process. */
 export interface ConnectorJournalClaim<TRequest, TResponse, TProgress = never> {

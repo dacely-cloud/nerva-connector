@@ -10,7 +10,7 @@ import {
     CapturedHistoryGroup,
 } from './support/ExecutionHistoryCapturedFixture.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
-import type { ConnectorOperationDispatch } from '../src/runtime/ConnectorOperationCodec.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 import { ConnectorEffectContextCodec } from '../src/runtime/ConnectorEffectContextCodec.js';
 import {
     ConnectorEffectKind,
@@ -20,12 +20,12 @@ import {
     ConnectorPrivateDirectory,
     ConnectorDirectoryPurpose,
 } from '../src/runtime/ConnectorPrivateDirectory.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import { ExecutionFailure } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { ExecutionFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionCgroup } from '../src/execution/ExecutionCgroup.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
 import {

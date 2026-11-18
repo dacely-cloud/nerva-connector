@@ -5,7 +5,7 @@ import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it, vi, type MockInstance } from 'vitest';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceJournal } from '../src/workspace/JointWorkspaceJournal.js';
 import { JointWorkspaceJournalContext } from '../src/workspace/JointWorkspaceJournalContext.js';
 import { JointWorkspaceJournalStore } from '../src/workspace/JointWorkspaceJournalStore.js';

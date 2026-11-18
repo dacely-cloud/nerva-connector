@@ -3,7 +3,7 @@
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { HostProcessReportCodec, type HostProcessReport } from './HostProcessReport.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** Control readiness, lifecycle evidence and failed shutdown remain distinct private messages. */
 export const HostProcessWindowsFrameKind = {

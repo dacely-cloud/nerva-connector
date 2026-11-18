@@ -13,8 +13,8 @@ import type {
     ConnectorFileOperation,
     ConnectorFilePermit,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import {
     ConnectorFrameKind,
     ConnectorTransportCodec,
@@ -24,11 +24,14 @@ import {
     ExecutionJobLimits,
     type ExecutionPermit,
     type ExecutionRequest,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
 import { ExecutionOutputProtocol } from '../src/execution/ExecutionOutputProtocol.js';
-import type { ExecutionOutputUpdate, ExecutionOutput } from '../src/execution/ExecutionOutput.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import type {
+    ExecutionOutputUpdate,
+    ExecutionOutput,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { AuthorizedOperationFixture } from './support/AuthorizedOperationFixture.js';
 
 it('a full65536-byte upload chunk plus full authorization and hybrid permit fits the unchanged131072-byte file frame', (): void => {

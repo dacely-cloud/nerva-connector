@@ -4,16 +4,16 @@
 import {
     type ExecutionPolicyDefinition,
     type ExecutionProgramPolicy,
-} from '../../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionMachineRuleCodec } from '../../src/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
 import {
     ExecutionMachineMode,
     type ExecutionMachineInvocationRule,
     type ExecutionMachineShellInvocation,
     type ExecutionMachineArgvInvocation,
 } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Pure fixtures contain no opened files, installed native helpers or live credentials. */
 export class ExecutionMachineFixture {

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { expect, it } from 'vitest';
-import { ExecutionInputCodec } from '../src/execution/ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionMachineInvocationCodec as Codec } from '../src/execution/ExecutionMachineInvocationCodec.js';
+import { ExecutionMachineInvocationCodec as Codec } from 'nerva-connector-protocol/execution/ExecutionMachineInvocationCodec.js';
 import {
     ExecutionMachineMode,
     type ExecutionMachineInvocationRule,
@@ -12,7 +12,7 @@ import {
     type ExecutionMachineShellInvocation,
     type ExecutionMachineEnvironmentValue,
 } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
-import { ExecutionMachineRuleCodec } from '../src/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
 import { ExecutionMachineBoundary } from 'nerva-connector-protocol/execution/ExecutionMachineBoundary.js';
 import { ExecutionMachineFixture as Fixture } from './support/ExecutionMachineFixture.js';
 

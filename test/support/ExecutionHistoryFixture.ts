@@ -14,22 +14,22 @@ import {
     ConnectorJournalState,
     type ConnectorJournalSnapshot,
 } from '../../src/runtime/ConnectorJournalState.js';
-import type { ConnectorOperationDispatch } from '../../src/runtime/ConnectorOperationCodec.js';
-import { type ExecutionRequest } from '../../src/execution/ExecutionJobs.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJournalCodec } from '../../src/execution/ExecutionJournalCodec.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import {
     ExecutionWorkspaceAccess,
     type ExecutionResult,
-} from '../../src/execution/ExecutionTypes.js';
-import type { ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 export class ExecutionHistoryFixture implements AsyncDisposable {
     public readonly authority: ExecutionIdentity;

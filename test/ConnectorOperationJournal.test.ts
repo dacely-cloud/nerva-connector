@@ -5,7 +5,7 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { JournalEffectFixture } from './support/JournalEffectFixture.js';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import { IdentityLengths } from 'nerva-connector-protocol/identity/IdentityFormat.js';
@@ -18,12 +18,12 @@ import {
     type ConnectorJournalClaim,
 } from '../src/runtime/ConnectorOperationJournal.js';
 import { ConnectorFileJournalCodec } from '../src/runtime/ConnectorFileJournalCodec.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionRequest } from '../src/execution/ExecutionJobs.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import type {
     ConnectorFileOperation,

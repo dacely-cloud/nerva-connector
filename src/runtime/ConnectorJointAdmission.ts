@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ConnectorFilePermit } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import type { ExecutionPermit } from '../execution/ExecutionJobs.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 
 /** One existing metadata owner checks current lease readiness and the same borrowed capabilities before a fresh joint effect. */
 export interface ConnectorJointAdmission {

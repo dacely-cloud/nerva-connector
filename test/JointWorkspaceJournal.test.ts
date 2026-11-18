@@ -5,7 +5,7 @@ import { readFile, stat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { JointWorkspaceJournal } from '../src/workspace/JointWorkspaceJournal.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';

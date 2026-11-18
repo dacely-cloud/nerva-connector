@@ -10,22 +10,22 @@ import { ExecutionFixture } from './ExecutionFixture.js';
 import { ExecutionIdentity } from './ExecutionIdentity.js';
 import { ExecutionPolicy } from '../../src/execution/ExecutionPolicy.js';
 import { ExecutionPolicyCodec } from '../../src/execution/ExecutionPolicyCodec.js';
-import { type ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+import { type ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 import {
     ExecutionWorkspaceAccess,
     type ExecutionResult,
-} from '../../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionClient } from '../../src/execution/ExecutionClient.js';
 import {
     type ExecutionRequest,
     type ExecutionPermit,
     type ExecutionCompletion,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJournalCodec } from '../../src/execution/ExecutionJournalCodec.js';
 import type { ExecutionClientSettings } from '../../src/execution/ExecutionClientSettings.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import { ConnectorOperationJournal } from '../../src/runtime/ConnectorOperationJournal.js';
 import {

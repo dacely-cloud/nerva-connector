@@ -9,7 +9,7 @@ import { ConnectorFilePolicy } from '../src/runtime/ConnectorFilePolicy.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.js';
 import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
-import type { ExecutionPolicyDefinition } from '../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
 import { JointWorkspaceConfiguration } from '../src/workspace/JointWorkspaceConfiguration.js';
 import { FileHistoryFixture } from './support/FileHistoryFixture.js';

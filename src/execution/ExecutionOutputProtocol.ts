@@ -12,7 +12,7 @@ import type {
     ExecutionOutputOriginal,
     ExecutionOutputUpdate,
     ExecutionOutputAck,
-} from './ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 
 /** Exact binary-prefix contracts never turn provisional output into successful completion. */
 export class ExecutionOutputProtocol {

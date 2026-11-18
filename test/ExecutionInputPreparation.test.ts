@@ -16,8 +16,8 @@ import {
 import { ExecutionInputJournalValidation } from '../src/execution/ExecutionInputJournalValidation.js';
 import { ExecutionInputRecordCodec } from '../src/execution/ExecutionInputRecordCodec.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
-import type { ExecutionPermit } from '../src/execution/ExecutionJobs.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 
 function preparation(
     fixture: Fixture,

@@ -12,7 +12,7 @@ import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.
 import { ExecutionPairPreparation } from '../src/execution/ExecutionPairPreparation.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { type ExecutionPublication } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionPublication } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';

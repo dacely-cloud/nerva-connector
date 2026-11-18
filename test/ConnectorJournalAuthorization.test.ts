@@ -12,8 +12,8 @@ import {
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import {
     ConnectorFileMode,
     ConnectorFileFailure,
@@ -25,19 +25,17 @@ import {
     ConnectorJournalState,
 } from '../src/runtime/ConnectorJournalState.js';
 import { ConnectorFileJournalCodec } from '../src/runtime/ConnectorFileJournalCodec.js';
-import type {
-    ConnectorJournalReceipt,
-    ConnectorJournalPending,
-} from '../src/runtime/ConnectorJournalState.js';
+import type { ConnectorJournalReceipt } from 'nerva-connector-protocol/protocol/ConnectorJournalReceipt.js';
+import type { ConnectorJournalPending } from '../src/runtime/ConnectorJournalState.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ConnectorOperationDispatch } from '../src/runtime/ConnectorOperationCodec.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
-import { ExecutionFailure } from '../src/execution/ExecutionTypes.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionResultCodec } from '../src/execution/ExecutionResultCodec.js';
 
 const helper: string | undefined = process.env['NERVA_CONNECTOR_FILES_HELPER'];

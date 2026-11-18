@@ -8,11 +8,11 @@ import { expect, it } from 'vitest';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import type { ExecutionPolicyDefinition } from '../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import type { ConnectorClientIdentity } from '../src/runtime/ConnectorClientConfiguration.js';
 import { InspectionFixture } from './support/InspectionFixture.js';
 

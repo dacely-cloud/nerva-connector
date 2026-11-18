@@ -6,9 +6,9 @@ import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/Conn
 import type { ConnectorStorageCodec } from '../runtime/ConnectorOperationCodec.js';
 import { JointWorkspaceJournalContext } from './JointWorkspaceJournalContext.js';
 import { JointWorkspacePublicationCodec } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationCodec.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceReceiptCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptCodec.js';
-import { JointWorkspaceReceiptProof } from './JointWorkspaceReceiptProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import type {
     JointWorkspaceReceiptExpected,
@@ -22,6 +22,7 @@ import {
     type JointWorkspaceJournalPair,
     type JointWorkspaceJournalAccepted,
 } from './JointWorkspaceJournalTypes.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Authenticated plaintext still undergoes strict ordering, immutable-reference, proof and installation validation. */
 export class JointWorkspaceJournalState implements ConnectorStorageCodec<JointWorkspaceJournalSnapshot> {
@@ -217,7 +218,13 @@ export class JointWorkspaceJournalState implements ConnectorStorageCodec<JointWo
             leaseExpiresAtMs,
         };
         if (
-            !JointWorkspaceReceiptProof.verify(expected, publication, receipt, receipt.issuedAtMs)
+            !JointWorkspaceReceiptProof.verify(
+                SigningKey,
+                expected,
+                publication,
+                receipt,
+                receipt.issuedAtMs,
+            )
         ) {
             throw new Error('Retained workspace acceptance does not authenticate');
         }

@@ -17,11 +17,12 @@ import {
 } from '../protocol/ConnectorTransport.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
-import { JointWorkspacePublicationProof } from './JointWorkspacePublicationProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
 import type { JointWorkspaceReceiptExpected } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
-import { JointWorkspaceRetryProof } from './JointWorkspaceRetryProof.js';
+import { JointWorkspaceRetryProof } from 'nerva-connector-protocol/workspace/JointWorkspaceRetryProof.js';
 import { JointWorkspaceRetryReason } from 'nerva-connector-protocol/workspace/JointWorkspaceRetry.js';
 import type { JointWorkspaceJournal } from './JointWorkspaceJournal.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Only an authenticated acceptance or authenticated finite wait can finish an exact publication attempt. */
 export type JointWorkspaceDeliveryReply =
@@ -201,7 +202,7 @@ export class JointWorkspaceDelivery implements AsyncDisposable {
                 pending !== null && pending.leaseId === link.leaseId
                     ? pending
                     : await this.journal.publish(
-                          JointWorkspacePublicationProof.sign(this.identity.key, {
+                          JointWorkspacePublicationProof.sign(SigningKey, this.identity.key, {
                               enrollmentId: expected.enrollmentId,
                               slot: expected.slot,
                               leaseId: expected.leaseId,
@@ -223,7 +224,15 @@ export class JointWorkspaceDelivery implements AsyncDisposable {
             }
             const now: bigint = BigInt(Date.now());
             if (frame.kind === ConnectorFrameKind.JointWorkspaceRetry) {
-                if (!JointWorkspaceRetryProof.verify(expected, publication, frame.retry, now)) {
+                if (
+                    !JointWorkspaceRetryProof.verify(
+                        SigningKey,
+                        expected,
+                        publication,
+                        frame.retry,
+                        now,
+                    )
+                ) {
                     throw new Error('Workspace publication wait was not authenticated');
                 }
                 this.progress?.({

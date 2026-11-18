@@ -9,7 +9,7 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import type {
     ConnectorFilePermit,
@@ -17,7 +17,7 @@ import type {
     ConnectorFileAcknowledgment,
     ConnectorFileAcknowledged,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
 import {
     type ExecutionPermit,
@@ -25,10 +25,10 @@ import {
     type ExecutionCompletion,
     type ExecutionAcknowledgment,
     type ExecutionAcknowledged,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { AuthorizedOperationFixture } from './support/AuthorizedOperationFixture.js';
 
 type AuthorizedWireValue =
@@ -173,7 +173,9 @@ it('the stable semantic admission hash cannot authorize swapping a separately va
         binding: JointWorkspaceProof.sign(fixture.device, fixture.descriptor.binding),
     };
     expect(authorization.binding.signature).not.toBe(fixture.descriptor.signature);
-    expect(JointWorkspaceProof.verify(fixture.expected, authorization.binding)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, authorization.binding)).toBe(
+        true,
+    );
     const file: ConnectorFilePermit = fixture.filePermit();
     expect(ConnectorAuthorizationProof.file(file.requestHash, authorization)).toBe(
         file.admissionHash,

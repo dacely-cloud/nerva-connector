@@ -26,7 +26,7 @@ import type {
     ExecutionCancellation,
     ExecutionCompletion,
     ExecutionAcknowledgment,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionInputJournalTerminalProof } from './ExecutionInputJournalTerminalProof.js';
 import { ExecutionInputJournalStore } from './ExecutionInputJournalStore.js';
 import { ExecutionInputJournalStorage } from './ExecutionInputJournalStorage.js';

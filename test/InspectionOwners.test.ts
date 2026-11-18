@@ -6,7 +6,7 @@ import { mkdir, rename, stat } from 'node:fs/promises';
 import { expect, it } from 'vitest';
 import { ConnectorFilesystem } from '../src/runtime/ConnectorFilesystem.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import type { WorkspaceInspection } from '../src/workspace/WorkspaceInspection.js';
 import { InspectionFixture } from './support/InspectionFixture.js';

@@ -3,18 +3,18 @@
 
 import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { HostOperationError } from '../host/HostOperationError.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostErrorCode,
     type ConnectorHostPermit,
     type ConnectorHostResponse,
     type ConnectorHostPublication,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorHostObservationLimits } from 'nerva-connector-protocol/protocol/ConnectorHostObservation.js';
 import type {
     ConnectorHostObservationCapability as Capability,
     ConnectorHostObservationActivation as Activation,
-} from '../protocol/ConnectorHostObservationCapability.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import { ConnectorHostObservationCapabilityCodec } from '../protocol/ConnectorHostObservationCapabilityCodec.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import { ConnectorHostGrant } from './ConnectorHostGrant.js';

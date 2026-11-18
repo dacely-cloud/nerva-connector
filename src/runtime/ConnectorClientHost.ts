@@ -3,7 +3,7 @@
 
 import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostLimits,
     ConnectorHostTool,
@@ -15,7 +15,7 @@ import {
     type ConnectorHostCompletion,
     type ConnectorHostAcknowledgment,
     type ConnectorHostAcknowledged,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostWorkspace } from '../host/HostWorkspace.js';
 import { HostTerminal } from '../host/HostTerminal.js';
 import { HostMcpProtocol, type HostJsonObject } from '../host/HostMcpProtocol.js';
@@ -33,14 +33,14 @@ import { ConnectorHostProof } from './ConnectorHostProof.js';
 import { ConnectorHostFailure } from './ConnectorHostFailure.js';
 import { ConnectorHostObservationAccess } from './ConnectorHostObservationAccess.js';
 import { HostOperationError } from '../host/HostOperationError.js';
-import { ConnectorHostObservedStart } from '../protocol/ConnectorHostObservationProtocol.js';
-import { ConnectorHostObservedStartCodec as ObservedStart } from '../protocol/ConnectorHostObservedStartCodec.js';
+import { ConnectorHostObservedStart } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
+import { ConnectorHostObservedStartCodec as ObservedStart } from 'nerva-connector-protocol/protocol/ConnectorHostObservedStartCodec.js';
 import {
     type ConnectorHostObservationConnection,
     type ConnectorHostObservationOwned,
     type ConnectorHostObservationPrepared,
 } from './ConnectorHostObservationOwners.js';
-import type { ConnectorHostObservationCapability } from '../protocol/ConnectorHostObservationCapability.js';
+import type { ConnectorHostObservationCapability } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import type { ConnectorActivityHandle, ConnectorActivitySink } from './ConnectorActivity.js';
 import { ConnectorConnectionLog } from './ConnectorConnectionLog.js';
 import { HostDesktopError } from '../host/HostDesktopError.js';

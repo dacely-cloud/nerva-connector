@@ -3,14 +3,14 @@
 
 import { createHash } from 'node:crypto';
 import { expect, it } from 'vitest';
-import { ExecutionInputCodec } from '../src/execution/ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import {
     type ExecutionPolicyDefinition,
     type ExecutionProgramPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionMachineRuleCodec as Codec } from '../src/execution/ExecutionMachineRuleCodec.js';
-import { ExecutionMachineInvocationCodec } from '../src/execution/ExecutionMachineInvocationCodec.js';
+import { ExecutionMachineRuleCodec as Codec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionMachineInvocationCodec } from 'nerva-connector-protocol/execution/ExecutionMachineInvocationCodec.js';
 import type { ExecutionMachineInvocationRule } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
 import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
@@ -18,12 +18,12 @@ import {
     type ExecutionProfile,
     type ExecutionPublication,
     type ExecutionRequest,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { executionPublicProfile } from '../src/execution/ExecutionPublicProfile.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ExecutionMachineFixture as Fixture } from './support/ExecutionMachineFixture.js';

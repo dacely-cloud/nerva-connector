@@ -3,7 +3,8 @@
 
 import { expect, it } from 'vitest';
 import { AdmissionMigrationFixture } from './support/AdmissionMigrationFixture.js';
-import { ConnectorAdmissionMigrationProof as Proof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof as Proof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
 import {
@@ -61,6 +62,7 @@ it('all three largest original source headers fit their bounded plan without tru
 it('a complete three-source approval preserves six explicit full joint descriptors and both signature envelopes within its own budget', (): void => {
     using fixture: AdmissionMigrationFixture = new AdmissionMigrationFixture();
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(fixture.plan, fixture.authorization),

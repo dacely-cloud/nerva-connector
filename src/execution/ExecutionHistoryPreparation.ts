@@ -9,14 +9,17 @@ import {
 } from '../runtime/ConnectorPrivateDirectory.js';
 import { ConnectorOperationJournal } from '../runtime/ConnectorOperationJournal.js';
 import type { ConnectorJournalPending } from '../runtime/ConnectorJournalState.js';
-import { type ExecutionRequest } from './ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJournalCodec } from './ExecutionJournalCodec.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
-import { ExecutionFailure, type ExecutionResult } from './ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import {
+    ExecutionFailure,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ConnectorEffectKind } from '../runtime/ConnectorEffectContext.js';
 import { ExecutionCgroup } from './ExecutionCgroup.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionResultCodec } from './ExecutionResultCodec.js';
 
 /** Saved terminal results still require their original remote acknowledgment before policy activation. */

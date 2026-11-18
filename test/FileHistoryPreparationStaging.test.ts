@@ -27,7 +27,7 @@ import type {
     ConnectorFilePermit,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 
 const helpers: boolean =
     process.platform === 'linux' && process.env['NERVA_CONNECTOR_FILES_HELPER'] !== undefined;

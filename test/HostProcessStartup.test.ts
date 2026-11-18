@@ -7,7 +7,10 @@ import { HostProcessStartup } from '../src/host/HostProcessStartup.js';
 import { HostOperationError } from '../src/host/HostOperationError.js';
 import { HostProcessWindowsProtocol } from '../src/host/HostProcessWindowsProtocol.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
-import { ConnectorHostErrorCode, ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostTool,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 it('authenticated broker readiness alone never settles native creation', async (): Promise<void> => {
     const startup: HostProcessStartup = new HostProcessStartup(true);

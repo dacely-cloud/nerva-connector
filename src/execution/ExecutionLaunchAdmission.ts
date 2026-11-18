@@ -5,10 +5,13 @@ import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { ConnectorClientSession } from '../runtime/ConnectorClientSession.js';
 import type { ConnectorClientIdentity } from '../runtime/ConnectorClientConfiguration.js';
 import type { ConnectorOperationJournal } from '../runtime/ConnectorOperationJournal.js';
-import type { ExecutionPermit, ExecutionRequest } from './ExecutionJobs.js';
+import type {
+    ExecutionPermit,
+    ExecutionRequest,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import type { ExecutionResult } from './ExecutionTypes.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 
 /** Reuses captured verified start authority across local awaits without renewing it or bounding already-running lifetime. */
 export class ExecutionLaunchAdmission {

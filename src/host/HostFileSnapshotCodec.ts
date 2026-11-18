@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { BigIntStats } from 'node:fs';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { HostFileIdentity } from './HostFileIdentity.js';

@@ -9,7 +9,7 @@ import {
     ConnectorHostOutcome,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import { ConnectorActivityFeed } from '../src/runtime/ConnectorActivityFeed.js';
 import { ConnectorConsole } from '../src/cli/ConnectorConsole.js';

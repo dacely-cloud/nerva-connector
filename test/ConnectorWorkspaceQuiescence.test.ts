@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { expect, it, vi, type MockInstance } from 'vitest';
 import { ConnectorClientFiles } from '../src/runtime/ConnectorClientFiles.js';
 import { ConnectorFilesystem } from '../src/runtime/ConnectorFilesystem.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import type {
     ConnectorFileAcknowledgment,
@@ -23,7 +23,10 @@ import { ExecutionClient } from '../src/execution/ExecutionClient.js';
 import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.js';
 import { ExecutionPairPreparation } from '../src/execution/ExecutionPairPreparation.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import { type ExecutionPermit, type ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
+import {
+    type ExecutionPermit,
+    type ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';

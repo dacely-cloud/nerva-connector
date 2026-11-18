@@ -8,8 +8,8 @@ import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityForm
 import { ConnectorHostPermissionWizard } from '../src/cli/ConnectorHostPermissionWizard.js';
 import { ConnectorSetupSession } from '../src/cli/ConnectorSetupSession.js';
 import { ConnectorApproval } from '../src/cli/ConnectorPromptTypes.js';
-import { ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
-import { ConnectorHostCodec } from '../src/protocol/ConnectorHostCodec.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import { ConnectorHostGrant } from '../src/runtime/ConnectorHostGrant.js';
 import type { ConnectorHostLocalGrant } from '../src/runtime/ConnectorHostGrantTypes.js';
 import { ConnectorSetupAccess } from '../src/runtime/ConnectorSetupProfile.js';

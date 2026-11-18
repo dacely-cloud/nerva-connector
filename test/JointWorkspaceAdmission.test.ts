@@ -7,16 +7,16 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it, vi, type MockInstance } from 'vitest';
 import { JointDeviceFixture } from './support/JointDeviceFixture.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
-import { JointWorkspaceReceiptProof } from '../src/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import {
     ConnectorFileAction,
     ConnectorWriteMode,
@@ -31,9 +31,12 @@ import {
     type ConnectorClientFrame,
 } from '../src/protocol/ConnectorTransport.js';
 import type { ExecutionDeliveryLink } from '../src/execution/ExecutionDeliveryLink.js';
-import type { ExecutionPermit, ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
-import type { ExecutionOutputAck } from '../src/execution/ExecutionOutput.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import type {
+    ExecutionPermit,
+    ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionOutputAck } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 
 const enabled: boolean =

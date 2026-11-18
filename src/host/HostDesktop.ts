@@ -12,7 +12,7 @@ import { HostDesktopKeyChord } from './HostDesktopKeyChord.js';
 import { HostDesktopError } from './HostDesktopError.js';
 import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
 import { HostOperationError } from './HostOperationError.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostDesktopMac } from './HostDesktopMac.js';
 import {
     HostDesktopPointerAction,
@@ -235,7 +235,10 @@ export class HostDesktop implements AsyncDisposable {
         return await this.#operate(async (): Promise<void> => {
             this.#active();
             await this.#available();
-            if ((target !== undefined || field !== undefined) && !(this.#driver instanceof HostDesktopWindows)) {
+            if (
+                (target !== undefined || field !== undefined) &&
+                !(this.#driver instanceof HostDesktopWindows)
+            ) {
                 throw new HostOperationError(
                     ConnectorHostErrorCode.Unsupported,
                     'Window targets require Windows desktop input',

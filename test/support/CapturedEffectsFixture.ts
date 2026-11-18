@@ -13,7 +13,7 @@ import type { ConnectorMigrationApproval } from 'nerva-connector-protocol/protoc
 import { ConnectorHistoryMigration } from '../../src/runtime/ConnectorHistoryMigration.js';
 import { ConnectorFileJournalCodec } from '../../src/runtime/ConnectorFileJournalCodec.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
-import { ConnectorFileProof } from '../../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import {
     ConnectorFileMode,

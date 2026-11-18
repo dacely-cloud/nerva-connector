@@ -11,11 +11,11 @@ import {
     type ExecutionInteractiveReady,
     type ExecutionInteractiveReadyBody,
 } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
-import { ExecutionInteractiveLaunchCodec } from './ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import { ExecutionInteractiveProof as Proof } from 'nerva-connector-protocol/execution/ExecutionInteractiveProof.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import type { ExecutionPermit } from './ExecutionJobs.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type {
     ExecutionInputPermit,
     ExecutionInputReceipt,

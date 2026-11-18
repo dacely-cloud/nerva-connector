@@ -21,10 +21,10 @@ import type { JointWorkspaceJournalIdentity } from '../workspace/JointWorkspaceJ
 import { JointWorkspaceCapture } from '../workspace/JointWorkspaceCapture.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import type { ConnectorFilePermit } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import type { ExecutionPermit } from '../execution/ExecutionJobs.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ConnectorJointAdmission } from './ConnectorJointAdmission.js';
 import { JointWorkspaceAdmission } from '../workspace/JointWorkspaceAdmission.js';
-import { JointWorkspaceProof } from '../workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import {
     JointWorkspaceDelivery,
     type JointWorkspaceDeliveryReply,

@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import { RuntimeMigrationApprovalFixture } from './support/RuntimeMigrationApprovalFixture.js';
-import { ConnectorAdmissionMigrationProof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import {
     ConnectorMigrationLane,
     type ConnectorMigrationApproval,
@@ -33,7 +33,7 @@ import {
 } from '../src/runtime/ConnectorOperationCodec.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 
 /** This isolated storage test payload is not accepted by any remote file/command capability. */
 interface StorageRequest {

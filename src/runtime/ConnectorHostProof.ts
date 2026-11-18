@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { SigningKey } from '../identity/SigningKey.js';
 import type { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import type {
     ConnectorHostPublication,
     ConnectorHostPermit,
@@ -12,7 +12,7 @@ import type {
     ConnectorHostAcknowledgment,
     ConnectorHostAcknowledged,
     ConnectorHostResponse,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** Purpose-separated host transcripts bind full data through their validated exact commitments. */
 export class ConnectorHostProof {

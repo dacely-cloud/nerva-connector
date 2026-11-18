@@ -8,8 +8,8 @@ import {
     ExecutionInteractiveEncoding as Encoding,
 } from 'nerva-connector-protocol/execution/ExecutionInteractiveFields.js';
 import { ExecutionInteractiveCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveCodec.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
-import { ExecutionInteractiveLaunchCodec } from './ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import { ExecutionInputCursorCodec } from 'nerva-connector-protocol/execution/ExecutionInputCursorCodec.js';
 import { ExecutionInputPermitCodec } from 'nerva-connector-protocol/execution/ExecutionInputPermitCodec.js';
 import { ExecutionInputReceiptCodec } from 'nerva-connector-protocol/execution/ExecutionInputReceiptCodec.js';

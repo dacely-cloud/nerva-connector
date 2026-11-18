@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionInputCodec } from '../src/execution/ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { randomBytes, createHash } from 'node:crypto';
 import { writeFile, rename, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -14,11 +14,11 @@ import {
     ExecutionWorkspaceAccess,
     ExecutionTermination,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     type ExecutionInvocation,
     type ExecutionPolicyDefinition,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 import { ExecutionFixture } from './support/ExecutionFixture.js';
 

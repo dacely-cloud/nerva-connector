@@ -20,7 +20,7 @@ import {
     ConnectorDirectoryPurpose,
 } from '../src/runtime/ConnectorPrivateDirectory.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
+import type { ExecutionCompletion } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import {
     ExecutionInputDisposition,
     type ExecutionInputPermit,

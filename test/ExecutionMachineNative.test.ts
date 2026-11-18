@@ -11,9 +11,9 @@ import type {
     ExecutionPolicyDefinition,
     ExecutionProgramPolicy,
     ExecutionRootPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
-import { ExecutionMachineRuleCodec } from '../src/execution/ExecutionMachineRuleCodec.js';
-import { ExecutionMachineInvocationCodec } from '../src/execution/ExecutionMachineInvocationCodec.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionMachineInvocationCodec } from 'nerva-connector-protocol/execution/ExecutionMachineInvocationCodec.js';
 import {
     ExecutionMachineMode,
     type ExecutionMachineInput,
@@ -25,7 +25,7 @@ import {
     ExecutionSetupFailure,
     ExecutionFailure,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionFixture } from './support/ExecutionFixture.js';
 import { ExecutionMachineFixture } from './support/ExecutionMachineFixture.js';
 

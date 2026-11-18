@@ -8,19 +8,27 @@ import {
     type ConnectorEffectContext,
 } from '../runtime/ConnectorEffectContext.js';
 import type { ExecutionCgroupIdentity } from './ExecutionCgroupIdentity.js';
-import type { ConnectorOperationDispatch } from '../runtime/ConnectorOperationCodec.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 import type {
     ConnectorOperationJournal,
     ConnectorJournalClaim,
 } from '../runtime/ConnectorOperationJournal.js';
-import type { ExecutionRequest, ExecutionPermit, ExecutionCancellation } from './ExecutionJobs.js';
+import type {
+    ExecutionRequest,
+    ExecutionPermit,
+    ExecutionCancellation,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionPolicy } from './ExecutionPolicy.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionOutputRetentionError } from './ExecutionOutputRetentionError.js';
 import { ExecutionCgroup } from './ExecutionCgroup.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionResultCodec } from './ExecutionResultCodec.js';
-import { ExecutionFailure, ExecutionTermination, type ExecutionResult } from './ExecutionTypes.js';
+import {
+    ExecutionFailure,
+    ExecutionTermination,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionLaunchAdmission } from './ExecutionLaunchAdmission.js';
 import { randomBytes } from 'node:crypto';
 import type { ConnectorClientSession } from '../runtime/ConnectorClientSession.js';

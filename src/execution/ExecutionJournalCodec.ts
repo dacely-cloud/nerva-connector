@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import {
     ConnectorEffectKind,
     type ConnectorEffectContext,
@@ -12,14 +12,18 @@ import {
     ConnectorOperationPurpose,
     type ConnectorOperationCodec,
 } from '../runtime/ConnectorOperationCodec.js';
-import { type ExecutionRequest } from './ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionFailure, ExecutionTermination, type ExecutionResult } from './ExecutionTypes.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import {
+    ExecutionFailure,
+    ExecutionTermination,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
 import { ExecutionResultCodec } from './ExecutionResultCodec.js';
 import { ExecutionOutputCodec } from './ExecutionOutputCodec.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 
 /** Command state uses the shared durable owner with separate keys, lock, storage and validated execution semantics. */
 export class ExecutionJournalCodec implements ConnectorOperationCodec<

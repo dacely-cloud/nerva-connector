@@ -3,11 +3,11 @@
 
 import { createHash } from 'node:crypto';
 import { AuthorizedOperationFixture } from './AuthorizedOperationFixture.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorOperationSchema } from 'nerva-connector-protocol/protocol/ConnectorOperationSchema.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ConnectorAdmissionMigrationProof } from '../../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import {
     ConnectorMigrationLane,
     type ConnectorMigrationPlan,

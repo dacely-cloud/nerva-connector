@@ -23,12 +23,15 @@ import {
     type ExecutionInputCursor,
 } from 'nerva-connector-protocol/execution/ExecutionInput.js';
 import { ExecutionInputPermitCodec } from 'nerva-connector-protocol/execution/ExecutionInputPermitCodec.js';
-import type { ExecutionPermit, ExecutionRequest } from '../../src/execution/ExecutionJobs.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import type {
+    ExecutionPermit,
+    ExecutionRequest,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionInteractiveProof as Proof } from 'nerva-connector-protocol/execution/ExecutionInteractiveProof.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Only the owning test may advance its receiver clock; global time and native sandbox deadlines remain untouched. */
 export class ExecutionInteractiveRuntimeClock {

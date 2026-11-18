@@ -4,8 +4,11 @@
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/ConnectorDeviceCodec.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
-import type { ConnectorHostRequest, ConnectorHostResponse } from '../protocol/ConnectorHost.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
+import type {
+    ConnectorHostRequest,
+    ConnectorHostResponse,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorHostProof } from './ConnectorHostProof.js';
 import type { ConnectorStorageCodec } from './ConnectorOperationCodec.js';
 

@@ -12,9 +12,9 @@ import {
     ExecutionWorkspaceAccess,
     ExecutionTermination,
     ExecutionFailure,
-    type ExecutionBootstrap,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from '../src/execution/ExecutionBootstrap.js';
 import { ExecutionFixture } from './support/ExecutionFixture.js';
 import {
     ExecutionPipeFixture,

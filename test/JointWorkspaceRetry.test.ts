@@ -7,18 +7,19 @@ import {
     SignaturePurpose,
 } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { JointWorkspaceRetryCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceRetryCodec.js';
-import { JointWorkspaceRetryProof } from '../src/workspace/JointWorkspaceRetryProof.js';
+import { JointWorkspaceRetryProof } from 'nerva-connector-protocol/workspace/JointWorkspaceRetryProof.js';
 import {
     JointWorkspaceRetryReason,
     JointWorkspaceRetryLimits,
     type JointWorkspaceRetry,
     type JointWorkspaceRetryBody,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceRetry.js';
-import { JointWorkspaceReceiptProof } from '../src/workspace/JointWorkspaceReceiptProof.js';
-import { JointWorkspacePublicationProof } from '../src/workspace/JointWorkspacePublicationProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import { ConnectorTransportCodec, ConnectorFrameKind } from '../src/protocol/ConnectorTransport.js';
 import { JointWorkspaceReceiptFixture } from './support/JointWorkspaceReceiptFixture.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 /** Synthetic public lease data tests proofs and codecs only, not device physical-root evidence. */
 function body(fixture: JointWorkspaceReceiptFixture): JointWorkspaceRetryBody {
@@ -36,7 +37,13 @@ it('verifies a fixed signed delay for one exact publication without producing ac
         body(fixture),
     );
     expect(
-        JointWorkspaceRetryProof.verify(fixture.current, fixture.publication, retry, fixture.nowMs),
+        JointWorkspaceRetryProof.verify(
+            SigningKey,
+            fixture.current,
+            fixture.publication,
+            retry,
+            fixture.nowMs,
+        ),
     ).toBe(true);
     expect(retry.bindingRevision).toBe(9007199254740993n);
     expect(JointWorkspaceRetryCodec.decode(JointWorkspaceRetryCodec.encode(retry))).toEqual(retry);
@@ -58,6 +65,7 @@ it('requires both components and a retry purpose distinct from activation', (): 
         signature[offset] = (signature[offset] ?? 0) ^ 1;
         expect(
             JointWorkspaceRetryProof.verify(
+                SigningKey,
                 fixture.current,
                 fixture.publication,
                 { ...retry, signature: signature.toString('base64url') },
@@ -67,6 +75,7 @@ it('requires both components and a retry purpose distinct from activation', (): 
     }
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             {
@@ -81,6 +90,7 @@ it('requires both components and a retry purpose distinct from activation', (): 
     ).toBe(false);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             { ...fixture.receiptBody, signature: retry.signature },
@@ -96,6 +106,7 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
         body(fixture),
     );
     const replacement: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         {
             enrollmentId: fixture.publication.enrollmentId,
@@ -106,10 +117,17 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
     );
     expect(replacement.signature).not.toBe(fixture.publication.signature);
     expect(
-        JointWorkspaceRetryProof.verify(fixture.current, replacement, retry, fixture.nowMs),
+        JointWorkspaceRetryProof.verify(
+            SigningKey,
+            fixture.current,
+            replacement,
+            retry,
+            fixture.nowMs,
+        ),
     ).toBe(false);
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             retry,
@@ -118,6 +136,7 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
     ).toBe(false);
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             { ...fixture.current, leaseId: Buffer.alloc(32, 9).toString('base64url') },
             fixture.publication,
             retry,
@@ -126,6 +145,7 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
     ).toBe(false);
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             { ...fixture.current, environmentId: 'different-environment' },
             fixture.publication,
             retry,
@@ -134,6 +154,7 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
     ).toBe(false);
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             { ...retry, retryAfterMs: 0 },
@@ -142,6 +163,7 @@ it('rejects changed full publication signatures, stale leases, delay tampering a
     ).toBe(false);
     expect(
         JointWorkspaceRetryProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             { ...retry, reason: JointWorkspaceRetryReason.OriginalPending },

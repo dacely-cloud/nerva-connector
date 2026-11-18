@@ -4,9 +4,9 @@
 import { expect, it } from 'vitest';
 import { JointWorkspaceFixture } from './support/JointWorkspaceFixture.js';
 import { JointWorkspaceAssembly } from '../src/workspace/JointWorkspaceAssembly.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspacePublicationCodec } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationCodec.js';
-import { JointWorkspacePublicationProof } from '../src/workspace/JointWorkspacePublicationProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import type {
     JointWorkspacePublication,
@@ -17,6 +17,7 @@ import {
     IdentityLengths,
     SignaturePurpose,
 } from 'nerva-connector-protocol/identity/IdentityFormat.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 /** Canonical generated-lease test data is public and never used for device authentication. */
 class PublicationFixture extends JointWorkspaceFixture {
@@ -46,10 +47,13 @@ class PublicationFixture extends JointWorkspaceFixture {
 it('publishes both proofs on the current primary lease while retaining an immutable lease-independent binding', (): void => {
     using fixture: PublicationFixture = new PublicationFixture();
     const publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         fixture.body,
     );
-    expect(JointWorkspacePublicationProof.verify(fixture.current, publication)).toBe(true);
+    expect(JointWorkspacePublicationProof.verify(SigningKey, fixture.current, publication)).toBe(
+        true,
+    );
     expect(
         JointWorkspacePublicationCodec.decode(JointWorkspacePublicationCodec.encode(publication)),
     ).toEqual(publication);
@@ -57,11 +61,13 @@ it('publishes both proofs on the current primary lease while retaining an immuta
     expect(Object.isFrozen(publication)).toBe(true);
     expect(Object.isFrozen(publication.descriptor.binding.executionJournals)).toBe(true);
     const replacement: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         { ...fixture.body, leaseId: fixture.replacementLeaseId },
     );
     expect(
         JointWorkspacePublicationProof.verify(
+            SigningKey,
             { ...fixture.current, leaseId: fixture.replacementLeaseId },
             replacement,
         ),
@@ -84,6 +90,7 @@ it('rejects replay into replacement lease, another connection slot or foreign de
     using fixture: PublicationFixture = new PublicationFixture();
     using other: JointWorkspaceFixture = new JointWorkspaceFixture();
     const publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         fixture.body,
     );
@@ -96,16 +103,16 @@ it('rejects replay into replacement lease, another connection slot or foreign de
         { ...fixture.current, devicePublicKey: other.device.publicKey },
     ];
     for (const current of invalid) {
-        expect(JointWorkspacePublicationProof.verify(current, publication)).toBe(false);
+        expect(JointWorkspacePublicationProof.verify(SigningKey, current, publication)).toBe(false);
     }
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             leaseId: fixture.replacementLeaseId,
         }),
     ).toBe(false);
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             enrollmentId: 'conn_' + 'b'.repeat(64),
         }),
@@ -115,6 +122,7 @@ it('rejects replay into replacement lease, another connection slot or foreign de
 it('requires both composite proof components on both the descriptor and its distinct-purpose publication', (): void => {
     using fixture: PublicationFixture = new PublicationFixture();
     const publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         fixture.body,
     );
@@ -138,11 +146,13 @@ it('requires both composite proof components on both the descriptor and its dist
                           signature: signature.toString('base64url'),
                       },
                   };
-            expect(JointWorkspacePublicationProof.verify(fixture.current, changed)).toBe(false);
+            expect(
+                JointWorkspacePublicationProof.verify(SigningKey, fixture.current, changed),
+            ).toBe(false);
         }
     }
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             signature: fixture.device.sign(
                 SignaturePurpose.JointWorkspaceBinding,
@@ -151,7 +161,7 @@ it('requires both composite proof components on both the descriptor and its dist
         }),
     ).toBe(false);
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             descriptor: {
                 ...publication.descriptor,
@@ -168,6 +178,7 @@ it('rejects descriptor substitution even when the substituted descriptor has a v
     using fixture: PublicationFixture = new PublicationFixture();
     using other: JointWorkspaceFixture = new JointWorkspaceFixture();
     const publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         fixture.body,
     );
@@ -175,18 +186,18 @@ it('rejects descriptor substitution even when the substituted descriptor has a v
         ...fixture.descriptor.binding,
         revision: fixture.descriptor.binding.revision + 1n,
     });
-    expect(JointWorkspaceProof.verify(fixture.expected, replacement)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, replacement)).toBe(true);
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             descriptor: replacement,
         }),
     ).toBe(false);
     expect((): JointWorkspacePublication =>
-        JointWorkspacePublicationProof.sign(other.device, fixture.body),
+        JointWorkspacePublicationProof.sign(SigningKey, other.device, fixture.body),
     ).toThrow('device');
     expect((): JointWorkspacePublication =>
-        JointWorkspacePublicationProof.sign(fixture.device, {
+        JointWorkspacePublicationProof.sign(SigningKey, fixture.device, {
             ...fixture.body,
             descriptor: { ...replacement, signature: fixture.descriptor.signature },
         }),
@@ -196,7 +207,7 @@ it('rejects descriptor substitution even when the substituted descriptor has a v
         fixture.descriptor.binding,
     );
     expect(
-        JointWorkspacePublicationProof.verify(fixture.current, {
+        JointWorkspacePublicationProof.verify(SigningKey, fixture.current, {
             ...publication,
             descriptor: resigned,
         }),
@@ -206,6 +217,7 @@ it('rejects descriptor substitution even when the substituted descriptor has a v
 it('refuses malformed, extra, unsupported and oversized envelopes before proof verification', (): void => {
     using fixture: PublicationFixture = new PublicationFixture();
     const publication: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         fixture.body,
     );
@@ -250,7 +262,7 @@ it('bundles and round-trips the publication codec without Node or Buffer globals
     const vm: typeof import('node:vm') = await import('node:vm');
     using fixture: PublicationFixture = new PublicationFixture();
     const input: string = JointWorkspacePublicationCodec.encode(
-        JointWorkspacePublicationProof.sign(fixture.device, fixture.body),
+        JointWorkspacePublicationProof.sign(SigningKey, fixture.device, fixture.body),
     );
     const bundle: import('rolldown').RolldownBuild = await bundler.rolldown({
         input: 'node_modules/nerva-connector-protocol/dist/workspace/JointWorkspacePublicationCodec.js',

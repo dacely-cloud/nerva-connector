@@ -22,9 +22,9 @@ import {
     ExecutionFailure,
     ExecutionTermination,
     ExecutionWorkspaceAccess,
-    type ExecutionBootstrap,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from '../src/execution/ExecutionBootstrap.js';
 import { ExecutionPipeDelayedBroker } from './support/ExecutionPipeDelayedBroker.js';
 import { ExecutionPipeDescendantFixture } from './support/ExecutionPipeDescendantFixture.js';
 import type { ExecutionFixture } from './support/ExecutionFixture.js';

@@ -5,7 +5,7 @@ import type { ConnectorClientExecution } from './ConnectorClientExecution.js';
 import type { ConnectorClientHost, ConnectorHostDelivery } from './ConnectorClientHost.js';
 import { ConnectorClientLane, type ConnectorLaneReply } from './ConnectorClientLane.js';
 import { ConnectorHostObservationClient } from './ConnectorHostObservationClient.js';
-import { ConnectorHostLimits } from '../protocol/ConnectorHost.js';
+import { ConnectorHostLimits } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorHostServerFrame } from '../protocol/ConnectorTransport.js';
 import type { ExecutionDeliveryLink } from '../execution/ExecutionDeliveryLink.js';
 import { SystemInfo } from '../system/SystemInfo.js';
@@ -44,7 +44,7 @@ import type {
 import type {
     ConnectorHostAcknowledgment,
     ConnectorHostPermit,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** A metadata run borrows the exact current primary lifetime and owns only its separate abort and socket task. */
 interface ConnectorHostObservationRun {

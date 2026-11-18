@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { createHash } from 'node:crypto';
-import type { SigningKey } from '../identity/SigningKey.js';
+import { SigningKey } from '../identity/SigningKey.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import type {
@@ -10,13 +10,13 @@ import type {
     JointWorkspaceScope,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import type { JointWorkspaceJournalIdentity } from './JointWorkspaceJournalTypes.js';
 import type {
     JointWorkspacePublicationExpected,
     JointWorkspacePublication,
 } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
-import { JointWorkspacePublicationProof } from './JointWorkspacePublicationProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
 
 /** Validated public installation context is immutable and supplies all cryptographic expected identities. */
 export class JointWorkspaceJournalContext {
@@ -54,7 +54,7 @@ export class JointWorkspaceJournalContext {
     public descriptor(value: JointWorkspaceDescriptor): JointWorkspaceDescriptor {
         const descriptor: JointWorkspaceDescriptor = JointWorkspaceCodec.descriptorValue(value);
         if (
-            !JointWorkspaceProof.verify(this.scope, descriptor) ||
+            !JointWorkspaceProof.verify(SigningKey, this.scope, descriptor) ||
             descriptor.binding.fileJournalId !== this.identity.fileJournalId ||
             descriptor.binding.executionJournals.first !== this.identity.executionJournals.first ||
             descriptor.binding.executionJournals.second !== this.identity.executionJournals.second
@@ -71,7 +71,7 @@ export class JointWorkspaceJournalContext {
             slot: 0,
             leaseId: value.leaseId,
         };
-        if (!JointWorkspacePublicationProof.verify(expected, value)) {
+        if (!JointWorkspacePublicationProof.verify(SigningKey, expected, value)) {
             throw new Error(
                 'Joint workspace publication does not authenticate under this installation',
             );

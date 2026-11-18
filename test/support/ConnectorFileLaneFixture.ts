@@ -9,7 +9,7 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import type {
     ConnectorFileOperation,
@@ -22,7 +22,7 @@ import type { ConnectorActivitySink } from '../../src/runtime/ConnectorActivity.
 import { ConnectorClientFiles } from '../../src/runtime/ConnectorClientFiles.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import { ConnectorFilePolicy } from '../../src/runtime/ConnectorFilePolicy.js';
-import { ConnectorFileProof } from '../../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ConnectorSessionFixture } from './ConnectorSessionFixture.js';
 import { FilesystemFixture } from './FilesystemFixture.js';
 

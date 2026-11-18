@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ConnectorHostLimits } from '../protocol/ConnectorHost.js';
+import { ConnectorHostLimits } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { request as httpsRequest } from 'node:https';
 import type { ClientRequest, IncomingHttpHeaders, IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';

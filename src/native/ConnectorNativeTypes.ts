@@ -4,8 +4,8 @@
 import type {
     ExecutionRootPolicy,
     ExecutionProgramPolicy,
-} from '../execution/ExecutionPolicyTypes.js';
-import type { ExecutionResourceLimits } from '../execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
+import type { ExecutionResourceLimits } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 
 /** A runtime contains only explicitly approved readonly data or executable bytes. */

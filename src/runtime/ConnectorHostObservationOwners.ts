@@ -14,13 +14,13 @@ import {
     type ConnectorHostPermit,
     type ConnectorHostResponse,
     type ConnectorHostProfile,
-} from '../protocol/ConnectorHost.js';
-import { ConnectorHostObservedStartCodec as Capture } from '../protocol/ConnectorHostObservedStartCodec.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostObservedStartCodec as Capture } from 'nerva-connector-protocol/protocol/ConnectorHostObservedStartCodec.js';
 import type {
     ConnectorHostObservationCapture,
     ConnectorHostObservedArguments,
-} from '../protocol/ConnectorHostObservedStart.js';
-import { ConnectorHostObservationCodec as Codec } from '../protocol/ConnectorHostObservationCodec.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservedStart.js';
+import { ConnectorHostObservationCodec as Codec } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCodec.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
     ConnectorHostObservationLimits as Limits,
@@ -33,7 +33,7 @@ import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js'
 import type { ConnectorHostLocalGrant } from './ConnectorHostGrantTypes.js';
 import { ConnectorHostProof } from './ConnectorHostProof.js';
 import { HostOperationError } from '../host/HostOperationError.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** The live connection supplies its already authenticated primary lease, not a value taken from the observation frame. */
 export interface ConnectorHostObservationConnection {

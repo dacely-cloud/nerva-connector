@@ -14,7 +14,7 @@ import {
     type ConnectorCapturedFileEffect,
 } from '../src/runtime/ConnectorEffectContext.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import {
     ConnectorFileFailure,
     type ConnectorFileResponse,

@@ -3,10 +3,10 @@
 
 import type { CapturedEffectsFixture } from './CapturedEffectsFixture.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
-import { ConnectorFileProof } from '../../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import type { ConnectorFilePermit } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import type { JointWorkspaceBinding } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';

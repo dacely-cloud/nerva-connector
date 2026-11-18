@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import { ExecutionMachineBoundary as Data } from 'nerva-connector-protocol/execution/ExecutionMachineBoundary.js';
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import {
     ExecutionNativePipeCommandKind,
     ExecutionNativePipeEventKind,

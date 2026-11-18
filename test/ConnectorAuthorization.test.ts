@@ -4,7 +4,7 @@
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { SigningKey } from '../src/identity/SigningKey.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
 import type {
     JointWorkspaceBinding,
@@ -17,10 +17,10 @@ import {
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
 
 /** This finite body intentionally uses a revision above number precision; every field remains public scope metadata. */
@@ -132,7 +132,7 @@ it('every immutable body field including both journal lanes affects admission, w
                 binding: mutated,
             }),
         ).not.toBe(expected);
-        expect(JointWorkspaceProof.verify(scope, mutated)).toBe(false);
+        expect(JointWorkspaceProof.verify(SigningKey, scope, mutated)).toBe(false);
     }
 });
 
@@ -162,16 +162,16 @@ it('randomized signatures retain one logical admission identity and require sepa
             }),
         ).toBe(expected);
     }
-    expect(JointWorkspaceProof.verify(scope, first)).toBe(true);
-    expect(JointWorkspaceProof.verify(scope, second)).toBe(true);
-    expect(JointWorkspaceProof.verify(scope, forged)).toBe(false);
+    expect(JointWorkspaceProof.verify(SigningKey, scope, first)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, scope, second)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, scope, forged)).toBe(false);
     for (const changed of [
         { ...scope, authorityId: 'other' },
         { ...scope, environmentId: 'other' },
         { ...scope, enrollmentId: 'conn_' + 'b'.repeat(64) },
         { ...scope, devicePublicKey: foreign.publicKey },
     ]) {
-        expect(JointWorkspaceProof.verify(changed, first)).toBe(false);
+        expect(JointWorkspaceProof.verify(SigningKey, changed, first)).toBe(false);
     }
     const parsed: ConnectorAuthorization = ConnectorAuthorizationCodec.decode(
         ConnectorAuthorizationCodec.encode({

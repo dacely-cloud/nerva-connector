@@ -16,7 +16,7 @@ import {
 import { ConnectorClient } from '../src/runtime/ConnectorClient.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ConnectorRuntimeFileMode } from '../src/native/ConnectorNativeTypes.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** This controller is not the Ubuntu 26 pilot; only actual package mutation is replaced by a finite no-op in local copy/authority tests. */
 class NativePackageObservation implements Disposable {

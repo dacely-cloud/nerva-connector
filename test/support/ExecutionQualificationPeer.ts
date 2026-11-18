@@ -15,12 +15,12 @@ import {
     type ExecutionAppArmorDefinition,
 } from '../../src/execution/ExecutionAppArmorProfile.js';
 import { ProtectedFiles } from '../../src/local/ProtectedFiles.js';
-import type { ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import {
     ExecutionTermination,
     ExecutionFailure,
     type ExecutionResult,
-} from '../../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** This finite test peer contains only the customer's execution policy/runner; it has no account, Nexa or infrastructure identity. */
 const args: readonly string[] = process.argv.slice(2);

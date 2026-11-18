@@ -4,7 +4,7 @@
 import { realpath } from 'node:fs/promises';
 import { ConnectorHostGrant } from '../runtime/ConnectorHostGrant.js';
 import { type ConnectorHostLocalGrant } from '../runtime/ConnectorHostGrantTypes.js';
-import { ConnectorHostTool } from '../protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import {
     ConnectorClientConfiguration,

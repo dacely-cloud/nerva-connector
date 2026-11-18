@@ -18,7 +18,7 @@ import {
 } from './HostWorkspaceTypes.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostOperationError } from './HostOperationError.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** The workspace retains authorization, shared operation admission and the combined native process budget. */
 export interface HostPtyPoolOwner {

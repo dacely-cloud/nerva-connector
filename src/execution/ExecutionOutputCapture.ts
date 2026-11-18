@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { ExecutionOutput, ExecutionOutputSink } from './ExecutionOutput.js';
+import type {
+    ExecutionOutput,
+    ExecutionOutputSink,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionOutputRetentionError } from './ExecutionOutputRetentionError.js';
 
 /** One coalesced prefix write at a time bounds disk work while native deadlines remain independent of storage latency. */

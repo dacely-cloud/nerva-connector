@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { ConnectorHostProfile } from '../protocol/ConnectorHost.js';
+import type { ConnectorHostProfile } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** A signed local grant binds one enrolled account device and its permanent host journal. */
 export interface ConnectorHostLocalGrant {

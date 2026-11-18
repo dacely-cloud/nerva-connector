@@ -5,14 +5,14 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ConnectorSocket } from '../networking/ConnectorSocket.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
-import { ConnectorHostObservationCapabilityLimits as Limits } from '../protocol/ConnectorHostObservationCapability.js';
+import { ConnectorHostObservationCapabilityLimits as Limits } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import { ConnectorHostObservationTransportCodec as Codec } from '../protocol/ConnectorHostObservationTransportCodec.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
     ConnectorHostObservationFrameKind as Kind,
     type ConnectorHostObservationClientFrame as ClientFrame,
     type ConnectorHostObservationServerFrame as ServerFrame,
-} from '../protocol/ConnectorHostObservationTransport.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservationTransport.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import type { ConnectorClientHost } from './ConnectorClientHost.js';
 import { ConnectorHostObservationDelivery } from './ConnectorHostObservationDelivery.js';

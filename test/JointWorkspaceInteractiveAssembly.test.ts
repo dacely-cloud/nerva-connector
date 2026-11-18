@@ -8,7 +8,7 @@ import {
     JointWorkspaceAssembly,
     type JointWorkspaceSources,
 } from '../src/workspace/JointWorkspaceAssembly.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
@@ -17,7 +17,8 @@ import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/executio
 import { ExecutionInputKind } from 'nerva-connector-protocol/execution/ExecutionInput.js';
 import type { ExecutionInteractiveInvocationRule } from 'nerva-connector-protocol/execution/ExecutionInteractiveInvocation.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
-import type { ExecutionProfile } from '../src/execution/ExecutionJobs.js';
+import type { ExecutionProfile } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 /** These real signatures qualify assembly/counter handling over synthetic captures, not native execution or publication. */
 class InteractiveAssemblyFixture {
@@ -62,9 +63,10 @@ it.each([ConnectorFileMode.ReadOnly, ConnectorFileMode.ReadWrite])(
             InteractiveAssemblyFixture.revision,
             sources,
         );
-        expect(JointWorkspaceProof.verify(fixture.expected, descriptor)).toBe(true);
+        expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, descriptor)).toBe(true);
         expect(
             JointWorkspaceProof.verify(
+                SigningKey,
                 { ...fixture.expected, environmentId: 'other-environment' },
                 descriptor,
             ),
@@ -122,7 +124,7 @@ it('foreground sources retain exact revisions and complete source validation', (
             },
         },
     );
-    expect(JointWorkspaceProof.verify(fixture.expected, descriptor)).toBe(true);
+    expect(JointWorkspaceProof.verify(SigningKey, fixture.expected, descriptor)).toBe(true);
     expect((): JointWorkspaceDescriptor =>
         JointWorkspaceAssembly.create(fixture.device, fixture.scope, 1n, {
             ...sources,

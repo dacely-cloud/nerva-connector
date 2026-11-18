@@ -9,9 +9,9 @@ import {
     JointWorkspaceAssembly,
     type JointWorkspaceSources,
 } from '../../src/workspace/JointWorkspaceAssembly.js';
-import { JointWorkspacePublicationProof } from '../../src/workspace/JointWorkspacePublicationProof.js';
-import { JointWorkspaceProof } from '../../src/workspace/JointWorkspaceProof.js';
-import { JointWorkspaceReceiptProof } from '../../src/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import type { JointWorkspaceReceipt } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
 import { JointWorkspaceJournal } from '../../src/workspace/JointWorkspaceJournal.js';
@@ -19,8 +19,9 @@ import type { JointWorkspaceJournalIdentity } from '../../src/workspace/JointWor
 import type {
     ExecutionRootGrant,
     ExecutionProgramGrant,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { JointWorkspaceReceiptFixture } from './JointWorkspaceReceiptFixture.js';
+import { SigningKey } from '../../src/identity/SigningKey.js';
 
 /** Private real filesystem journals use synthetic protocol captures, never a claim of actual workspace admission. */
 export class JointWorkspaceJournalFixture
@@ -98,7 +99,7 @@ export class JointWorkspaceJournalFixture
         descriptor: JointWorkspaceDescriptor,
         leaseByte: number = 1,
     ): JointWorkspacePublication {
-        return JointWorkspacePublicationProof.sign(this.device, {
+        return JointWorkspacePublicationProof.sign(SigningKey, this.device, {
             enrollmentId: this.expected.enrollmentId,
             slot: 0,
             leaseId: Buffer.alloc(32, leaseByte).toString('base64url'),

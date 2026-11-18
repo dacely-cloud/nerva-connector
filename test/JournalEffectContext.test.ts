@@ -3,7 +3,7 @@
 
 import type { ConnectorJournalSnapshot } from '../src/runtime/ConnectorJournalState.js';
 import type { ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import type { ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ConnectorEffectContext } from '../src/runtime/ConnectorEffectContext.js';
 import { expect, it } from 'vitest';
 import {

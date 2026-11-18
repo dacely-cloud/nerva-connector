@@ -7,7 +7,7 @@ import {
 } from '../runtime/ConnectorClientConfiguration.js';
 import { ConnectorHostGrant } from '../runtime/ConnectorHostGrant.js';
 import { type ConnectorHostLocalGrant } from '../runtime/ConnectorHostGrantTypes.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 
 /** Explicit operator entrypoint enables or disables paired full-computer consent without resetting journal history. */
 export class ConnectorHostAccessCommand {

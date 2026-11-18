@@ -11,7 +11,7 @@ import {
     ExecutionAppArmorMode,
     type ExecutionAppArmorDefinition,
 } from '../src/execution/ExecutionAppArmorProfile.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionMachineFixture } from './support/ExecutionMachineFixture.js';
 
 it('foreground profile bytes retain their qualified identity and receive no guardian trace permission', (): void => {

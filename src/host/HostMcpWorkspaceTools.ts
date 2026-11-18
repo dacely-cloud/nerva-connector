@@ -15,7 +15,7 @@ import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from './HostTerminalTypes.js';
 import { HostOperationError } from './HostOperationError.js';
 import { HostDesktopTextFieldOptions } from './HostDesktopTextFieldOptions.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     HostDesktopPointerAction,
     HostDesktopButton,
@@ -211,13 +211,18 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 return '{"sent":true}';
             }
             case 'desktop_text': {
-                const field: HostDesktopTextField | undefined = HostDesktopTextFieldOptions.read(args['field'], args['replace']);
+                const field: HostDesktopTextField | undefined = HostDesktopTextFieldOptions.read(
+                    args['field'],
+                    args['replace'],
+                );
                 await this.workspace.desktopText(
                     this.#text(args['text'], true),
                     args['target'] === undefined ? undefined : this.#text(args['target']),
                     field,
                 );
-                return field === undefined ? '{"sent":true}' : '{"sent":true,"replaced":true,"verified":true}';
+                return field === undefined
+                    ? '{"sent":true}'
+                    : '{"sent":true,"replaced":true,"verified":true}';
             }
             case 'computer_info':
                 return this.#serialize(await SystemInfo.read(this.signal));

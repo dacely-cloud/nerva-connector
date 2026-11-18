@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { SigningKey } from '../../src/identity/SigningKey.js';
 import { DeviceSession } from '../../src/remote/DeviceSession.js';
 import { ExchangeCodec } from 'nerva-connector-protocol/remote/ExchangeCodec.js';
-import { ExchangeProof } from '../../src/remote/ExchangeProof.js';
+import { ExchangeProof } from 'nerva-connector-protocol/remote/ExchangeProof.js';
 import {
     ExchangeKind,
     type ExchangeContext,
@@ -35,6 +35,7 @@ export class SessionFixture {
             });
             const proof: SignedExchange = session.prove(ExchangeCodec.encode(challenge), nowMs);
             ExchangeProof.verify(
+                SigningKey,
                 ExchangeCodec.encode(proof),
                 ExchangeKind.Authentication,
                 { ...context, recipientPublicKey: authority.publicKey },

@@ -3,7 +3,7 @@
 
 import { expect, it } from 'vitest';
 import { ExecutionBootstrapLimits as Limits } from '../src/execution/ExecutionBootstrapLimits.js';
-import { ExecutionInputCodec } from '../src/execution/ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
 import { ExecutionInvocationResolution } from '../src/execution/ExecutionResolvedInvocation.js';
 import { ExecutionBootstrapInputKind } from '../src/execution/ExecutionBootstrapInput.js';
@@ -12,12 +12,12 @@ import {
     type ExecutionPolicyDefinition,
     type ExecutionProgramPolicy,
     type ExecutionTextArgument,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 import type { ExecutionMachineEnvironmentValue } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
 import { ExecutionMachineFixture } from './support/ExecutionMachineFixture.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionBootstrap } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionBootstrap } from '../src/execution/ExecutionBootstrap.js';
 import type { WorkspaceIdentity } from '../src/workspace/WorkspaceIdentity.js';
 import type { ExecutionCgroupIdentity } from '../src/execution/ExecutionCgroupIdentity.js';
 

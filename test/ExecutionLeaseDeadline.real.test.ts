@@ -14,8 +14,11 @@ import type { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
 import { ExecutionClient } from '../src/execution/ExecutionClient.js';
 import { ExecutionJournalInstallation } from '../src/execution/ExecutionJournalInstallation.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
-import type { ExecutionPermit, ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
-import { ExecutionTermination } from '../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionPermit,
+    ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionTermination } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 const helper: string | undefined = process.env['NERVA_CONNECTOR_EXEC_HELPER'];
 

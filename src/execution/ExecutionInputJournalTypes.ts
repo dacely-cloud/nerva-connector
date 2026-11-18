@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionPermit } from './ExecutionJobs.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionInteractiveReady } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import type { ExecutionInputTerminalResolution } from 'nerva-connector-protocol/execution/ExecutionInputTerminalResolution.js';
 import type {

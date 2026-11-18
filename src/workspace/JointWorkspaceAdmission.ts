@@ -14,8 +14,8 @@ import type {
     ExecutionPermit,
     ExecutionRootGrant,
     ExecutionProgramGrant,
-} from '../execution/ExecutionJobs.js';
-import { ExecutionWorkspaceAccess } from '../execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type {
     ConnectorFileWorkspaceSource,
     ConnectorExecutionWorkspaceSource,
@@ -24,8 +24,9 @@ import type {
     JointWorkspaceDescriptor,
     JointWorkspaceBinding,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import type { JointWorkspaceDelivery } from './JointWorkspaceDelivery.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Fresh effects use the same opened capabilities that produced the installed, currently accepted metadata. */
 export class JointWorkspaceAdmission implements ConnectorJointAdmission {
@@ -100,6 +101,7 @@ export class JointWorkspaceAdmission implements ConnectorJointAdmission {
         if (
             authorization.kind !== ConnectorAuthorizationKind.Joint ||
             !JointWorkspaceProof.verify(
+                SigningKey,
                 {
                     authorityId: this.identity.authority.authorityId,
                     environmentId: this.identity.settings.environmentId,

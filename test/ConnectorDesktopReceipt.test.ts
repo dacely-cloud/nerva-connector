@@ -12,8 +12,8 @@ import {
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
     type ConnectorHostResponse,
-} from '../src/protocol/ConnectorHost.js';
-import { ConnectorHostCodec } from '../src/protocol/ConnectorHostCodec.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import { ConnectorHostGrant } from '../src/runtime/ConnectorHostGrant.js';
 import type { ConnectorHostLocalGrant } from '../src/runtime/ConnectorHostGrantTypes.js';
 import { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';

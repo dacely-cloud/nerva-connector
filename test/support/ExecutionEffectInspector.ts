@@ -19,21 +19,21 @@ import {
 } from '../../src/runtime/ConnectorJournalState.js';
 import { ConnectorEffectKind } from '../../src/runtime/ConnectorEffectContext.js';
 import { ExecutionJournalCodec } from '../../src/execution/ExecutionJournalCodec.js';
-import { type ExecutionRequest } from '../../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionPolicyCodec } from '../../src/execution/ExecutionPolicyCodec.js';
 import type {
     ExecutionPolicyDefinition,
     ExecutionRootPolicy,
-} from '../../src/execution/ExecutionPolicyTypes.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import {
     ExecutionWorkspaceAccess,
     type ExecutionResult,
     type ExecutionTermination,
     type ExecutionFailure,
     type ExecutionSetupFailure,
-} from '../../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { WorkspaceIdentityProcess } from '../../src/workspace/WorkspaceIdentityProcess.js';
 import type {
     WorkspaceIdentityResult,

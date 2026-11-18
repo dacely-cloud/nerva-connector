@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, access, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -12,14 +12,14 @@ import { ExecutionAppArmorInstaller } from '../src/execution/ExecutionAppArmorIn
 import type {
     ExecutionPolicyDefinition,
     ExecutionRootPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJobsCodec } from '../src/execution/ExecutionJobsCodec.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ConnectorEffectKind } from '../src/runtime/ConnectorEffectContext.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
 import {

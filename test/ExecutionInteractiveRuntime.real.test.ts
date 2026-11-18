@@ -24,7 +24,10 @@ import { ExecutionInteractiveCodec } from 'nerva-connector-protocol/execution/Ex
 import { ExecutionInteractiveProof as Proof } from 'nerva-connector-protocol/execution/ExecutionInteractiveProof.js';
 import { ExecutionInputReceiptCodec } from 'nerva-connector-protocol/execution/ExecutionInputReceiptCodec.js';
 import { ExecutionInputPermitCodec } from 'nerva-connector-protocol/execution/ExecutionInputPermitCodec.js';
-import { ExecutionTermination, type ExecutionResult } from '../src/execution/ExecutionTypes.js';
+import {
+    ExecutionTermination,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import type { ExecutionNativePipeHandle } from '../src/execution/ExecutionNativePipeHandle.js';

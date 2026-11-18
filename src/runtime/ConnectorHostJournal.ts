@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { KeyDerivationPurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorHostCodec } from '../protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
     type ConnectorHostPermit,
     type ConnectorHostResponse,
     type ConnectorHostAcknowledgment,
-} from '../protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import { ConnectorJournalCipher } from './ConnectorJournalCipher.js';
 import { ConnectorPrivateDirectory } from './ConnectorPrivateDirectory.js';

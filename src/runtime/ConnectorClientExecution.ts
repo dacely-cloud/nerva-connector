@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { type ExecutionPublication } from '../execution/ExecutionJobs.js';
+import { type ExecutionPublication } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionConfiguration } from '../execution/ExecutionConfiguration.js';
 import { ExecutionAppArmorInstaller } from '../execution/ExecutionAppArmorInstaller.js';
@@ -22,7 +22,7 @@ import type { ConnectorJointAdmission } from './ConnectorJointAdmission.js';
 import type { ConnectorClientIdentity } from './ConnectorClientConfiguration.js';
 import type { ConnectorExecutionWorkspaceSource } from '../workspace/ConnectorWorkspaceSource.js';
 import type { JointWorkspaceExecutionJournals } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import type { ExecutionProfile } from '../execution/ExecutionJobs.js';
+import type { ExecutionProfile } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ConnectorActivitySink } from './ConnectorActivity.js';
 
 /** The normal CLI owns exactly two durable command lanes, independently of optional file tools and socket lifetimes. */

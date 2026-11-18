@@ -4,7 +4,7 @@
 import type { ConnectorFilesystem } from '../runtime/ConnectorFilesystem.js';
 import type { ConnectorFileProfile } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import type { ExecutionPolicy } from '../execution/ExecutionPolicy.js';
-import type { ExecutionProfile } from '../execution/ExecutionJobs.js';
+import type { ExecutionProfile } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { JointWorkspaceExecutionJournals } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 
 /** Borrowed live-owner view; the runtime must outlive every capture and the caller must not dispose its filesystem. */

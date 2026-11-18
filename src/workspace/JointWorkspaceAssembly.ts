@@ -9,11 +9,14 @@ import type {
     ConnectorFileProfile,
 } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ExecutionJobsCodec } from '../execution/ExecutionJobsCodec.js';
-import type { ExecutionProfile, ExecutionRootGrant } from '../execution/ExecutionJobs.js';
+import type {
+    ExecutionProfile,
+    ExecutionRootGrant,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { WorkspaceIdentity } from './WorkspaceIdentity.js';
 import { WorkspaceIdentityCodec } from './WorkspaceIdentityCodec.js';
 import { JointWorkspaceCommitment } from './JointWorkspaceCommitment.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
 import type {
     JointWorkspaceDescriptor,

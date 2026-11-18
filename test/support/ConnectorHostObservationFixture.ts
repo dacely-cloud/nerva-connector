@@ -6,9 +6,9 @@ import { ConnectorHostFixture } from './ConnectorHostFixture.js';
 import { ConnectorClientHost } from '../../src/runtime/ConnectorClientHost.js';
 import { ConnectorHostProof as Proof } from '../../src/runtime/ConnectorHostProof.js';
 import { ConnectorHostObservationCapabilityProof } from '../../src/runtime/ConnectorHostObservationCapabilityProof.js';
-import { ConnectorHostObservationCapabilityTranscript } from '../../src/protocol/ConnectorHostObservationCapabilityTranscript.js';
-import { type ConnectorHostObservationCapture } from '../../src/protocol/ConnectorHostObservedStart.js';
-import { ConnectorHostObservedStart as Start } from '../../src/protocol/ConnectorHostObservationProtocol.js';
+import { ConnectorHostObservationCapabilityTranscript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapabilityTranscript.js';
+import { type ConnectorHostObservationCapture } from 'nerva-connector-protocol/protocol/ConnectorHostObservedStart.js';
+import { ConnectorHostObservedStart as Start } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
 import {
     ConnectorHostObservationKind,
     type ConnectorHostObservationOrigin,
@@ -17,14 +17,14 @@ import {
     type ConnectorHostObservationAcknowledgment as Ack,
 } from 'nerva-connector-protocol/protocol/ConnectorHostObservation.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
-import type { ConnectorHostObservationActivation } from '../../src/protocol/ConnectorHostObservationCapability.js';
+import type { ConnectorHostObservationActivation } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import type { ConnectorHostObservationConnection } from '../../src/runtime/ConnectorHostObservationOwners.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorHostLocalGrant } from '../../src/runtime/ConnectorHostGrantTypes.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';

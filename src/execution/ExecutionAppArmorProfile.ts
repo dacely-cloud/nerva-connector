@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { createHash } from 'node:crypto';
-import { ExecutionWorkspaceAccess } from './ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type {
     ExecutionPolicyDefinition,
     ExecutionProgramPolicy,
     ExecutionRootPolicy,
     ExecutionBinaryPolicy,
-} from './ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** Exact operator-installed policy allows implicit loader mappings without allowing the loader itself as a command. */
 export interface ExecutionAppArmorDefinition {

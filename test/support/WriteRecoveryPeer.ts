@@ -4,7 +4,7 @@
 import { ConnectorOperationJournal } from '../../src/runtime/ConnectorOperationJournal.js';
 import { ConnectorClient } from '../../src/runtime/ConnectorClient.js';
 import type { ConnectorClientState } from '../../src/runtime/ConnectorClientState.js';
-import type { ConnectorOperationDispatch } from '../../src/runtime/ConnectorOperationCodec.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import { ConnectorFilesCodec } from 'nerva-connector-protocol/protocol/ConnectorFilesCodec.js';
 import type { ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';

@@ -11,7 +11,7 @@ import {
     ConnectorHostErrorCode,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import type { ConnectorHostLocalGrant } from '../src/runtime/ConnectorHostGrantTypes.js';
 import {

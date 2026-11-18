@@ -3,8 +3,14 @@
 
 import type { ExecutionDeliveryClient } from './ExecutionDeliveryClient.js';
 import type { ExecutionDeliveryLink } from './ExecutionDeliveryLink.js';
-import type { ExecutionPermit, ExecutionCancellation } from './ExecutionJobs.js';
-import type { ExecutionOutputUpdate, ExecutionOutputAck } from './ExecutionOutput.js';
+import type {
+    ExecutionPermit,
+    ExecutionCancellation,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type {
+    ExecutionOutputUpdate,
+    ExecutionOutputAck,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ConnectorFrameKind } from '../protocol/ConnectorTransport.js';
 
 /** One acknowledged prefix in flight bounds signing/network work; all newer output remains in the durable journal. */

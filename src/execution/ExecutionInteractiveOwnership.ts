@@ -28,9 +28,9 @@ import type {
     ExecutionCancellation,
     ExecutionCompletion,
     ExecutionAcknowledgment,
-} from './ExecutionJobs.js';
-import type { ExecutionResult } from './ExecutionTypes.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type {
     ExecutionInteractiveResolution,
     ExecutionInteractiveNativeBinding,

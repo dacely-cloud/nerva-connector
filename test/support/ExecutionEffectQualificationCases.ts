@@ -19,18 +19,24 @@ import {
 } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { ExecutionInvocation } from '../../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionInvocation } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import type { ExecutionEffectAdmission } from '../../src/execution/ExecutionEffectAdmission.js';
-import type { ExecutionOutput, ExecutionOutputSink } from '../../src/execution/ExecutionOutput.js';
-import { ExecutionFailure, type ExecutionResult } from '../../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionOutput,
+    ExecutionOutputSink,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import {
+    ExecutionFailure,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type {
     ExecutionPermit,
     ExecutionCompletion,
     ExecutionRequest,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionCgroupIdentity } from '../../src/execution/ExecutionCgroupIdentity.js';
 import { ExecutionCgroupIdentityCodec } from '../../src/execution/ExecutionCgroupIdentityCodec.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { ExecutionPolicy } from '../../src/execution/ExecutionPolicy.js';
 import {
     ConnectorEffectKind,

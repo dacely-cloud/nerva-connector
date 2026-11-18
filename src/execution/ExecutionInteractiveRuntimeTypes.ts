@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ConnectorClientIdentity } from '../runtime/ConnectorClientConfiguration.js';
-import type { ExecutionPermit } from './ExecutionJobs.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type {
     ExecutionInteractiveInvocationRule,
     ExecutionInteractiveLaunch,

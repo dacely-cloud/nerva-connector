@@ -11,12 +11,12 @@ import {
     SignaturePurpose,
 } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorFrameKind } from '../src/protocol/ConnectorTransport.js';
-import { JointWorkspaceReceiptProof } from '../src/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import type {
     JointWorkspaceReceipt,
     JointWorkspaceReceiptBody,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
-import { JointWorkspaceRetryProof } from '../src/workspace/JointWorkspaceRetryProof.js';
+import { JointWorkspaceRetryProof } from 'nerva-connector-protocol/workspace/JointWorkspaceRetryProof.js';
 import {
     JointWorkspaceRetryReason,
     JointWorkspaceRetryLimits,

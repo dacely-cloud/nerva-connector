@@ -11,8 +11,8 @@ import {
     type ConnectorHostResponse,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
-import { ConnectorHostCodec } from '../src/protocol/ConnectorHostCodec.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import { ConnectorHostProof } from '../src/runtime/ConnectorHostProof.js';
 import { ConnectorHostFixture } from './support/ConnectorHostFixture.js';

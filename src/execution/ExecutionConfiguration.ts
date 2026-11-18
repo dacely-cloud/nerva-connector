@@ -9,7 +9,7 @@ import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
 import type { ExecutionClientSettings } from './ExecutionClientSettings.js';
 import type { ConnectorLocalCapabilitySettings } from '../runtime/ConnectorClientSettings.js';
 import { ExecutionPolicyCodec } from './ExecutionPolicyCodec.js';
-import type { ExecutionPolicyDefinition } from './ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ConnectorFilePolicy } from '../runtime/ConnectorFilePolicy.js';
 import { JointWorkspaceConfiguration } from '../workspace/JointWorkspaceConfiguration.js';
 import { ConnectorHostGrant } from '../runtime/ConnectorHostGrant.js';

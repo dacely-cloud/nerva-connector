@@ -12,8 +12,9 @@ import { ExecutionAppArmorMode } from '../../src/execution/ExecutionAppArmorProf
 import { ExecutionBootstrapInputKind } from '../../src/execution/ExecutionBootstrapInput.js';
 import { ExecutionNativePipeHandle } from '../../src/execution/ExecutionNativePipeHandle.js';
 import type { ExecutionNativePipeBudget } from '../../src/execution/ExecutionNativePipeProtocol.js';
-import type { ExecutionResult, ExecutionBootstrap } from '../../src/execution/ExecutionTypes.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionBootstrap } from '../../src/execution/ExecutionBootstrap.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionFixture } from './ExecutionFixture.js';
 
 /** Probe actions are fixed test programs, not a remote program-selection API. */

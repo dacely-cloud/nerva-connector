@@ -24,7 +24,7 @@ import {
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 
 /** This storage-only payload is deliberately outside remote file/command grammars; it proves the complete prior plaintext allowance is retained. */
 interface AuthorizedStorageRecord {

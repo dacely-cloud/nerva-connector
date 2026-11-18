@@ -37,13 +37,13 @@ import type {
     ConnectorFileCompletion,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
-import { ConnectorFileProof } from '../../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
-import { ConnectorAdmissionMigrationProof } from '../../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
 import {
@@ -59,6 +59,7 @@ import {
     OriginalJournalFixtureCodec,
     type OriginalJournalFixtureSnapshot,
 } from './OriginalJournalFixtureCodec.js';
+import { SigningKey } from '../../src/identity/SigningKey.js';
 
 /** Fixed labels reveal no generated identity, native descriptor, path, key, or operation content. */
 enum QualificationCase {
@@ -587,6 +588,7 @@ class FileEffectQualification implements AsyncDisposable {
             kind: ConnectorAuthorizationKind.Independent,
         };
         return ConnectorAdmissionMigrationProof.signApproval(
+            SigningKey,
             fixture.history.identity.key,
             expected,
             {

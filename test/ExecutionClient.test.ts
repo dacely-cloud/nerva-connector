@@ -15,15 +15,15 @@ import { ExecutionIdentity } from './support/ExecutionIdentity.js';
 import { ExecutionClient } from '../src/execution/ExecutionClient.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import {
     ExecutionFailure,
     ExecutionTermination,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import type {
     ExecutionPermit,
@@ -32,7 +32,7 @@ import type {
     ExecutionRequest,
     ExecutionAcknowledgment,
     ExecutionAcknowledged,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import {
     SignaturePurpose,

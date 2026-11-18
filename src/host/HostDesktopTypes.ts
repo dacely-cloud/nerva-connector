@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ConnectorHostLimits } from '../protocol/ConnectorHost.js';
+import { ConnectorHostLimits } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** Desktop backends describe actual session mechanisms, without assuming every machine has a GUI. */
 export const HostDesktopBackend = {

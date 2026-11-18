@@ -26,7 +26,7 @@ import {
     ConnectorHostTool,
     type ConnectorHostAcknowledgment,
     type ConnectorHostPermit,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     ConnectorFrameKind,
     ConnectorTransportLimits,

@@ -9,7 +9,7 @@ import {
     ExecutionFailure,
     ExecutionSetupFailure,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Successful output and setup failures have disjoint trusted meanings. */
 const completed: ExecutionResult = {

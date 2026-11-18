@@ -22,8 +22,11 @@ import { ExecutionJournalInstallation } from '../src/execution/ExecutionJournalI
 import { ExecutionEffectCapture } from '../src/execution/ExecutionEffectCapture.js';
 import { ExecutionCgroup } from '../src/execution/ExecutionCgroup.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
-import type { ExecutionPermit, ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
-import { ExecutionTermination } from '../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionPermit,
+    ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionTermination } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ConnectorClientSession } from '../src/runtime/ConnectorClientSession.js';
 import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/ConnectorDeviceCodec.js';
 import type {
@@ -31,7 +34,7 @@ import type {
     ConnectorDeviceLease,
     ConnectorDeviceProof,
 } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorOperationSchema } from 'nerva-connector-protocol/protocol/ConnectorOperationSchema.js';
 

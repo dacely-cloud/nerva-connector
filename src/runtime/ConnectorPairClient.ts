@@ -7,14 +7,14 @@ import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityForm
 import { lstat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { ConnectorLinkCodec } from '../protocol/ConnectorLinkCodec.js';
+import { ConnectorLinkCodec } from 'nerva-connector-protocol/protocol/ConnectorLinkCodec.js';
 import {
     ConnectorLinkPhase,
     ConnectorLinkLimits,
     type ConnectorLinkProof,
     type ConnectorLinkStart,
     type ConnectorLinkStatus,
-} from '../protocol/ConnectorLink.js';
+} from 'nerva-connector-protocol/protocol/ConnectorLink.js';
 import {
     ConnectorFrameKind,
     type ConnectorLinkErrorFrame,

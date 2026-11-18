@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { SigningKey } from '../identity/SigningKey.js';
+import { SigningKey } from '../identity/SigningKey.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from './JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspacePublicationCodec } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationCodec.js';
 import { JointWorkspaceReceiptCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptCodec.js';
-import { JointWorkspaceReceiptProof } from './JointWorkspaceReceiptProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import type {
     JointWorkspaceReceipt,
@@ -255,7 +255,7 @@ export class JointWorkspaceJournal implements AsyncDisposable {
                 current.environmentId !== this.#context.scope.environmentId ||
                 current.enrollmentId !== this.#context.scope.enrollmentId ||
                 current.devicePublicKey !== this.#context.scope.devicePublicKey ||
-                !JointWorkspaceReceiptProof.verify(current, original, receipt, nowMs)
+                !JointWorkspaceReceiptProof.verify(SigningKey, current, original, receipt, nowMs)
             ) {
                 throw new Error(
                     'Joint workspace acceptance does not match current trusted authentication',

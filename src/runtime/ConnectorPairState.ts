@@ -8,12 +8,12 @@ import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
-import { ConnectorLinkCodec } from '../protocol/ConnectorLinkCodec.js';
+import { ConnectorLinkCodec } from 'nerva-connector-protocol/protocol/ConnectorLinkCodec.js';
 import {
     ConnectorLinkPhase,
     type ConnectorLinkIssued,
     type ConnectorLinkStatus,
-} from '../protocol/ConnectorLink.js';
+} from 'nerva-connector-protocol/protocol/ConnectorLink.js';
 import type { ConnectorDeviceIdentity } from './ConnectorDeviceKey.js';
 import {
     ConnectorPrivateDirectory,

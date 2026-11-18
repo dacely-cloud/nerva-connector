@@ -8,9 +8,9 @@ import {
     SignaturePurpose,
 } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorDeviceLimits } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspacePublicationCodec } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationCodec.js';
-import { JointWorkspacePublicationProof } from '../src/workspace/JointWorkspacePublicationProof.js';
+import { JointWorkspacePublicationProof } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationProof.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
 import type {
     JointWorkspaceReceipt,
@@ -18,8 +18,9 @@ import type {
     JointWorkspaceReceiptExpected,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
 import { JointWorkspaceReceiptCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptCodec.js';
-import { JointWorkspaceReceiptProof } from '../src/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
 import { JointWorkspaceReceiptFixture } from './support/JointWorkspaceReceiptFixture.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 it('accepts only an authority-signed exact original publication receipt within the actual current lease', (): void => {
     using fixture: JointWorkspaceReceiptFixture = new JointWorkspaceReceiptFixture();
@@ -29,6 +30,7 @@ it('accepts only an authority-signed exact original publication receipt within t
     );
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             receipt,
@@ -47,6 +49,7 @@ it('accepts only an authority-signed exact original publication receipt within t
     );
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             receipt,
@@ -71,6 +74,7 @@ it('requires both authority signature components, the pinned authority identity 
         signature[index] = byte ^ 1;
         expect(
             JointWorkspaceReceiptProof.verify(
+                SigningKey,
                 fixture.current,
                 fixture.publication,
                 { ...receipt, signature: signature.toString('base64url') },
@@ -80,6 +84,7 @@ it('requires both authority signature components, the pinned authority identity 
     }
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             JointWorkspaceReceiptProof.sign(other.authority, fixture.receiptBody),
@@ -88,6 +93,7 @@ it('requires both authority signature components, the pinned authority identity 
     ).toBe(false);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             { ...fixture.current, authorityPublicKey: other.authority.publicKey },
             fixture.publication,
             receipt,
@@ -96,6 +102,7 @@ it('requires both authority signature components, the pinned authority identity 
     ).toBe(false);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             {
@@ -129,6 +136,7 @@ it('rejects every foreign correlation even when a genuine authority signs the al
         );
         expect(
             JointWorkspaceReceiptProof.verify(
+                SigningKey,
                 fixture.current,
                 fixture.publication,
                 receipt,
@@ -147,6 +155,7 @@ it('rejects every foreign correlation even when a genuine authority signs the al
     for (const expected of invalidScope) {
         expect(
             JointWorkspaceReceiptProof.verify(
+                SigningKey,
                 expected,
                 fixture.publication,
                 receipt,
@@ -163,6 +172,7 @@ it('commits both exact randomized device signatures while preserving the stable 
         fixture.receiptBody,
     );
     const resigned: JointWorkspacePublication = JointWorkspacePublicationProof.sign(
+        SigningKey,
         fixture.device,
         {
             enrollmentId: fixture.publication.enrollmentId,
@@ -186,7 +196,13 @@ it('commits both exact randomized device signatures while preserving the stable 
             receipt.publicationSha256,
         );
         expect(
-            JointWorkspaceReceiptProof.verify(fixture.current, candidate, receipt, fixture.nowMs),
+            JointWorkspaceReceiptProof.verify(
+                SigningKey,
+                fixture.current,
+                candidate,
+                receipt,
+                fixture.nowMs,
+            ),
         ).toBe(false);
         const nextReceipt: JointWorkspaceReceipt = JointWorkspaceReceiptProof.sign(
             fixture.authority,
@@ -197,6 +213,7 @@ it('commits both exact randomized device signatures while preserving the stable 
         );
         expect(
             JointWorkspaceReceiptProof.verify(
+                SigningKey,
                 fixture.current,
                 candidate,
                 nextReceipt,
@@ -218,10 +235,17 @@ it('never accepts unsigned or invalid device publication merely because an autho
         publicationSha256: JointWorkspaceReceiptProof.publicationSha256(candidate),
     });
     expect(
-        JointWorkspaceReceiptProof.verify(fixture.current, candidate, receipt, fixture.nowMs),
+        JointWorkspaceReceiptProof.verify(
+            SigningKey,
+            fixture.current,
+            candidate,
+            receipt,
+            fixture.nowMs,
+        ),
     ).toBe(false);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             { ...fixture.current, devicePublicKey: other.device.publicKey },
             fixture.publication,
             receipt,
@@ -247,6 +271,7 @@ it('enforces finite clock lead, actual lease issuance and expiration without fab
         });
         expect(
             JointWorkspaceReceiptProof.verify(
+                SigningKey,
                 fixture.current,
                 fixture.publication,
                 receipt,
@@ -260,6 +285,7 @@ it('enforces finite clock lead, actual lease issuance and expiration without fab
     });
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             lead,
@@ -268,6 +294,7 @@ it('enforces finite clock lead, actual lease issuance and expiration without fab
     ).toBe(true);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             fixture.current,
             fixture.publication,
             valid,
@@ -275,10 +302,17 @@ it('enforces finite clock lead, actual lease issuance and expiration without fab
         ),
     ).toBe(false);
     expect(
-        JointWorkspaceReceiptProof.verify(fixture.current, fixture.publication, valid, -1n),
+        JointWorkspaceReceiptProof.verify(
+            SigningKey,
+            fixture.current,
+            fixture.publication,
+            valid,
+            -1n,
+        ),
     ).toBe(false);
     expect(
         JointWorkspaceReceiptProof.verify(
+            SigningKey,
             { ...fixture.current, leaseExpiresAtMs: fixture.current.leaseIssuedAtMs },
             fixture.publication,
             valid,

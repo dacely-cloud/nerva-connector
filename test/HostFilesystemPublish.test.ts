@@ -5,7 +5,7 @@ import type { BigIntStats, PathLike } from 'node:fs';
 import { writeFile, readFile, stat, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it, vi } from 'vitest';
-import { ConnectorHostErrorCode } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from '../src/host/HostOperationError.js';
 import { HostFileKind, HostOperation } from '../src/host/HostWorkspaceTypes.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';

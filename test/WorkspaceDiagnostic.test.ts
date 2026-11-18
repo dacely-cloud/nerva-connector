@@ -9,7 +9,7 @@ import { expect, it } from 'vitest';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import { SignatureSuite } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     WorkspaceDiagnostic,
     WorkspaceCompatibility,

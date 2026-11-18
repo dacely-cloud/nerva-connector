@@ -13,7 +13,7 @@ import {
     type ConnectorCapturedExecutionEffect,
 } from '../../src/runtime/ConnectorEffectContext.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type {
     WorkspaceIdentity,
     WorkspaceIdentityResult,
@@ -21,7 +21,7 @@ import type {
 import { WorkspaceIdentityProcess } from '../../src/workspace/WorkspaceIdentityProcess.js';
 import type { ExecutionCgroupIdentity } from '../../src/execution/ExecutionCgroupIdentity.js';
 import { ExecutionCgroupIdentityCodec } from '../../src/execution/ExecutionCgroupIdentityCodec.js';
-import type { ExecutionRootPolicy } from '../../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionRootPolicy } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionHistoryFixture } from './ExecutionHistoryFixture.js';
 
 /** Only an exact retained child is killed by fixture cleanup; directory generation checks guard removal. */

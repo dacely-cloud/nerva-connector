@@ -18,16 +18,19 @@ import { type ExecutionDeliveryLink } from '../src/execution/ExecutionDeliveryLi
 import type {
     ExecutionOutputUpdate,
     ExecutionOutputAck,
-} from '../src/execution/ExecutionOutput.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import {
     ConnectorFrameKind,
     type ConnectorClientFrame,
 } from '../src/protocol/ConnectorTransport.js';
 import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSettings.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
-import type { ExecutionCompletion, ExecutionPermit } from '../src/execution/ExecutionJobs.js';
-import { ExecutionFailure } from '../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionCompletion,
+    ExecutionPermit,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     IdentityLengths,
     SignaturePurpose,

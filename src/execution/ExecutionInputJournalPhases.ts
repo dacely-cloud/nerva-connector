@@ -8,7 +8,7 @@ import type {
     ExecutionCancellation,
     ExecutionCompletion,
     ExecutionAcknowledgment,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionInteractiveFields } from 'nerva-connector-protocol/execution/ExecutionInteractiveFields.js';
 import { ExecutionInputJournalLifecycle } from './ExecutionInputJournalLifecycle.js';
 import { ExecutionInputJournalTerminalProof } from './ExecutionInputJournalTerminalProof.js';

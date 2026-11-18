@@ -16,7 +16,7 @@ import {
     ConnectorLinkPhase,
     type ConnectorLinkIssued,
     type ConnectorLinkStatus,
-} from '../src/protocol/ConnectorLink.js';
+} from 'nerva-connector-protocol/protocol/ConnectorLink.js';
 import { ConnectorReleaseFixture } from './support/ConnectorReleaseFixture.js';
 import { ConnectorReleaseInstallation } from '../src/install/ConnectorReleaseInstallation.js';
 import {

@@ -1,19 +1,19 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ConnectorHostObservationFields as Data } from './ConnectorHostObservationFields.js';
+import { ExecutionMachineBoundary as Data } from 'nerva-connector-protocol/execution/ExecutionMachineBoundary.js';
 import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/ConnectorDeviceCodec.js';
 import type { ConnectorDeviceLeaseTarget } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
-import { ConnectorHostObservationCodec as Observation } from './ConnectorHostObservationCodec.js';
+import { ConnectorHostObservationCodec as Observation } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCodec.js';
 import { ConnectorHostObservationCapabilityCodec as Capability } from './ConnectorHostObservationCapabilityCodec.js';
-import { ConnectorHostObservationCapabilityLimits as Limits } from './ConnectorHostObservationCapability.js';
+import { ConnectorHostObservationCapabilityLimits as Limits } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import { ConnectorHostObservationTranscript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
     ConnectorHostObservationFrameKind as Kind,
     type ConnectorHostObservationClientFrame as ClientFrame,
     type ConnectorHostObservationServerFrame as ServerFrame,
-} from './ConnectorHostObservationTransport.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservationTransport.js';
 
 /** Strict direction-specific decoding bounds JSON before parsing and admits no additional payload fields. */
 export class ConnectorHostObservationTransportCodec {

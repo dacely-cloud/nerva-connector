@@ -13,7 +13,10 @@ import {
 } from '../src/host/HostMcpProtocol.js';
 import { HostOperation } from '../src/host/HostWorkspaceTypes.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
-import { ConnectorHostErrorCode, ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostTool,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostEnvironmentFixture } from './support/HostEnvironmentFixture.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 

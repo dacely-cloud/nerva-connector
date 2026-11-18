@@ -6,7 +6,7 @@ import { writeFile, open, readdir, readlink, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { expect, it } from 'vitest';
-import { ConnectorHostErrorCode } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { HostFileSnapshotCodec } from '../src/host/HostFileSnapshotCodec.js';
 import type {

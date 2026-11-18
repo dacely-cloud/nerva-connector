@@ -3,7 +3,7 @@
 
 import { ChildProcess } from 'node:child_process';
 import { subscribe, unsubscribe } from 'node:diagnostics_channel';
-import { ExecutionSetupFailure } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionSetupFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 /** Fixed observer milestones distinguish wrapper assertions from the native launch path. */
 export enum ExecutionFreshPhase {

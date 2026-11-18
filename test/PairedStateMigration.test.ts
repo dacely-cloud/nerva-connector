@@ -22,7 +22,7 @@ import {
 } from '../src/runtime/ConnectorHistoryMigrationMarker.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
 import { ConnectorMigrationAppliedCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationAppliedCodec.js';
-import { ConnectorAdmissionMigrationProof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import {
     ConnectorMigrationLimits,
     type ConnectorMigrationPlan,
@@ -30,6 +30,7 @@ import {
     type ConnectorMigrationApplied,
 } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigration.js';
 import { WindowsStateOwner } from '../src/windows/WindowsStateOwner.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 /** Reproduces the retired device-signed shape as hostile persisted input, without allowing it in application contracts. */
 interface UnapprovedMarkerPayload extends Omit<
@@ -126,6 +127,7 @@ it.skipIf(!supported)(
         expect(proof.targets).toEqual([]);
         expect(
             ConnectorAdmissionMigrationProof.verifyApplied(
+                SigningKey,
                 ConnectorMigrationEvidence.expected(fixture.identity),
                 approval,
                 proof,

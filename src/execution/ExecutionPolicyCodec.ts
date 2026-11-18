@@ -1,19 +1,22 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import { ExecutionPipePolicy } from './ExecutionPipePolicy.js';
 import { resolve, posix } from 'node:path';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
-import { ExecutionWorkspaceAccess, type ExecutionResourceLimits } from './ExecutionTypes.js';
+import {
+    ExecutionWorkspaceAccess,
+    type ExecutionResourceLimits,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     type ExecutionArgumentRule,
     type ExecutionBinaryPolicy,
     type ExecutionProgramPolicy,
     type ExecutionRootPolicy,
     type ExecutionPolicyDefinition,
-} from './ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** Unknown local policy and remote invocation data are narrowed before handles, arguments or limits are used. */
 export class ExecutionPolicyCodec {

@@ -12,7 +12,7 @@ import {
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
 import { ConnectorMigrationAppliedCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationAppliedCodec.js';
-import { ConnectorAdmissionMigrationProof } from '../protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorMigrationPreparation } from './ConnectorMigrationPreparation.js';
 import { ConnectorMigrationInstallation } from './ConnectorMigrationInstallation.js';
 import { ConnectorApprovedJournalMigration } from './ConnectorApprovedJournalMigration.js';
@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import { createHash } from 'node:crypto';
 import type { ConnectorHistoryMigrationEntry } from './ConnectorHistoryMigrationMarker.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Exact first migration proofs remain private, durable and separate from operation acknowledgement history. */
 export class ConnectorMigrationEvidence {
@@ -73,7 +74,14 @@ export class ConnectorMigrationEvidence {
             ),
         );
         const expected: ConnectorMigrationExpected = this.expected(installation.identity);
-        if (!ConnectorAdmissionMigrationProof.verifyApproval(expected, original, approval)) {
+        if (
+            !ConnectorAdmissionMigrationProof.verifyApproval(
+                SigningKey,
+                expected,
+                original,
+                approval,
+            )
+        ) {
             throw new Error('Migration approval does not authenticate the original retained plan');
         }
         const purposes: readonly ConnectorOperationPurpose[] = [
@@ -138,6 +146,7 @@ export class ConnectorMigrationEvidence {
             return original;
         }
         const applied: ConnectorMigrationApplied = ConnectorAdmissionMigrationProof.signApplied(
+            SigningKey,
             installation.identity.key,
             expected,
             approval,
@@ -169,6 +178,7 @@ export class ConnectorMigrationEvidence {
         );
         if (
             !ConnectorAdmissionMigrationProof.verifyApplied(
+                SigningKey,
                 this.expected(identity),
                 approval,
                 applied,
@@ -229,8 +239,13 @@ export class ConnectorMigrationEvidence {
                     target.plainSha256 !== entry.expectedPlainSha256
                 );
             }) ||
-            !ConnectorAdmissionMigrationProof.verifyApproval(expected, plan, approval) ||
-            !ConnectorAdmissionMigrationProof.verifyApplied(expected, approval, applied)
+            !ConnectorAdmissionMigrationProof.verifyApproval(
+                SigningKey,
+                expected,
+                plan,
+                approval,
+            ) ||
+            !ConnectorAdmissionMigrationProof.verifyApplied(SigningKey, expected, approval, applied)
         ) {
             throw new Error(
                 'Completed migration marker has missing or substituted authority evidence',

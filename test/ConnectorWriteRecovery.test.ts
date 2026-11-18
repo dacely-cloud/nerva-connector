@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -22,7 +22,7 @@ import { ConnectorClientFiles } from '../src/runtime/ConnectorClientFiles.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
 import { ConnectorFilesystem } from '../src/runtime/ConnectorFilesystem.js';
 import { ConnectorFileJournalCodec } from '../src/runtime/ConnectorFileJournalCodec.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import { ConnectorUploadCodec } from 'nerva-connector-protocol/protocol/ConnectorUploadCodec.js';
 import type {
@@ -378,6 +378,7 @@ it.skipIf(helper === undefined).each(cases)(
                 expect(effect).not.toHaveBeenCalled();
                 expect(
                     ConnectorFileProof.verify(
+                        SigningKey,
                         device.publicKey,
                         SignaturePurpose.OperationFileResult,
                         ConnectorFileProof.completion(result),

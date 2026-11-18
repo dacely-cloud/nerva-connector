@@ -6,7 +6,7 @@ import type { HostWorkspace } from '../src/host/HostWorkspace.js';
 import type { HostJsonObject } from '../src/host/HostMcpProtocol.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
-import { ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
 it.each<HostJsonObject>([

@@ -6,7 +6,7 @@ import {
     ConnectorFileMode,
     ConnectorFileLimits,
 } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type { WorkspaceIdentity } from '../../src/workspace/WorkspaceIdentity.js';
 import type { JointWorkspaceSources } from '../../src/workspace/JointWorkspaceAssembly.js';
 import type {

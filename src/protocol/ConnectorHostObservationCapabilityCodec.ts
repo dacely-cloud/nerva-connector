@@ -3,12 +3,15 @@
 
 import { IdentityLengths } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
-import { ConnectorHostObservationFields as Data } from './ConnectorHostObservationFields.js';
+import { ExecutionMachineBoundary as Data } from 'nerva-connector-protocol/execution/ExecutionMachineBoundary.js';
 import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/ConnectorDeviceCodec.js';
 import { ConnectorEnrollmentCodec as Identity } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
-import { ConnectorHostCodec } from './ConnectorHostCodec.js';
-import { ConnectorHostTool, type ConnectorHostPublication } from './ConnectorHost.js';
-import { ConnectorHostObservedStart } from './ConnectorHostObservationProtocol.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
+import {
+    ConnectorHostTool,
+    type ConnectorHostPublication,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostObservedStart } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
 import { ConnectorHostObservationLimits } from 'nerva-connector-protocol/protocol/ConnectorHostObservation.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
@@ -16,7 +19,7 @@ import {
     type ConnectorHostObservationChallenge as Challenge,
     type ConnectorHostObservationCapability as Capability,
     type ConnectorHostObservationActivation as Activation,
-} from './ConnectorHostObservationCapability.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 
 /** Untrusted companion handshakes have one closed canonical bounded representation before cryptographic verification. */
 export class ConnectorHostObservationCapabilityCodec {

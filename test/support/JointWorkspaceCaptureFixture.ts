@@ -4,7 +4,7 @@
 import { SigningKey } from '../../src/identity/SigningKey.js';
 import { ConnectorFilesystem } from '../../src/runtime/ConnectorFilesystem.js';
 import { ExecutionPolicy } from '../../src/execution/ExecutionPolicy.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { JointWorkspaceCapture } from '../../src/workspace/JointWorkspaceCapture.js';
 import type { JointWorkspaceCaptureRequest } from '../../src/workspace/JointWorkspaceCapture.js';

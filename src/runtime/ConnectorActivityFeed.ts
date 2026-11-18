@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ConnectorHostTool } from '../protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostApplicationStatus } from '../host/HostApplication.js';
 import {
     ConnectorActivityState,

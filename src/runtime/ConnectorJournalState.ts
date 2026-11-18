@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { ConnectorAuthorization } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
+import type { ConnectorJournalReceipt } from 'nerva-connector-protocol/protocol/ConnectorJournalReceipt.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
 import { ConnectorJournalFormatError } from './ConnectorJournalFormatError.js';
 import type { ConnectorEffectContext } from './ConnectorEffectContext.js';
@@ -15,15 +16,6 @@ export enum ConnectorJournalSchema {
     AuthorizedEffectContext = 'authorized-effect-context',
 }
 
-/** Receipt metadata survives compaction without retaining file content or an obsolete connection lease. */
-export interface ConnectorJournalReceipt {
-    readonly jobId: string;
-    readonly sequence: bigint;
-    readonly dispatchId: string;
-    readonly requestHash: string;
-    readonly admissionHash: string;
-    readonly responseHash: string;
-}
 /** Null response means execution may have started; recovery must never repeat that operation. */
 export interface ConnectorJournalPending<TRequest, TResponse, TProgress = never> extends Omit<
     ConnectorJournalReceipt,

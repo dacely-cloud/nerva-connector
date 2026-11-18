@@ -4,12 +4,12 @@
 import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ExecutionInteractiveFields as Fields } from 'nerva-connector-protocol/execution/ExecutionInteractiveFields.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
-import { ExecutionInteractiveLaunchCodec } from './ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import { ExecutionProof } from './ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import type { ConnectorStorageCodec } from '../runtime/ConnectorOperationCodec.js';
 import type { ConnectorClientSession } from '../runtime/ConnectorClientSession.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';

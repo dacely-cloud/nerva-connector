@@ -14,12 +14,12 @@ import {
     type ConnectorMigrationPlan,
     type ConnectorMigrationSource,
 } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigration.js';
-import { ConnectorAdmissionMigrationProof } from '../../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import { ConnectorMigrationPreparation } from '../../src/runtime/ConnectorMigrationPreparation.js';
 
@@ -54,7 +54,7 @@ export class RuntimeMigrationApprovalFixture {
             enrollmentId: identity.settings.enrollmentId,
             devicePublicKey: identity.publicKey,
         };
-        return ConnectorAdmissionMigrationProof.signApproval(authority, expected, {
+        return ConnectorAdmissionMigrationProof.signApproval(SigningKey, authority, expected, {
             plan,
             fenceId: 'test-only-fence-' + randomUUID(),
             authorizations: plan.sources.map(

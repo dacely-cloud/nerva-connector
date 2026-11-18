@@ -12,23 +12,23 @@ import {
 } from '../../src/runtime/ConnectorEffectContext.js';
 import { ExecutionInteractiveOwnership } from '../../src/execution/ExecutionInteractiveOwnership.js';
 import { ExecutionJournalCodec } from '../../src/execution/ExecutionJournalCodec.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ExecutionAppArmorMode } from '../../src/execution/ExecutionAppArmorProfile.js';
 import { ExecutionBootstrapInputKind } from '../../src/execution/ExecutionBootstrapInput.js';
 import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import { ExecutionMachineMode } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
-import { ExecutionInteractiveLaunchCodec } from '../../src/execution/ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import {
     ExecutionWorkspaceAccess,
     type ExecutionResult,
-} from '../../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type {
     ExecutionRequest,
     ExecutionPermit,
     ExecutionCompletion,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import type {
     ExecutionInteractiveInvocationRule,

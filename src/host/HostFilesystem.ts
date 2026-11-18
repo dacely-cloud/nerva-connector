@@ -15,7 +15,7 @@ import {
     stat,
     type FileHandle,
 } from 'node:fs/promises';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
 import { HostFileIdentity } from './HostFileIdentity.js';
 import { HostFileSnapshotCodec } from './HostFileSnapshotCodec.js';

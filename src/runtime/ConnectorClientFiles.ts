@@ -10,8 +10,8 @@ import type { ConnectorJointAdmission } from './ConnectorJointAdmission.js';
 import { ConnectorOperationAuthorization } from './ConnectorOperationAuthorization.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
-import { ConnectorFileProof } from './ConnectorFileProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import {
     ConnectorOperationJournal,
     type ConnectorJournalClaim,
@@ -48,6 +48,7 @@ import { JointWorkspaceConfiguration } from '../workspace/JointWorkspaceConfigur
 import { ConnectorHostGrant } from './ConnectorHostGrant.js';
 import type { ConnectorActivityHandle, ConnectorActivitySink } from './ConnectorActivity.js';
 import { ConnectorActivityLane } from './ConnectorActivityLane.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** One verified delivery of an original file permit, bound to the lease it arrived on. */
 export interface ConnectorFileDelivery {
@@ -233,6 +234,7 @@ export class ConnectorClientFiles implements AsyncDisposable {
             permit.expiresAtMs <= now ||
             permit.expiresAtMs > expiresAtMs ||
             !ConnectorFileProof.verify(
+                SigningKey,
                 this.#authorityKey,
                 SignaturePurpose.OperationFilePermit,
                 ConnectorFileProof.permit(permit),
@@ -308,6 +310,7 @@ export class ConnectorClientFiles implements AsyncDisposable {
         this.#binding(acknowledgment, leaseId);
         if (
             !ConnectorFileProof.verify(
+                SigningKey,
                 this.#authorityKey,
                 SignaturePurpose.OperationFileAcknowledgment,
                 ConnectorFileProof.acknowledgment(acknowledgment),

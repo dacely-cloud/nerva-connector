@@ -26,7 +26,7 @@ import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
 import type {
     ExecutionPolicyDefinition,
     ExecutionRootPolicy,
-} from '../src/execution/ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ConnectorReleaseFile } from '../src/install/ConnectorRelease.js';
 
 /** Owned installation metadata excludes read-induced atime changes and never retains key contents. */

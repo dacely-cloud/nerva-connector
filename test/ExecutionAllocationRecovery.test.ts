@@ -3,7 +3,7 @@
 
 import { spawn, type ChildProcess } from 'node:child_process';
 import type { ExecutionSandboxAdmission } from '../src/execution/ExecutionSandboxAdmission.js';
-import type { ExecutionResourceLimits } from '../src/execution/ExecutionTypes.js';
+import type { ExecutionResourceLimits } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { readFile, readdir, type FileHandle } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it, vi, type MockInstance } from 'vitest';
@@ -25,9 +25,9 @@ import type {
     ExecutionCompletion,
     ExecutionPermit,
     ExecutionRequest,
-} from '../src/execution/ExecutionJobs.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { WorkspaceIdentityProcess } from '../src/workspace/WorkspaceIdentityProcess.js';
 import type { WorkspaceDirectoryInspection } from '../src/workspace/WorkspaceDirectoryInspection.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';

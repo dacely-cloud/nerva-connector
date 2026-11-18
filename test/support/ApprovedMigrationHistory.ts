@@ -22,7 +22,8 @@ import type {
 import type { ConnectorJournalRecord } from '../../src/runtime/ConnectorJournalRecord.js';
 import type { ConnectorEffectContext } from '../../src/runtime/ConnectorEffectContext.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
-import { ConnectorAdmissionMigrationProof as Proof } from '../../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof as Proof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
+import { SigningKey } from '../../src/identity/SigningKey.js';
 import {
     ConnectorMigrationLane,
     type ConnectorMigrationPlan,
@@ -173,6 +174,7 @@ export function migrationApproval<TRequest, TResponse, TProgress>(
         sources: [entry],
     });
     return Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(plan, joint ? fixture.authorization : fixture.independent),

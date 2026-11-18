@@ -6,9 +6,9 @@ import { join } from 'node:path';
 import type { ExecutionFixture } from './ExecutionFixture.js';
 import type { ExecutionClientSettings } from '../../src/execution/ExecutionClientSettings.js';
 import { ExecutionPolicyCodec } from '../../src/execution/ExecutionPolicyCodec.js';
-import { type ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+import { type ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 
 /** Only this test-owned operator policy grants the finite effect and hold probes. */

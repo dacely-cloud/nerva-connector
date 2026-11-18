@@ -3,11 +3,11 @@
 
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { type ExecutionRequest } from '../execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 import { ExecutionJournalCodec } from '../execution/ExecutionJournalCodec.js';
-import type { ExecutionResult } from '../execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../execution/ExecutionOutput.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type { ConnectorFileOperation } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import type { ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ConnectorOperationSchema } from 'nerva-connector-protocol/protocol/ConnectorOperationSchema.js';
@@ -20,7 +20,7 @@ import {
     type ConnectorMigrationOriginal,
 } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigration.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
-import { ConnectorAdmissionMigrationProof } from '../protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorApprovedJournalMigration } from './ConnectorApprovedJournalMigration.js';
 import { ConnectorMigrationInstallation } from './ConnectorMigrationInstallation.js';
 import { ConnectorJournalMigrationSourceCodec } from './ConnectorJournalMigrationSourceCodec.js';
@@ -29,6 +29,7 @@ import { ConnectorJournalStore, ConnectorJournalOpenIntent } from './ConnectorJo
 import type { ConnectorJournalRecord } from './ConnectorJournalRecord.js';
 import type { ConnectorOperationCodec, ConnectorStorageCodec } from './ConnectorOperationCodec.js';
 import { ConnectorFileJournalCodec } from './ConnectorFileJournalCodec.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Preparation reads authenticated old ciphertext without providing any path that can rewrite it. */
 class ConnectorMigrationInspectionCodec<
@@ -107,7 +108,7 @@ export class ConnectorMigrationPreparation {
                 ),
             );
             if (
-                !ConnectorAdmissionMigrationProof.verifyPlan(expected, original) ||
+                !ConnectorAdmissionMigrationProof.verifyPlan(SigningKey, expected, original) ||
                 Buffer.compare(
                     Buffer.from(
                         ConnectorAdmissionMigrationProof.planPayload(

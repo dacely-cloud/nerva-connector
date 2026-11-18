@@ -16,8 +16,11 @@ import type { ExecutionClientSettings } from '../src/execution/ExecutionClientSe
 import { ExecutionJournalInstallation } from '../src/execution/ExecutionJournalInstallation.js';
 import { ExecutionDelivery } from '../src/execution/ExecutionDelivery.js';
 import { type ExecutionDeliveryLink } from '../src/execution/ExecutionDeliveryLink.js';
-import type { ExecutionPermit, ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
-import { ExecutionFailure } from '../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionPermit,
+    ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     ConnectorFrameKind,
     type ConnectorClientFrame,

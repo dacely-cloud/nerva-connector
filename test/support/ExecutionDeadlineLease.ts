@@ -13,7 +13,7 @@ import { ConnectorClientSession } from '../../src/runtime/ConnectorClientSession
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import type { SigningKey } from '../../src/identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 
 /** Both real signature components confirm an already-aged finite fixture lease; no real account service is simulated. */
 export interface ExecutionDeadlineLease {

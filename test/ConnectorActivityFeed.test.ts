@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { expect, it } from 'vitest';
-import { ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     ConnectorFileAction,
     ConnectorWriteMode,
 } from 'nerva-connector-protocol/protocol/ConnectorFileTypes.js';
 import type { ConnectorFileWrite } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import type { ExecutionRequest } from '../src/execution/ExecutionJobs.js';
-import type { ConnectorOperationDispatch } from '../src/runtime/ConnectorOperationCodec.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import {
     ConnectorActivityKind,

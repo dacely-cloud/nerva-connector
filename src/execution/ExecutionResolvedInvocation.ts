@@ -5,11 +5,11 @@ import {
     ExecutionBootstrapInputKind,
     type ExecutionBootstrapInput,
 } from './ExecutionBootstrapInput.js';
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
-import { ExecutionMachineInvocationCodec } from './ExecutionMachineInvocationCodec.js';
-import { ExecutionMachineRuleCodec } from './ExecutionMachineRuleCodec.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
-import { ExecutionInteractiveLaunchCodec } from './ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
+import { ExecutionMachineInvocationCodec } from 'nerva-connector-protocol/execution/ExecutionMachineInvocationCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import type {
     ExecutionInteractiveInvocationRule,
@@ -24,7 +24,7 @@ import type {
     ExecutionBinaryPolicy,
     ExecutionInvocation,
     ExecutionProgramPolicy,
-} from './ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** An immutable trusted launch captures exactly the locally pinned binary and all signed application inputs. */
 export interface ExecutionResolvedInvocation {

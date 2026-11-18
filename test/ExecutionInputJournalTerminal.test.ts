@@ -12,9 +12,9 @@ import type {
 import type {
     ExecutionCompletion,
     ExecutionAcknowledgment,
-} from '../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorPrivateDirectory } from '../src/runtime/ConnectorPrivateDirectory.js';
 

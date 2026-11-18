@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ExchangeCodec } from 'nerva-connector-protocol/remote/ExchangeCodec.js';
-import { ExchangeProof } from './ExchangeProof.js';
+import { ExchangeProof } from 'nerva-connector-protocol/remote/ExchangeProof.js';
+import { SigningKey } from '../identity/SigningKey.js';
 import {
     ExchangeKind,
     type ExchangeContext,
@@ -50,6 +51,7 @@ export class StreamVerifier {
                 throw new Error('Authenticated stream is closed or exceeds its frame budget');
             }
             const frame: SignedExchange = ExchangeProof.verify(
+                SigningKey,
                 bytes,
                 ExchangeKind.Chunk,
                 this.#context,

@@ -4,15 +4,15 @@
 import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import type { ConnectorHostPublication } from '../protocol/ConnectorHost.js';
+import type { ConnectorHostPublication } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorHostObservationCapabilityCodec as Codec } from '../protocol/ConnectorHostObservationCapabilityCodec.js';
-import { ConnectorHostObservationCapabilityTranscript as Transcript } from '../protocol/ConnectorHostObservationCapabilityTranscript.js';
+import { ConnectorHostObservationCapabilityTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapabilityTranscript.js';
 import { ConnectorHostObservationTranscript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
-import { ConnectorHostObservedStart } from '../protocol/ConnectorHostObservationProtocol.js';
+import { ConnectorHostObservedStart } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
 import type {
     ConnectorHostObservationCapability as Capability,
     ConnectorHostObservationActivation as Activation,
-} from '../protocol/ConnectorHostObservationCapability.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import { ConnectorHostProof } from './ConnectorHostProof.js';
 
 /** The current primary owner, installed authority and this socket's challenge supply all expected pins. */

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { ConnectorHostPlatform } from '../protocol/ConnectorHost.js';
+import type { ConnectorHostPlatform } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** A read-only availability question names bare programs and environment variables only. */
 export interface HostEnvironmentRequest {

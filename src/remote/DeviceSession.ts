@@ -6,7 +6,7 @@ import { SigningKey } from '../identity/SigningKey.js';
 import { IdentityCodec } from 'nerva-connector-protocol/identity/IdentityCodec.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ExchangeCodec } from 'nerva-connector-protocol/remote/ExchangeCodec.js';
-import { ExchangeProof } from './ExchangeProof.js';
+import { ExchangeProof } from 'nerva-connector-protocol/remote/ExchangeProof.js';
 import {
     ExchangeKind,
     ExchangeLimits,
@@ -71,6 +71,7 @@ export class DeviceSession implements Disposable {
                 throw new Error('Unexpected authority challenge');
             }
             const challenge: SignedExchange = ExchangeProof.verify(
+                SigningKey,
                 bytes,
                 ExchangeKind.Challenge,
                 this.#context,
@@ -124,6 +125,7 @@ export class DeviceSession implements Disposable {
                 throw new Error('Unexpected authority confirmation');
             }
             const confirmation: SignedExchange = ExchangeProof.verify(
+                SigningKey,
                 bytes,
                 ExchangeKind.Confirmation,
                 this.#context,
@@ -168,6 +170,7 @@ export class DeviceSession implements Disposable {
         try {
             const context: ExchangeContext = this.require(nowMs);
             const request: SignedExchange = ExchangeProof.verify(
+                SigningKey,
                 bytes,
                 ExchangeKind.Request,
                 context,

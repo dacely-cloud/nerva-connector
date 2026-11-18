@@ -5,14 +5,15 @@ import { mkdir, rename } from 'node:fs/promises';
 import { fstatSync } from 'node:fs';
 import { expect, it, vi, type MockInstance } from 'vitest';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import { JointWorkspaceCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceCodec.js';
 import { WorkspaceIdentityProcess } from '../src/workspace/WorkspaceIdentityProcess.js';
 import type { WorkspaceInspection } from '../src/workspace/WorkspaceInspection.js';
 import type { WorkspaceIdentityResult } from '../src/workspace/WorkspaceIdentity.js';
 import { JointWorkspaceCaptureFixture } from './support/JointWorkspaceCaptureFixture.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 const helpers: boolean =
     process.env['NERVA_CONNECTOR_FILES_HELPER'] !== undefined &&
@@ -27,7 +28,7 @@ it.skipIf(!helpers)(
             fixture.request,
             new AbortController().signal,
         );
-        expect(JointWorkspaceProof.verify(fixture.scope, first)).toBe(true);
+        expect(JointWorkspaceProof.verify(SigningKey, fixture.scope, first)).toBe(true);
         expect(first.binding.fileRootId).not.toBe(first.binding.executionRootId);
         expect(first.binding.revision).toBe(9007199254740993n);
         await rename(fixture.source.root, fixture.source.root + '.captured');
@@ -36,7 +37,7 @@ it.skipIf(!helpers)(
             { ...fixture.request, revision: fixture.request.revision + 1n },
             new AbortController().signal,
         );
-        expect(JointWorkspaceProof.verify(fixture.scope, next)).toBe(true);
+        expect(JointWorkspaceProof.verify(SigningKey, fixture.scope, next)).toBe(true);
         expect(next.binding.physicalRootCommitment).toBe(first.binding.physicalRootCommitment);
         expect(JointWorkspaceProof.bindingSha256(next.binding)).not.toBe(
             JointWorkspaceProof.bindingSha256(first.binding),

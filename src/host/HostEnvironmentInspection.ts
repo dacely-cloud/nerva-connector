@@ -4,7 +4,10 @@
 import { constants, type Stats } from 'node:fs';
 import { access, lstat, stat } from 'node:fs/promises';
 import { isAbsolute, sep } from 'node:path';
-import { ConnectorHostErrorCode, ConnectorHostPlatform } from '../protocol/ConnectorHost.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostPlatform,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import {

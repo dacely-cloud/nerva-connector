@@ -4,7 +4,7 @@
 import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ConnectorHostPlatform } from '../../src/protocol/ConnectorHost.js';
+import { ConnectorHostPlatform } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { HostEnvironmentSource } from '../../src/host/HostEnvironmentTypes.js';
 
 /** An injected environment records every lookup so tests can prove which variables were read. */

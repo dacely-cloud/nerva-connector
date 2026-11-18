@@ -28,13 +28,13 @@ import type { ExecutionDeliveryLink } from '../../src/execution/ExecutionDeliver
 import { JointWorkspaceDelivery } from '../../src/workspace/JointWorkspaceDelivery.js';
 import type { JointWorkspaceDescriptor } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspace/JointWorkspacePublication.js';
-import { JointWorkspaceReceiptProof } from '../../src/workspace/JointWorkspaceReceiptProof.js';
-import { JointWorkspaceProof } from '../../src/workspace/JointWorkspaceProof.js';
+import { JointWorkspaceReceiptProof } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import type {
     JointWorkspaceReceiptBody,
     JointWorkspaceReceipt,
 } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
-import { JointWorkspaceRetryProof } from '../../src/workspace/JointWorkspaceRetryProof.js';
+import { JointWorkspaceRetryProof } from 'nerva-connector-protocol/workspace/JointWorkspaceRetryProof.js';
 import {
     JointWorkspaceRetryReason,
     JointWorkspaceRetryLimits,

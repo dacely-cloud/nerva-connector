@@ -4,7 +4,7 @@
 import { createHash, type Hash } from 'node:crypto';
 import { constants, type BigIntStats } from 'node:fs';
 import { open, type FileHandle } from 'node:fs/promises';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
 import { HostFileSnapshotCodec } from './HostFileSnapshotCodec.js';
 import {

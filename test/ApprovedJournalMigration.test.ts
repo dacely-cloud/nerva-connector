@@ -33,7 +33,7 @@ import {
 import { ConnectorOperationPurpose } from '../src/runtime/ConnectorOperationCodec.js';
 import type { ConnectorClientIdentity } from '../src/runtime/ConnectorClientConfiguration.js';
 import { ConnectorEffectKind } from '../src/runtime/ConnectorEffectContext.js';
-import { ConnectorAdmissionMigrationProof as Proof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof as Proof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import {
     ConnectorMigrationLane,
     type ConnectorMigrationApproval,
@@ -42,10 +42,10 @@ import {
 import { type ConnectorFileResponse } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import type { ConnectorFileOperation } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
-import { type ExecutionRequest } from '../src/execution/ExecutionJobs.js';
+import { type ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { SigningKey } from '../src/identity/SigningKey.js';
 
 it('authenticated original no-authority AES history preserves exact receipt, binary response, provenance and >53-bit counters through approved conversion', (): void => {
@@ -269,7 +269,9 @@ it('an authority-approved joint certificate cannot manufacture missing joint ope
         operation.purpose,
         true,
     );
-    expect(Proof.verifyApproval(fixture.scope, certificate.plan, certificate)).toBe(true);
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, certificate.plan, certificate)).toBe(
+        true,
+    );
     const converter: ConnectorApprovedJournalMigration = ConnectorApprovedJournalMigration.create(
         migrationIdentity(fixture),
         certificate,

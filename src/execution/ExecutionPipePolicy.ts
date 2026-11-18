@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import { ExecutionInteractiveTransport } from 'nerva-connector-protocol/execution/ExecutionInteractive.js';
 import { ExecutionInputKind } from 'nerva-connector-protocol/execution/ExecutionInput.js';
-import { ExecutionMachineRuleCodec } from './ExecutionMachineRuleCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
 import type { ExecutionInteractiveInvocationRule } from 'nerva-connector-protocol/execution/ExecutionInteractiveInvocation.js';
-import type { ExecutionProgramPolicy } from './ExecutionPolicyTypes.js';
+import type { ExecutionProgramPolicy } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** Local Linux admission supports bounded Pipe input only; public PTY metadata grants no local capability. */
 export class ExecutionPipePolicy {

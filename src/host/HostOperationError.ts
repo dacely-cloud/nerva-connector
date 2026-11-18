@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import type { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** A bounded native error can prove rejection before an operation had effects. */
 export class HostOperationError extends Error {

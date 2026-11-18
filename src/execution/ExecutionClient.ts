@@ -7,7 +7,7 @@ import type { ConnectorJointAdmission } from '../runtime/ConnectorJointAdmission
 import { ConnectorOperationAuthorization } from '../runtime/ConnectorOperationAuthorization.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import type { ConnectorClientIdentity } from '../runtime/ConnectorClientConfiguration.js';
 import { JointWorkspaceConfiguration } from '../workspace/JointWorkspaceConfiguration.js';
 import { ConnectorClientSession } from '../runtime/ConnectorClientSession.js';
@@ -25,13 +25,16 @@ import { ConnectorEffectKind } from '../runtime/ConnectorEffectContext.js';
 import { ExecutionPolicy } from './ExecutionPolicy.js';
 import { ExecutionOperation } from './ExecutionOperation.js';
 import { ExecutionOutputProtocol } from './ExecutionOutputProtocol.js';
-import type { ExecutionOutputUpdate, ExecutionOutputAck } from './ExecutionOutput.js';
+import type {
+    ExecutionOutputUpdate,
+    ExecutionOutputAck,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type { ConnectorJournalPending } from '../runtime/ConnectorJournalState.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJournalCodec } from './ExecutionJournalCodec.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import { ExecutionProof } from './ExecutionProof.js';
-import type { ExecutionResult } from './ExecutionTypes.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import type {
     ExecutionRequest,
     ExecutionPermit,
@@ -42,7 +45,7 @@ import type {
     ExecutionAcknowledged,
     ExecutionBinding,
     ExecutionProfile,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ConnectorActivitySink } from '../runtime/ConnectorActivity.js';
 
 /** One signed command lane retains exact original effects across session and process replacement. */

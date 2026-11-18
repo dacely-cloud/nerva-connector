@@ -12,7 +12,7 @@ import {
     ConnectorHostTool,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorHostFixture } from './support/ConnectorHostFixture.js';
 
 /** Both durable first-activation boundaries are exercised without interrupting unrelated filesystem writes. */

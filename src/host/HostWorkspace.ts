@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { stat, realpath } from 'node:fs/promises';
 import { HostDesktop } from './HostDesktop.js';
 import { HostOperationError } from './HostOperationError.js';
-import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
 import { HostEnvironmentInspection } from './HostEnvironmentInspection.js';
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
@@ -420,7 +420,11 @@ export class HostWorkspace implements AsyncDisposable {
     }
 
     /** Text authorization covers guarded foreground input or an explicit verified application field replacement. */
-    public async desktopText(text: string, target?: string, field?: HostDesktopTextField): Promise<void> {
+    public async desktopText(
+        text: string,
+        target?: string,
+        field?: HostDesktopTextField,
+    ): Promise<void> {
         await this.#run(
             { operation: HostOperation.Text, path: null, destinationPath: null, processId: null },
             (): Promise<void> => this.#desktopOwner().text(text, target, field),

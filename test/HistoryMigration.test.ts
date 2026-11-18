@@ -31,7 +31,7 @@ import type {
     ConnectorFileOperation,
     ConnectorFilePermit,
 } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import { ConnectorFileProof } from '../src/runtime/ConnectorFileProof.js';
+import { ConnectorFileProof } from 'nerva-connector-protocol/protocol/ConnectorFileProof.js';
 import { JournalEffectFixture } from './support/JournalEffectFixture.js';
 
 const helpers: boolean =

@@ -5,14 +5,14 @@ import { writeFile } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { expect, it, vi } from 'vitest';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorHostCodec } from '../src/protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
     type ConnectorHostPermit,
     type ConnectorHostCompletion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import { ConnectorHostGrant } from '../src/runtime/ConnectorHostGrant.js';
 import { type ConnectorHostLocalGrant } from '../src/runtime/ConnectorHostGrantTypes.js';

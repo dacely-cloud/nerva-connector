@@ -19,7 +19,7 @@ import { ConnectorNativeExecutable } from '../../src/runtime/ConnectorNativeExec
 import { WorkspaceIdentityProcess } from '../../src/workspace/WorkspaceIdentityProcess.js';
 import type { ExecutionCgroupIdentity } from '../../src/execution/ExecutionCgroupIdentity.js';
 import { ExecutionCgroupIdentityCodec } from '../../src/execution/ExecutionCgroupIdentityCodec.js';
-import type { ExecutionOutput } from '../../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { requireEffect } from './ExecutionEffectQualificationTypes.js';
 
 /** A trusted unsandboxed fixture child proves group ownership and liveness, never application confinement. */

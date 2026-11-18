@@ -7,11 +7,11 @@ import { ConnectorHostObservationFixture as Fixture } from './support/ConnectorH
 import { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import { ConnectorHostObservationDelivery as Delivery } from '../src/runtime/ConnectorHostObservationDelivery.js';
 import { ConnectorHostObservationCapabilityProof } from '../src/runtime/ConnectorHostObservationCapabilityProof.js';
-import { ConnectorHostObservationCapabilityTranscript } from '../src/protocol/ConnectorHostObservationCapabilityTranscript.js';
+import { ConnectorHostObservationCapabilityTranscript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapabilityTranscript.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import { ConnectorHostProof } from '../src/runtime/ConnectorHostProof.js';
-import { ConnectorHostObservedStart } from '../src/protocol/ConnectorHostObservationProtocol.js';
-import type { ConnectorHostObservationActivation } from '../src/protocol/ConnectorHostObservationCapability.js';
+import { ConnectorHostObservedStart } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
+import type { ConnectorHostObservationActivation } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 import type {
     ConnectorHostObservationReady as Ready,
     ConnectorHostObservationPermit as Permit,

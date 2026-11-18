@@ -8,9 +8,13 @@ import {
     type ConnectorJointAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
 import type { ConnectorFilePermit } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import { type ExecutionPermit, type ExecutionCancellation } from '../execution/ExecutionJobs.js';
+import {
+    type ExecutionPermit,
+    type ExecutionCancellation,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { JointWorkspaceProof } from '../workspace/JointWorkspaceProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
+import { SigningKey } from '../identity/SigningKey.js';
 
 /** Immutable original proof verification never reads a current metadata head or substitutes newly captured physical authority. */
 export class ConnectorOperationAuthorization {
@@ -69,6 +73,7 @@ export class ConnectorOperationAuthorization {
         if (
             authorization.kind !== ConnectorAuthorizationKind.Joint ||
             !JointWorkspaceProof.verify(
+                SigningKey,
                 {
                     authorityId: identity.authority.authorityId,
                     environmentId: identity.settings.environmentId,

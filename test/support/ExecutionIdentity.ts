@@ -9,7 +9,7 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { SigningKey } from '../../src/identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorClientSession } from '../../src/runtime/ConnectorClientSession.js';
@@ -22,7 +22,7 @@ import type {
 } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/ConnectorDeviceCodec.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import type {
     ExecutionProfile,
     ExecutionPermit,
@@ -30,7 +30,7 @@ import type {
     ExecutionAcknowledgment,
     ExecutionCompletion,
     ExecutionCancellation,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 
 /** Test-only private authority stays in the controller test; no production module or customer artifact imports it. */
 export class ExecutionIdentity implements Disposable {

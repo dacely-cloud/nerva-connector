@@ -7,11 +7,11 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ConnectorSessionFixture } from './ConnectorSessionFixture.js';
 import { ExecutionMachineFixture } from './ExecutionMachineFixture.js';
-import { ExecutionMachineRuleCodec } from '../../src/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
 import { ConnectorClientSession } from '../../src/runtime/ConnectorClientSession.js';
 import type { ConnectorDeviceLease } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
 import { ConnectorAuthorizationKind } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../../src/protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 import {
     ExecutionInteractiveTransport,
@@ -22,7 +22,7 @@ import type {
     ExecutionInteractiveInvocationRule,
     ExecutionInteractiveLaunch,
 } from 'nerva-connector-protocol/execution/ExecutionInteractiveInvocation.js';
-import { ExecutionInteractiveLaunchCodec } from '../../src/execution/ExecutionInteractiveLaunchCodec.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import { ExecutionInteractiveProof as Proof } from 'nerva-connector-protocol/execution/ExecutionInteractiveProof.js';
 import {
     ExecutionInputKind,
@@ -39,10 +39,13 @@ import {
     type ExecutionRequest,
     type ExecutionCompletion,
     type ExecutionAcknowledgment,
-} from '../../src/execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
-import { ExecutionTermination, type ExecutionResult } from '../../src/execution/ExecutionTypes.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import {
+    ExecutionTermination,
+    type ExecutionResult,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import type {
     ExecutionInputJournalAdmission,

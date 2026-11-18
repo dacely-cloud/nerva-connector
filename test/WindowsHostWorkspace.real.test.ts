@@ -11,7 +11,7 @@ import { HostWorkspace } from '../src/host/HostWorkspace.js';
 import { HostWindowsBuild } from '../src/host/HostWindowsBuild.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import type { HostEnvironmentReport } from '../src/host/HostEnvironmentTypes.js';
-import { ConnectorHostErrorCode } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     HostFileKind,
     HostShell,

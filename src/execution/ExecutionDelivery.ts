@@ -13,7 +13,10 @@ import {
 } from '../protocol/ConnectorTransport.js';
 import type { ExecutionClient } from './ExecutionClient.js';
 import type { ExecutionDeliveryClient } from './ExecutionDeliveryClient.js';
-import type { ExecutionCompletion, ExecutionAcknowledged } from './ExecutionJobs.js';
+import type {
+    ExecutionCompletion,
+    ExecutionAcknowledged,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import {
     ExecutionDeliveryChannel,
     type ExecutionPendingDelivery,

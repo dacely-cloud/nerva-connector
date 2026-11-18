@@ -11,7 +11,7 @@ import {
     type ConnectorMigrationPlan,
     type ConnectorMigrationPlanBody,
 } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigration.js';
-import { ConnectorAdmissionMigrationProof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorMigrationAppliedCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationAppliedCodec.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
@@ -29,6 +29,7 @@ import {
 } from '../src/runtime/ConnectorHistoryMigrationMarker.js';
 import { FileHistoryFixture } from './support/FileHistoryFixture.js';
 import { RuntimeMigrationApprovalFixture } from './support/RuntimeMigrationApprovalFixture.js';
+import { SigningKey } from '../src/identity/SigningKey.js';
 
 const helpers: boolean =
     process.platform === 'linux' && process.env['NERVA_CONNECTOR_FILES_HELPER'] !== undefined;
@@ -150,13 +151,24 @@ it.skipIf(!helpers)(
         const expected: ReturnType<typeof ConnectorMigrationEvidence.expected> =
             ConnectorMigrationEvidence.expected(fixture.identity);
         const resignedApplied: ConnectorMigrationApplied =
-            ConnectorAdmissionMigrationProof.signApplied(fixture.identity.key, expected, approval, {
-                planSha256: applied.planSha256,
-                approvalSha256: applied.approvalSha256,
-                targets: applied.targets,
-            });
+            ConnectorAdmissionMigrationProof.signApplied(
+                SigningKey,
+                fixture.identity.key,
+                expected,
+                approval,
+                {
+                    planSha256: applied.planSha256,
+                    approvalSha256: applied.approvalSha256,
+                    targets: applied.targets,
+                },
+            );
         expect(
-            ConnectorAdmissionMigrationProof.verifyApplied(expected, approval, resignedApplied),
+            ConnectorAdmissionMigrationProof.verifyApplied(
+                SigningKey,
+                expected,
+                approval,
+                resignedApplied,
+            ),
         ).toBe(true);
         expect(resignedApplied.signature === applied.signature).toBe(false);
         await writeFile(appliedPath, ConnectorMigrationAppliedCodec.encode(resignedApplied));
@@ -171,12 +183,18 @@ it.skipIf(!helpers)(
             authorizations: approval.authorizations,
         };
         const alternate: ConnectorMigrationApproval = ConnectorAdmissionMigrationProof.signApproval(
+            SigningKey,
             fixture.identity.key,
             expected,
             approvalBody,
         );
         expect(
-            ConnectorAdmissionMigrationProof.verifyApproval(expected, approval.plan, alternate),
+            ConnectorAdmissionMigrationProof.verifyApproval(
+                SigningKey,
+                expected,
+                approval.plan,
+                alternate,
+            ),
         ).toBe(true);
         expect(alternate.signature === approval.signature).toBe(false);
         const approvalPath: string = join(directory, ConnectorMigrationEvidence.approvalFilename);
@@ -189,6 +207,7 @@ it.skipIf(!helpers)(
         await writeFile(approvalPath, approvalBytes);
         const alternateApplied: ConnectorMigrationApplied =
             ConnectorAdmissionMigrationProof.signApplied(
+                SigningKey,
                 fixture.identity.key,
                 expected,
                 alternate,
@@ -199,7 +218,12 @@ it.skipIf(!helpers)(
                 },
             );
         expect(
-            ConnectorAdmissionMigrationProof.verifyApplied(expected, alternate, alternateApplied),
+            ConnectorAdmissionMigrationProof.verifyApplied(
+                SigningKey,
+                expected,
+                alternate,
+                alternateApplied,
+            ),
         ).toBe(true);
         await writeFile(appliedPath, ConnectorMigrationAppliedCodec.encode(alternateApplied));
         await expect(
@@ -221,7 +245,9 @@ it.skipIf(!helpers)(
             fixture.identity.key,
             body,
         );
-        expect(ConnectorAdmissionMigrationProof.verifyPlan(expected, alternatePlan)).toBe(true);
+        expect(
+            ConnectorAdmissionMigrationProof.verifyPlan(SigningKey, expected, alternatePlan),
+        ).toBe(true);
         expect(alternatePlan.signature === first.signature).toBe(false);
         const planPath: string = join(directory, ConnectorMigrationPreparation.filename);
         const planBytes: Buffer = await readFile(planPath);

@@ -7,7 +7,7 @@ import {
     type ConnectorCapturedExecutionEffect,
 } from '../../src/runtime/ConnectorEffectContext.js';
 import type { ConnectorFileOperation } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import type { ExecutionRequest } from '../../src/execution/ExecutionJobs.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 
 /** Synthetic values test journal shape/correlation only; they do not qualify filesystem provenance or native execution. */
 export class JournalEffectFixture {

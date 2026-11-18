@@ -10,7 +10,10 @@ import type { ExecutionNativePipeHandle } from './ExecutionNativePipeHandle.js';
 import { readlink, type FileHandle } from 'node:fs/promises';
 import { ExecutionCgroup } from './ExecutionCgroup.js';
 import { ExecutionOutputCapture } from './ExecutionOutputCapture.js';
-import type { ExecutionOutput, ExecutionOutputSink } from './ExecutionOutput.js';
+import type {
+    ExecutionOutput,
+    ExecutionOutputSink,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import type { ExecutionSandboxAdmission } from './ExecutionSandboxAdmission.js';
 import type { WorkspaceIdentity } from '../workspace/WorkspaceIdentity.js';
 import type { ExecutionCgroupIdentity } from './ExecutionCgroupIdentity.js';
@@ -19,11 +22,10 @@ import {
     ExecutionTermination,
     ExecutionFailure,
     ExecutionSetupFailure,
-    type ExecutionBootstrap,
-    type ExecutionNamespaces,
     type ExecutionResourceLimits,
     type ExecutionResult,
-} from './ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap, type ExecutionNamespaces } from './ExecutionBootstrap.js';
 
 /** Pinned runtime ELF content is mounted at the exact granted guest path; later host pathname replacement cannot substitute bytes. */
 export interface ExecutionExecutable {

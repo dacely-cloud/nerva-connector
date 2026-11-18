@@ -13,9 +13,9 @@ import {
 } from '../src/runtime/ConnectorPrivateDirectory.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
 import type { ConnectorClientIdentity } from '../src/runtime/ConnectorClientConfiguration.js';
-import type { ExecutionRequest } from '../src/execution/ExecutionJobs.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';

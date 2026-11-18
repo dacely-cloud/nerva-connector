@@ -12,7 +12,7 @@ import {
     ConnectorHostTool,
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 const target: string = 'win32:v1:00000000000000ff:0000002a:01dc000000000001:00000037';
 

@@ -11,8 +11,8 @@ import {
     type ConnectorHostObservationConnection as Connection,
     type ConnectorHostObservationOwned as Owned,
 } from '../src/runtime/ConnectorHostObservationOwners.js';
-import { type ConnectorHostObservationCapture as Capture } from '../src/protocol/ConnectorHostObservedStart.js';
-import { ConnectorHostObservedStart as Start } from '../src/protocol/ConnectorHostObservationProtocol.js';
+import { type ConnectorHostObservationCapture as Capture } from 'nerva-connector-protocol/protocol/ConnectorHostObservedStart.js';
+import { ConnectorHostObservedStart as Start } from 'nerva-connector-protocol/protocol/ConnectorHostObservationProtocol.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
     ConnectorHostObservationKind as Kind,
@@ -25,14 +25,14 @@ import {
     ConnectorHostErrorCode,
     type ConnectorHostPermit as Effect,
     type ConnectorHostCompletion as Completion,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorHostLocalGrant as Grant } from '../src/runtime/ConnectorHostGrantTypes.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { HostProcess } from '../src/host/HostProcess.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorHostObservationCapabilityProof as CapabilityProof } from '../src/runtime/ConnectorHostObservationCapabilityProof.js';
-import { ConnectorHostObservationCapabilityTranscript as CapabilityTranscript } from '../src/protocol/ConnectorHostObservationCapabilityTranscript.js';
-import type { ConnectorHostObservationActivation as Activation } from '../src/protocol/ConnectorHostObservationCapability.js';
+import { ConnectorHostObservationCapabilityTranscript as CapabilityTranscript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapabilityTranscript.js';
+import type { ConnectorHostObservationActivation as Activation } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCapability.js';
 
 afterEach((): void => {
     vi.restoreAllMocks();

@@ -1,21 +1,21 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionMachineRuleCodec } from './ExecutionMachineRuleCodec.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import {
     type ExecutionProgramPolicy,
     type ExecutionRootPolicy,
     type ExecutionArgumentRule,
     type ExecutionPolicyDefinition,
-} from './ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
 import type {
     ExecutionProfile,
     ExecutionRootGrant,
     ExecutionProgramGrant,
     ExecutionInputRule,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 
 /** Projection borrows validated metadata only, without requiring ownership of executable or filesystem handles. */
 export interface ExecutionPublicProfileSource {

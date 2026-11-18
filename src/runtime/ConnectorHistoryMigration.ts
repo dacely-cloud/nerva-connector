@@ -20,7 +20,7 @@ import { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.
 import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import { ConnectorMigrationInstallation } from './ConnectorMigrationInstallation.js';
 import { ConnectorMigrationEvidence } from './ConnectorMigrationEvidence.js';
-import { ConnectorAdmissionMigrationProof } from '../protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import type {
     ConnectorMigrationApproval,
     ConnectorMigrationTarget,

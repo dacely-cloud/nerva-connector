@@ -17,17 +17,17 @@ import type {
     ExecutionInteractiveInvocationRule,
     ExecutionInteractiveLaunch,
 } from 'nerva-connector-protocol/execution/ExecutionInteractiveInvocation.js';
-import type { ExecutionPermit } from '../src/execution/ExecutionJobs.js';
-import { ExecutionProof } from '../src/execution/ExecutionProof.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
+import type { ExecutionPermit } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorOperationJournal } from '../src/runtime/ConnectorOperationJournal.js';
 import { ConnectorEffectKind } from '../src/runtime/ConnectorEffectContext.js';
 import { ExecutionJournalCodec } from '../src/execution/ExecutionJournalCodec.js';
 import { ExecutionLaunchAdmission } from '../src/execution/ExecutionLaunchAdmission.js';
-import type { ExecutionRequest } from '../src/execution/ExecutionJobs.js';
-import type { ExecutionResult } from '../src/execution/ExecutionTypes.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 
 /** Real fixture authority signatures validate preparation; no Ready, native start or input acceptance is claimed. */
 function signed(fixture: Fixture, value: ExecutionPermit): ExecutionPermit {

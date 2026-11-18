@@ -3,9 +3,9 @@
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import type { ConnectorProgressCodec } from '../runtime/ConnectorProgressCodec.js';
-import type { ExecutionRequest } from './ExecutionJobs.js';
-import type { ExecutionResult } from './ExecutionTypes.js';
-import type { ExecutionOutput } from './ExecutionOutput.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ExecutionResult } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import {
     ConnectorEffectKind,
     type ConnectorEffectContext,

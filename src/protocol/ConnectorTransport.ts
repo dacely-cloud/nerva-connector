@@ -9,8 +9,8 @@ import {
     type ConnectorHostCompletion,
     type ConnectorHostAcknowledgment,
     type ConnectorHostAcknowledged,
-} from './ConnectorHost.js';
-import { ConnectorHostCodec } from './ConnectorHostCodec.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 
 import {
     ConnectorInteractiveProtocol,
@@ -25,10 +25,13 @@ import type { JointWorkspacePublication } from 'nerva-connector-protocol/workspa
 import { JointWorkspacePublicationCodec } from 'nerva-connector-protocol/workspace/JointWorkspacePublicationCodec.js';
 import type { JointWorkspaceReceipt } from 'nerva-connector-protocol/workspace/JointWorkspaceReceipt.js';
 import { JointWorkspaceReceiptCodec } from 'nerva-connector-protocol/workspace/JointWorkspaceReceiptCodec.js';
-import type { ConnectorInventoryPublication } from './ConnectorInventory.js';
-import { ConnectorInventoryCodec } from './ConnectorInventoryCodec.js';
+import type { ConnectorInventoryPublication } from 'nerva-connector-protocol/protocol/ConnectorInventory.js';
+import { ConnectorInventoryCodec } from 'nerva-connector-protocol/protocol/ConnectorInventoryCodec.js';
 import { ExecutionOutputProtocol } from '../execution/ExecutionOutputProtocol.js';
-import type { ExecutionOutputUpdate, ExecutionOutputAck } from '../execution/ExecutionOutput.js';
+import type {
+    ExecutionOutputUpdate,
+    ExecutionOutputAck,
+} from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionJobsCodec } from '../execution/ExecutionJobsCodec.js';
 import type {
     ExecutionPublication,
@@ -37,7 +40,7 @@ import type {
     ExecutionCompletion,
     ExecutionAcknowledgment,
     ExecutionAcknowledged,
-} from '../execution/ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { IdentityLengths } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorFileJobsCodec } from 'nerva-connector-protocol/protocol/ConnectorFileJobsCodec.js';
 import type {
@@ -60,7 +63,7 @@ import type {
     ConnectorDeviceHello,
     ConnectorDeviceLease,
 } from 'nerva-connector-protocol/protocol/ConnectorDevice.js';
-import { ConnectorLinkCodec } from './ConnectorLinkCodec.js';
+import { ConnectorLinkCodec } from 'nerva-connector-protocol/protocol/ConnectorLinkCodec.js';
 import {
     ConnectorLinkFailure,
     ConnectorLinkLimits,
@@ -69,7 +72,7 @@ import {
     type ConnectorLinkIssued,
     type ConnectorLinkStatus,
     type ConnectorLinkReceipt,
-} from './ConnectorLink.js';
+} from 'nerva-connector-protocol/protocol/ConnectorLink.js';
 
 /** Purpose-separated authentication and bounded capability frames contain no backend credentials or general network forwarding. */
 export enum ConnectorFrameKind {

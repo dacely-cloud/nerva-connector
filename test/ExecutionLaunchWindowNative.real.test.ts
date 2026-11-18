@@ -15,9 +15,9 @@ import { ExecutionNativePipeHandle } from '../src/execution/ExecutionNativePipeH
 import {
     ExecutionWorkspaceAccess,
     ExecutionTermination,
-    type ExecutionBootstrap,
     type ExecutionResult,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from '../src/execution/ExecutionBootstrap.js';
 
 const helper: string | undefined = process.env['NERVA_CONNECTOR_EXEC_HELPER'];
 

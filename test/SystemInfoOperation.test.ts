@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { afterEach, expect, it, vi, type MockInstance } from 'vitest';
 import { SigningKey } from '../src/identity/SigningKey.js';
 import { IdentityLengths } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ExchangeProof } from '../src/remote/ExchangeProof.js';
+import { ExchangeProof } from 'nerva-connector-protocol/remote/ExchangeProof.js';
 import { ExchangeCodec } from 'nerva-connector-protocol/remote/ExchangeCodec.js';
 import {
     ExchangeKind,
@@ -96,6 +96,7 @@ it('collects only after both signatures pass and returns the exact original requ
     const result: SignedExchange = await fixture.run(request);
     expect(probe).toHaveBeenCalledTimes(1);
     const accepted: SignedExchange = ExchangeProof.verify(
+        SigningKey,
         ExchangeCodec.encode(result),
         ExchangeKind.Result,
         { ...fixture.context, recipientPublicKey: fixture.authority.publicKey },

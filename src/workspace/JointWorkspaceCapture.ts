@@ -3,7 +3,7 @@
 
 import type { SigningKey } from '../identity/SigningKey.js';
 import type { ExecutionPolicy } from '../execution/ExecutionPolicy.js';
-import type { ExecutionProfile } from '../execution/ExecutionJobs.js';
+import type { ExecutionProfile } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionJobsCodec } from '../execution/ExecutionJobsCodec.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';

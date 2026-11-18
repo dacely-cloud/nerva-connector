@@ -10,7 +10,7 @@ import {
     ExecutionAppArmorMode,
     type ExecutionAppArmorDefinition,
 } from './ExecutionAppArmorProfile.js';
-import type { ExecutionPolicyDefinition } from './ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionAppArmorRequirements } from './ExecutionAppArmorRequirements.js';
 
 /** Only explicit local parser operations are available to installation. */

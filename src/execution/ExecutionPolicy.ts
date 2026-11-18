@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
 import {
     ExecutionInvocationResolution,
     type ExecutionResolvedInvocation,
@@ -21,7 +21,7 @@ import {
     ConnectorFileLimits,
 } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ExecutionPolicyCodec } from './ExecutionPolicyCodec.js';
-import type { ExecutionOutputSink } from './ExecutionOutput.js';
+import type { ExecutionOutputSink } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import {
     ExecutionAppArmorProfile,
     ExecutionAppArmorMode,
@@ -36,13 +36,13 @@ import type {
     ExecutionInteractiveNativeBinding,
     ExecutionInteractiveResolution,
 } from './ExecutionInteractiveOwnershipTypes.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import { ExecutionSandbox, type ExecutionExecutable } from './ExecutionSandbox.js';
 import {
     ExecutionWorkspaceAccess,
-    type ExecutionBootstrap,
     type ExecutionResult,
-} from './ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from './ExecutionBootstrap.js';
 import type { WorkspaceInspection } from '../workspace/WorkspaceInspection.js';
 import type { ExecutionEffectAdmission } from './ExecutionEffectAdmission.js';
 import type { ConnectorCapturedExecutionEffect } from '../runtime/ConnectorEffectContext.js';
@@ -54,7 +54,7 @@ import type {
     ExecutionProgramPolicy,
     ExecutionRootPolicy,
     ExecutionBinaryPolicy,
-} from './ExecutionPolicyTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 interface ExecutionPolicySelection {
     readonly invocation: ExecutionInvocation;

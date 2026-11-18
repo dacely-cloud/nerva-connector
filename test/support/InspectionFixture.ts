@@ -7,8 +7,8 @@ import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promi
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
-import { ExecutionWorkspaceAccess } from '../../src/execution/ExecutionTypes.js';
-import type { ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** Explicit files policy grants one folder without configuring any remote account or journal. */
 interface InspectionFilePolicy {

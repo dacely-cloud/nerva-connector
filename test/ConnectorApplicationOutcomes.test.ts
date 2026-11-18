@@ -16,7 +16,7 @@ import {
 } from '../src/runtime/ConnectorActivity.js';
 import { ConnectorActivityText } from '../src/cli/ConnectorActivityText.js';
 import type { ConnectorStyledRow } from '../src/cli/ConnectorLogo.js';
-import { ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 it('only an observed application window gets a successful activity checkmark', (): void => {
     for (const [status, windowObserved, expected] of [

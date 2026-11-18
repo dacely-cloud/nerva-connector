@@ -3,7 +3,7 @@
 
 import { ExecutionAppArmorMode } from './ExecutionAppArmorProfile.js';
 import { ExecutionPipePolicy } from './ExecutionPipePolicy.js';
-import type { ExecutionPolicyDefinition } from './ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 /** Every locally published execution mode requires its own exact enforcing launcher and payload stack. */
 export class ExecutionAppArmorRequirements {

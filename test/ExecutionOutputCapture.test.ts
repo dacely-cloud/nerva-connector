@@ -3,7 +3,7 @@
 
 import { expect, it, vi } from 'vitest';
 import { ExecutionOutputCapture } from '../src/execution/ExecutionOutputCapture.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionOutputRetentionError } from '../src/execution/ExecutionOutputRetentionError.js';
 
 it('coalesces pipe activity into one owned write and joins the final binary tail without a backlog', async (): Promise<void> => {

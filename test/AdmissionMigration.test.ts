@@ -4,7 +4,7 @@
 import { expect, it } from 'vitest';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { AdmissionMigrationFixture } from './support/AdmissionMigrationFixture.js';
-import { ConnectorAdmissionMigrationProof as Proof } from '../src/protocol/ConnectorAdmissionMigrationProof.js';
+import { ConnectorAdmissionMigrationProof as Proof } from 'nerva-connector-protocol/protocol/ConnectorAdmissionMigrationProof.js';
 import { ConnectorMigrationPlanCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationPlanCodec.js';
 import { ConnectorMigrationApprovalCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationApprovalCodec.js';
 import { ConnectorMigrationAppliedCodec } from 'nerva-connector-protocol/protocol/ConnectorMigrationAppliedCodec.js';
@@ -27,19 +27,21 @@ import {
 it('all three exact original encrypted histories round trip through device plan, authority approval and device applied proofs', (): void => {
     using fixture: AdmissionMigrationFixture = new AdmissionMigrationFixture();
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),
     );
     const applied: ConnectorMigrationApplied = Proof.signApplied(
+        SigningKey,
         fixture.device,
         fixture.scope,
         approval,
         fixture.appliedBody(approval),
     );
-    expect(Proof.verifyPlan(fixture.scope, fixture.plan)).toBe(true);
-    expect(Proof.verifyApproval(fixture.scope, fixture.plan, approval)).toBe(true);
-    expect(Proof.verifyApplied(fixture.scope, approval, applied)).toBe(true);
+    expect(Proof.verifyPlan(SigningKey, fixture.scope, fixture.plan)).toBe(true);
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, approval)).toBe(true);
+    expect(Proof.verifyApplied(SigningKey, fixture.scope, approval, applied)).toBe(true);
     expect(
         ConnectorMigrationPlanCodec.decode(ConnectorMigrationPlanCodec.encode(fixture.plan)),
     ).toEqual(fixture.plan);
@@ -64,11 +66,13 @@ it('paired-only proofs retain exact device, authority and approval binding witho
         sources: [],
     });
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(plan),
     );
     const applied: ConnectorMigrationApplied = Proof.signApplied(
+        SigningKey,
         fixture.device,
         fixture.scope,
         approval,
@@ -85,24 +89,27 @@ it('paired-only proofs retain exact device, authority and approval binding witho
     expect(
         ConnectorMigrationAppliedCodec.decode(ConnectorMigrationAppliedCodec.encode(applied)),
     ).toEqual(applied);
-    expect(Proof.verifyPlan(fixture.scope, plan)).toBe(true);
-    expect(Proof.verifyPlan(fixture.scope, { ...fixture.plan, sources: [] })).toBe(false);
-    expect(Proof.verifyApproval(fixture.scope, plan, approval)).toBe(true);
-    expect(Proof.verifyApplied(fixture.scope, approval, applied)).toBe(true);
-    expect(Proof.verifyApproval(fixture.scope, fixture.plan, approval)).toBe(false);
+    expect(Proof.verifyPlan(SigningKey, fixture.scope, plan)).toBe(true);
+    expect(Proof.verifyPlan(SigningKey, fixture.scope, { ...fixture.plan, sources: [] })).toBe(
+        false,
+    );
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, plan, approval)).toBe(true);
+    expect(Proof.verifyApplied(SigningKey, fixture.scope, approval, applied)).toBe(true);
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, approval)).toBe(false);
     expect(
-        Proof.verifyApplied(fixture.scope, approval, {
+        Proof.verifyApplied(SigningKey, fixture.scope, approval, {
             ...applied,
             approvalSha256: '0'.repeat(64),
         }),
     ).toBe(false);
     const nonempty: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),
     );
     expect((): ConnectorMigrationApplied =>
-        Proof.signApplied(fixture.device, fixture.scope, nonempty, {
+        Proof.signApplied(SigningKey, fixture.device, fixture.scope, nonempty, {
             ...fixture.appliedBody(nonempty),
             targets: [],
         }),
@@ -113,11 +120,13 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
     using fixture: AdmissionMigrationFixture = new AdmissionMigrationFixture();
     using foreign: SigningKey = SigningKey.generate();
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),
     );
     const applied: ConnectorMigrationApplied = Proof.signApplied(
+        SigningKey,
         fixture.device,
         fixture.scope,
         approval,
@@ -127,7 +136,7 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         const damagedPlan: Buffer = Buffer.from(fixture.plan.signature, 'base64url');
         damagedPlan[offset] = (damagedPlan[offset] ?? 0) ^ 1;
         expect(
-            Proof.verifyPlan(fixture.scope, {
+            Proof.verifyPlan(SigningKey, fixture.scope, {
                 ...fixture.plan,
                 signature: damagedPlan.toString('base64url'),
             }),
@@ -135,7 +144,7 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         const damagedApproval: Buffer = Buffer.from(approval.signature, 'base64url');
         damagedApproval[offset] = (damagedApproval[offset] ?? 0) ^ 1;
         expect(
-            Proof.verifyApproval(fixture.scope, fixture.plan, {
+            Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, {
                 ...approval,
                 signature: damagedApproval.toString('base64url'),
             }),
@@ -143,7 +152,7 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         const damagedApplied: Buffer = Buffer.from(applied.signature, 'base64url');
         damagedApplied[offset] = (damagedApplied[offset] ?? 0) ^ 1;
         expect(
-            Proof.verifyApplied(fixture.scope, approval, {
+            Proof.verifyApplied(SigningKey, fixture.scope, approval, {
                 ...applied,
                 signature: damagedApplied.toString('base64url'),
             }),
@@ -156,11 +165,11 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         { ...fixture.scope, devicePublicKey: foreign.publicKey },
         { ...fixture.scope, authorityPublicKey: foreign.publicKey },
     ]) {
-        expect(Proof.verifyApproval(scope, fixture.plan, approval)).toBe(false);
-        expect(Proof.verifyApplied(scope, approval, applied)).toBe(false);
+        expect(Proof.verifyApproval(SigningKey, scope, fixture.plan, approval)).toBe(false);
+        expect(Proof.verifyApplied(SigningKey, scope, approval, applied)).toBe(false);
     }
     expect(
-        Proof.verifyPlan(fixture.scope, {
+        Proof.verifyPlan(SigningKey, fixture.scope, {
             ...fixture.plan,
             signature: fixture.device.sign(
                 SignaturePurpose.AdmissionMigrationApplied,
@@ -169,7 +178,7 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         }),
     ).toBe(false);
     expect(
-        Proof.verifyApproval(fixture.scope, fixture.plan, {
+        Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, {
             ...approval,
             signature: fixture.authority.sign(
                 SignaturePurpose.AdmissionMigrationPlan,
@@ -178,7 +187,7 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
         }),
     ).toBe(false);
     expect(
-        Proof.verifyApplied(fixture.scope, approval, {
+        Proof.verifyApplied(SigningKey, fixture.scope, approval, {
             ...applied,
             signature: fixture.device.sign(
                 SignaturePurpose.AdmissionMigrationPlan,
@@ -188,55 +197,72 @@ it('either damaged hybrid component, a different enrolled device/authority, or a
     ).toBe(false);
     expect((): ConnectorMigrationPlan => Proof.signPlan(foreign, fixture.planBody())).toThrow();
     expect((): ConnectorMigrationApproval =>
-        Proof.signApproval(foreign, fixture.scope, fixture.approvalBody()),
+        Proof.signApproval(SigningKey, foreign, fixture.scope, fixture.approvalBody()),
     ).toThrow();
     expect((): ConnectorMigrationApplied =>
-        Proof.signApplied(foreign, fixture.scope, approval, fixture.appliedBody(approval)),
+        Proof.signApplied(
+            SigningKey,
+            foreign,
+            fixture.scope,
+            approval,
+            fixture.appliedBody(approval),
+        ),
     ).toThrow();
 });
 
 it('approval retains the entire original randomized plan proof and Applied binds the exact approval proof and every target', (): void => {
     using fixture: AdmissionMigrationFixture = new AdmissionMigrationFixture();
     const alternative: ConnectorMigrationPlan = Proof.signPlan(fixture.device, fixture.planBody());
-    expect(Proof.verifyPlan(fixture.scope, alternative)).toBe(true);
+    expect(Proof.verifyPlan(SigningKey, fixture.scope, alternative)).toBe(true);
     expect(alternative.signature).not.toBe(fixture.plan.signature);
     expect(Proof.planSha256(alternative)).not.toBe(Proof.planSha256(fixture.plan));
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),
     );
     const alternateApproval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(alternative),
     );
-    expect(Proof.verifyApproval(fixture.scope, fixture.plan, alternateApproval)).toBe(false);
-    expect(Proof.verifyApproval(fixture.scope, alternative, alternateApproval)).toBe(true);
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, alternateApproval)).toBe(
+        false,
+    );
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, alternative, alternateApproval)).toBe(
+        true,
+    );
     const resigned: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),
     );
     const applied: ConnectorMigrationApplied = Proof.signApplied(
+        SigningKey,
         fixture.device,
         fixture.scope,
         approval,
         fixture.appliedBody(approval),
     );
     expect(Proof.approvalSha256(resigned)).not.toBe(Proof.approvalSha256(approval));
-    expect(Proof.verifyApplied(fixture.scope, resigned, applied)).toBe(false);
+    expect(Proof.verifyApplied(SigningKey, fixture.scope, resigned, applied)).toBe(false);
     expect(
-        Proof.verifyApplied(fixture.scope, approval, {
+        Proof.verifyApplied(SigningKey, fixture.scope, approval, {
             ...applied,
             targets: applied.targets.slice(0, 2),
         }),
     ).toBe(false);
     expect(
-        Proof.verifyApplied(fixture.scope, approval, { ...applied, planSha256: 'f'.repeat(64) }),
+        Proof.verifyApplied(SigningKey, fixture.scope, approval, {
+            ...applied,
+            planSha256: 'f'.repeat(64),
+        }),
     ).toBe(false);
     expect(
-        Proof.verifyApplied(fixture.scope, approval, {
+        Proof.verifyApplied(SigningKey, fixture.scope, approval, {
             ...applied,
             targets: applied.targets.map(
                 (target: ConnectorMigrationTarget): ConnectorMigrationTarget => ({
@@ -258,7 +284,7 @@ it('every receipt/pending authorization is explicit and the fixed receiver lane 
         throw new Error('Two nonempty command histories required');
     }
     expect((): ConnectorMigrationApproval =>
-        Proof.signApproval(fixture.authority, fixture.scope, {
+        Proof.signApproval(SigningKey, fixture.authority, fixture.scope, {
             ...fixture.approvalBody(),
             authorizations: [entries[0], first, { ...second, pending: first.pending }].filter(
                 (
@@ -268,11 +294,12 @@ it('every receipt/pending authorization is explicit and the fixed receiver lane 
         }),
     ).toThrow();
     const joint: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(fixture.plan, fixture.authorization),
     );
-    expect(Proof.verifyApproval(fixture.scope, fixture.plan, joint)).toBe(true);
+    expect(Proof.verifyApproval(SigningKey, fixture.scope, fixture.plan, joint)).toBe(true);
     const wrongJournalPlan: ConnectorMigrationPlan = Proof.signPlan(fixture.device, {
         ...fixture.planBody(),
         sources: fixture.plan.sources.map(
@@ -284,6 +311,7 @@ it('every receipt/pending authorization is explicit and the fixed receiver lane 
     });
     expect((): ConnectorMigrationApproval =>
         Proof.signApproval(
+            SigningKey,
             fixture.authority,
             fixture.scope,
             fixture.approvalBody(wrongJournalPlan, fixture.authorization),
@@ -329,6 +357,7 @@ it('closed migration codecs reject plaintext additions, reordered/duplicate sour
         ConnectorMigrationPlanCodec.read({ ...raw, sourceSha256: 'a'.repeat(64) }),
     ).toThrow();
     const approval: ConnectorMigrationApproval = Proof.signApproval(
+        SigningKey,
         fixture.authority,
         fixture.scope,
         fixture.approvalBody(),

@@ -4,12 +4,15 @@
 import { ConnectorClock } from '../protocol/ConnectorClock.js';
 import { SigningKey } from '../identity/SigningKey.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
-import { ConnectorAuthorizationProof } from '../protocol/ConnectorAuthorizationProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
 import type { ConnectorClientSession } from '../runtime/ConnectorClientSession.js';
-import type { ExecutionPermit, ExecutionCancellation } from './ExecutionJobs.js';
+import type {
+    ExecutionPermit,
+    ExecutionCancellation,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import { ExecutionJobsCodec } from './ExecutionJobsCodec.js';
-import { ExecutionProof } from './ExecutionProof.js';
-import { ExecutionInteractiveLaunchCodec } from './ExecutionInteractiveLaunchCodec.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
+import { ExecutionInteractiveLaunchCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveLaunchCodec.js';
 import type { ExecutionInputRecordCodec } from './ExecutionInputRecordCodec.js';
 import {
     ExecutionInputJournalSchema,

@@ -9,16 +9,16 @@ import { expect, it } from 'vitest';
 import { ExecutionFixture } from './support/ExecutionFixture.js';
 import type { ExecutionCgroupIdentity } from '../src/execution/ExecutionCgroupIdentity.js';
 import type { ExecutionSandboxAdmission } from '../src/execution/ExecutionSandboxAdmission.js';
-import type { ExecutionOutput } from '../src/execution/ExecutionOutput.js';
+import type { ExecutionOutput } from 'nerva-connector-protocol/execution/ExecutionOutput.js';
 import { ExecutionOutputRetentionError } from '../src/execution/ExecutionOutputRetentionError.js';
 import {
     ExecutionTermination,
     ExecutionFailure,
     ExecutionWorkspaceAccess,
     type ExecutionResult,
-    type ExecutionBootstrap,
     ExecutionSetupFailure,
-} from '../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from '../src/execution/ExecutionBootstrap.js';
 
 const helper: string | undefined = process.env['NERVA_CONNECTOR_EXEC_HELPER'];
 

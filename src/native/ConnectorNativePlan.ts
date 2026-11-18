@@ -8,7 +8,7 @@ import { ProtectedFiles } from '../local/ProtectedFiles.js';
 import { ConnectorServiceUnit } from '../service/ConnectorServiceUnit.js';
 import { ConnectorServiceScope } from '../service/ConnectorServiceTypes.js';
 import { ExecutionPolicyCodec } from '../execution/ExecutionPolicyCodec.js';
-import type { ExecutionPolicyDefinition } from '../execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import { IdentityCodec } from 'nerva-connector-protocol/identity/IdentityCodec.js';

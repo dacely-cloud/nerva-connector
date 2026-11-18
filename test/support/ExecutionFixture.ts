@@ -38,12 +38,12 @@ import type {
 } from '../../src/workspace/WorkspaceIdentity.js';
 import { ConnectorFileMode } from 'nerva-connector-protocol/protocol/ConnectorFiles.js';
 import { ExecutionPolicyCodec } from '../../src/execution/ExecutionPolicyCodec.js';
-import type { ExecutionPolicyDefinition } from '../../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import {
     ExecutionWorkspaceAccess,
-    type ExecutionBootstrap,
     type ExecutionResourceLimits,
-} from '../../src/execution/ExecutionTypes.js';
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
+import { type ExecutionBootstrap } from '../../src/execution/ExecutionBootstrap.js';
 
 /** Only local test setup selects these existing parents and the finite prepared probe executable. */
 export interface ExecutionFixtureOptions {

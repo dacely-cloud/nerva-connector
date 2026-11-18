@@ -17,15 +17,18 @@ import {
     ConnectorAuthorizationKind,
     type ConnectorAuthorization,
 } from 'nerva-connector-protocol/protocol/ConnectorAuthorization.js';
-import { ConnectorAuthorizationProof } from '../src/protocol/ConnectorAuthorizationProof.js';
-import { JointWorkspaceProof } from '../src/workspace/JointWorkspaceProof.js';
+import { ConnectorAuthorizationProof } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationProof.js';
+import { JointWorkspaceProof } from 'nerva-connector-protocol/workspace/JointWorkspaceProof.js';
 import type { JointWorkspaceBinding } from 'nerva-connector-protocol/workspace/JointWorkspaceBinding.js';
 import { ExecutionConfiguration } from '../src/execution/ExecutionConfiguration.js';
 import { ExecutionPairPreparation } from '../src/execution/ExecutionPairPreparation.js';
 import { ExecutionClient } from '../src/execution/ExecutionClient.js';
 import { ExecutionPolicy } from '../src/execution/ExecutionPolicy.js';
-import type { ExecutionPermit, ExecutionCompletion } from '../src/execution/ExecutionJobs.js';
-import { ExecutionFailure } from '../src/execution/ExecutionTypes.js';
+import type {
+    ExecutionPermit,
+    ExecutionCompletion,
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionFailure } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 
 const filesHelper: string | undefined = process.env['NERVA_CONNECTOR_FILES_HELPER'];
 const execHelper: string | undefined = process.env['NERVA_CONNECTOR_EXEC_HELPER'];

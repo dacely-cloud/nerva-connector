@@ -11,8 +11,8 @@ import type {
     ExecutionAcknowledgment,
     ExecutionAcknowledged,
     ExecutionCompletion,
-} from '../../src/execution/ExecutionJobs.js';
-import { ExecutionProof } from '../../src/execution/ExecutionProof.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import { ExecutionProof } from 'nerva-connector-protocol/execution/ExecutionProof.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 
 /** An explicit delivery port borrows real kernel/encrypted ownership without enabling an installed interactive policy. */

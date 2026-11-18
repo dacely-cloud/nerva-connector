@@ -9,7 +9,7 @@ import { HostProcess } from '../src/host/HostProcess.js';
 import { HostOperationError } from '../src/host/HostOperationError.js';
 import type { HostProcessRequest, HostProcessSnapshot } from '../src/host/HostWorkspaceTypes.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
-import { ConnectorHostTool } from '../src/protocol/ConnectorHost.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
 /** Captured fixture ownership remains accessible when a factory fails after registering a live child. */

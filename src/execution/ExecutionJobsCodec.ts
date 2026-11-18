@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ExecutionLaneCodec } from 'nerva-connector-protocol/execution/ExecutionLaneCodec.js';
-import { ExecutionInputCodec } from './ExecutionInputCodec.js';
-import { ExecutionMachineRuleCodec } from './ExecutionMachineRuleCodec.js';
-import { ExecutionInteractiveRuleCodec } from './ExecutionInteractiveRuleCodec.js';
+import { ExecutionInputCodec } from 'nerva-connector-protocol/execution/ExecutionInputCodec.js';
+import { ExecutionMachineRuleCodec } from 'nerva-connector-protocol/execution/ExecutionMachineRuleCodec.js';
+import { ExecutionInteractiveRuleCodec } from 'nerva-connector-protocol/execution/ExecutionInteractiveRuleCodec.js';
 import type { ExecutionMachineInvocationRule } from 'nerva-connector-protocol/execution/ExecutionMachineInvocation.js';
 import { ConnectorAuthorizationCodec } from 'nerva-connector-protocol/protocol/ConnectorAuthorizationCodec.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
@@ -12,9 +12,12 @@ import { ConnectorDeviceCodec } from 'nerva-connector-protocol/protocol/Connecto
 import { ConnectorEnrollmentCodec } from 'nerva-connector-protocol/protocol/ConnectorEnrollmentCodec.js';
 import { IdentityLengths } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ExecutionResultCodec } from './ExecutionResultCodec.js';
-import { type ExecutionArgumentRule } from './ExecutionPolicyTypes.js';
+import { type ExecutionArgumentRule } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import { ExecutionArgumentKind } from 'nerva-connector-protocol/execution/ExecutionArgumentKind.js';
-import { ExecutionWorkspaceAccess, type ExecutionResourceLimits } from './ExecutionTypes.js';
+import {
+    ExecutionWorkspaceAccess,
+    type ExecutionResourceLimits,
+} from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import {
     ExecutionJobLimits,
     type ExecutionRequest,
@@ -29,7 +32,7 @@ import {
     type ExecutionRootGrant,
     type ExecutionProgramGrant,
     type ExecutionInputRule,
-} from './ExecutionJobs.js';
+} from 'nerva-connector-protocol/execution/ExecutionJobs.js';
 import type { ExecutionLane } from 'nerva-connector-protocol/execution/ExecutionLane.js';
 
 /** Execution authority has its own exact codecs; a file operation or signed blob cannot be reinterpreted as a command. */

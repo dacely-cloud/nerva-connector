@@ -18,7 +18,7 @@ import { ConnectorClientState } from '../src/runtime/ConnectorClientState.js';
 import { ConnectorHostGrant } from '../src/runtime/ConnectorHostGrant.js';
 import { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
 import { ConnectorHostProof } from '../src/runtime/ConnectorHostProof.js';
-import { ConnectorHostCodec } from '../src/protocol/ConnectorHostCodec.js';
+import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
@@ -27,7 +27,7 @@ import {
     type ConnectorHostCompletion,
     type ConnectorHostAcknowledgment,
     type ConnectorHostPublication,
-} from '../src/protocol/ConnectorHost.js';
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { ConnectorClientIdentity } from '../src/runtime/ConnectorClientConfiguration.js';
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { ConnectorLogout } from '../src/runtime/ConnectorLogout.js';

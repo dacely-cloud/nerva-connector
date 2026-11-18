@@ -11,7 +11,7 @@ import {
     type ConnectorCapturedExecutionEffect,
 } from '../runtime/ConnectorEffectContext.js';
 import { ConnectorEffectContextCodec } from '../runtime/ConnectorEffectContextCodec.js';
-import type { ExecutionPolicyDefinition } from './ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 import type { ExecutionCgroupIdentity } from './ExecutionCgroupIdentity.js';
 import type { ExecutionEffectAdmission } from './ExecutionEffectAdmission.js';
 import type { ExecutionSandboxAdmission } from './ExecutionSandboxAdmission.js';

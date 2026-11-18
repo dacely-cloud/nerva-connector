@@ -3,10 +3,8 @@
 
 import { ConnectorJournalMigrationSourceCodec } from '../../src/runtime/ConnectorJournalMigrationSourceCodec.js';
 import type { ConnectorJournalMigrationSource } from '../../src/runtime/ConnectorJournalMigrationSource.js';
-import type {
-    ConnectorJournalPending,
-    ConnectorJournalReceipt,
-} from '../../src/runtime/ConnectorJournalState.js';
+import type { ConnectorJournalPending } from '../../src/runtime/ConnectorJournalState.js';
+import type { ConnectorJournalReceipt } from 'nerva-connector-protocol/protocol/ConnectorJournalReceipt.js';
 import {
     ConnectorJournalSchema,
     ConnectorJournalState,

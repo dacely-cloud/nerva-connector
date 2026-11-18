@@ -6,8 +6,8 @@ import {
     ConnectorWriteMode,
 } from 'nerva-connector-protocol/protocol/ConnectorFileTypes.js';
 import type { ConnectorFileOperation } from 'nerva-connector-protocol/protocol/ConnectorFileJobs.js';
-import type { ExecutionRequest } from '../execution/ExecutionJobs.js';
-import type { ConnectorOperationDispatch } from './ConnectorOperationCodec.js';
+import type { ExecutionRequest } from 'nerva-connector-protocol/execution/ExecutionJobs.js';
+import type { ConnectorOperationDispatch } from 'nerva-connector-protocol/protocol/ConnectorOperationDispatch.js';
 import type { ConnectorActivitySource } from './ConnectorActivity.js';
 
 /** Operation names the folder-access and command lanes report; the dot keeps them apart from every host tool name. */

@@ -3,12 +3,12 @@
 
 import { access, rm } from 'node:fs/promises';
 import { expect, it, vi, type MockInstance } from 'vitest';
-import { ExecutionWorkspaceAccess } from '../src/execution/ExecutionTypes.js';
+import { ExecutionWorkspaceAccess } from 'nerva-connector-protocol/execution/ExecutionTypes.js';
 import { ExecutionFixture } from './support/ExecutionFixture.js';
 import { ExecutionAppArmorInstaller } from '../src/execution/ExecutionAppArmorInstaller.js';
 import { ExecutionPolicyCodec } from '../src/execution/ExecutionPolicyCodec.js';
 import { ProtectedFiles } from '../src/local/ProtectedFiles.js';
-import type { ExecutionPolicyDefinition } from '../src/execution/ExecutionPolicyTypes.js';
+import type { ExecutionPolicyDefinition } from 'nerva-connector-protocol/execution/ExecutionPolicyTypes.js';
 
 const helper: string | undefined = process.env['NERVA_CONNECTOR_EXEC_HELPER'];
 
