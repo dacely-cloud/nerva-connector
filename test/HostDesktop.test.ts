@@ -21,6 +21,7 @@ import {
 } from '../src/host/HostDesktopTypes.js';
 import { HostDesktopFixture } from './support/HostDesktopFixture.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
 /** GUI qualification is explicit: ordinary headless test environments need not install desktop applications. */
 const x11Qualification: boolean =
@@ -119,7 +120,8 @@ it.skipIf(!x11Qualification)(
         expect(bytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
         await expect(
             fixture.host.desktopScreenshot('desktop.png', HostWriteMode.Create),
-        ).rejects.toThrow();
+        ).rejects.toMatchObject({ code: ConnectorHostErrorCode.AlreadyExists, definitive: true });
+        expect(await readFile(captured.path)).toEqual(bytes);
         fixture.files.allowed = false;
         await expect(
             fixture.host.desktopPointer({

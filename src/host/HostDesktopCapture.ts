@@ -6,6 +6,7 @@ import { open, lstat, unlink, type FileHandle } from 'node:fs/promises';
 import { HostWriteMode } from './HostWorkspaceTypes.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import type { HostDesktopInfo, HostDesktopScreenshot } from './HostDesktopTypes.js';
+import { HostFilesystem } from './HostFilesystem.js';
 
 /** An intentional screenshot artifact owns no intermediate files or repeated exports. */
 export class HostDesktopCapture {
@@ -35,14 +36,14 @@ export class HostDesktopCapture {
             1,
             maximumHeight,
         );
-        const file: FileHandle = await open(
-            path,
-            constants.O_WRONLY |
-                constants.O_CREAT |
-                constants.O_NONBLOCK |
-                (mode === HostWriteMode.Create ? constants.O_EXCL : 0),
-            0o600,
-        );
+        const file: FileHandle =
+            mode === HostWriteMode.Create
+                ? await HostFilesystem.openExclusive(path)
+                : await open(
+                      path,
+                      constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK,
+                      0o600,
+                  );
         let completed: boolean = false;
         try {
             if (!(await file.stat()).isFile()) {

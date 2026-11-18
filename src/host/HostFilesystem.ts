@@ -87,6 +87,27 @@ export class HostFilesystem {
         }
     }
 
+    /** Opens a new regular-file destination without overwriting a name reserved by another operation. */
+    public static async openExclusive(path: string): Promise<FileHandle> {
+        try {
+            return await open(
+                path,
+                constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NONBLOCK,
+                0o600,
+            );
+        } catch (cause: unknown) {
+            if (this.#alreadyExists(cause)) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.AlreadyExists,
+                    'Host file already exists before exclusive creation',
+                    true,
+                    { cause },
+                );
+            }
+            throw cause;
+        }
+    }
+
     /** Writes distinguish exclusive creation, truncation, in-place updates and atomic OS append positioning. */
     public static async write(
         path: string,
@@ -105,27 +126,15 @@ export class HostFilesystem {
             throw new Error('Invalid host file write');
         }
         const flags: number =
+            mode === HostWriteMode.Replace
+                ? constants.O_WRONLY | constants.O_CREAT
+                : mode === HostWriteMode.Append
+                  ? constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND
+                  : constants.O_WRONLY;
+        const handle: FileHandle =
             mode === HostWriteMode.Create
-                ? constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL
-                : mode === HostWriteMode.Replace
-                  ? constants.O_WRONLY | constants.O_CREAT
-                  : mode === HostWriteMode.Append
-                    ? constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND
-                    : constants.O_WRONLY;
-        let handle: FileHandle;
-        try {
-            handle = await open(path, flags | constants.O_NONBLOCK, 0o600);
-        } catch (caught: unknown) {
-            if (mode === HostWriteMode.Create && this.#alreadyExists(caught)) {
-                throw new HostOperationError(
-                    ConnectorHostErrorCode.AlreadyExists,
-                    'Host file already exists before exclusive creation',
-                    true,
-                    { cause: caught },
-                );
-            }
-            throw caught;
-        }
+                ? await this.openExclusive(path)
+                : await open(path, flags | constants.O_NONBLOCK, 0o600);
         try {
             if (!(await handle.stat()).isFile()) {
                 throw new Error('Host file writes require a regular file');
