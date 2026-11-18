@@ -129,7 +129,7 @@ internal static class NexaConnectorHostApplicationCatalog
         return text.ToString();
     }
 
-    /// <summary>Exact identifiers/names win; normalization cannot silently pick between distinct candidates.</summary>
+    /// <summary>Exact matches win; a complete version family can resolve a short name.</summary>
     internal static List<NexaConnectorApplicationEntry> Select(
         string query,
         List<NexaConnectorApplicationEntry> catalog
@@ -165,12 +165,17 @@ internal static class NexaConnectorHostApplicationCatalog
                 )
                     matches = partial;
             }
-            if (matches != null && matches.Count < 32)
+            if (matches != null && (matches == partial || matches.Count < 32))
                 matches.Add(entry);
         }
-        return exact.Count != 0 ? exact
-            : compact.Count != 0 ? compact
-            : partial;
+        if (exact.Count != 0)
+            return exact;
+        if (compact.Count != 0)
+            return compact;
+
+        List<NexaConnectorApplicationEntry> family =
+            NexaConnectorHostApplicationVersionFamily.Choose(normalized, partial);
+        return family ?? (partial.Count <= 32 ? partial : partial.GetRange(0, 32));
     }
 
     private static List<NexaConnectorApplicationEntry> ShellApps()

@@ -124,10 +124,11 @@ export class ConnectorConsole implements Disposable {
         model: ConnectorConsoleModel,
         platform: NodeJS.Platform = process.platform,
     ): readonly ConnectorConsoleChoice[] {
-        if (!input.startsWith('/')) {
+        const commandLine: string = input.trim();
+        if (!commandLine.startsWith('/')) {
             return [];
         }
-        const typed: string = input.slice(1).toLowerCase();
+        const typed: string = commandLine.slice(1).toLowerCase();
         return this.commands.filter(
             (choice: ConnectorConsoleChoice): boolean =>
                 choice.command.startsWith(typed) &&
@@ -351,7 +352,7 @@ export class ConnectorConsole implements Disposable {
             text !== undefined &&
             !key.ctrl &&
             !key.meta &&
-            /^[a-z/?-]+$/i.test(text) &&
+            /^[a-z /?-]+$/i.test(text) &&
             this.#text.length + text.length <= 64
         ) {
             this.#text = this.#text.slice(0, this.#cursor) + text + this.#text.slice(this.#cursor);

@@ -58,6 +58,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                 sources: [
                     resolve('test/support/WindowsApplicationCatalogFixture.cs'),
                     resolve('native/windows/HostApplicationCatalog.cs'),
+                    resolve('native/windows/HostApplicationVersionFamily.cs'),
                 ],
                 entrypoint: 'NexaConnectorApplicationCatalogFixture',
                 destination: executable,
@@ -66,6 +67,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
                 execFile,
             )('/usr/bin/mono', [executable], { timeout: 10000, maxBuffer: 4096 });
             expect(result.stdout.toString()).toContain('ambiguity_preserved=true');
+            expect(result.stdout.toString()).toContain('newest_regular_version=true');
         } finally {
             await rm(directory, { recursive: true, force: true });
         }

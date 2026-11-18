@@ -243,6 +243,8 @@ it('the menu offers only what makes sense now and never interprets input as a ho
             (choice): ConnectorConsoleCommand => choice.command,
         );
     expect(commands('/PER', 'linux')).toEqual([ConnectorConsoleCommand.Permissions]);
+    expect(commands(' /settings ', 'darwin')).toEqual([ConnectorConsoleCommand.Settings]);
+    expect(commands('/set tings', 'darwin')).toEqual([]);
     expect(commands('/per', 'win32')).toEqual([]);
     expect(commands('/pa', 'linux')).toEqual([]);
     expect(commands('/dis', 'win32')).toEqual([ConnectorConsoleCommand.DisableHost]);
@@ -353,7 +355,7 @@ it('short activity views can scroll to the end of a single long entry', (): void
 });
 
 it.skipIf(process.platform !== 'linux')(
-    'the real terminal supports successive slash actions, completion and quit without EOF, restoring terminal state',
+    'the real terminal accepts spaces and supports slash actions, history and quit without EOF, restoring terminal state',
     async (): Promise<void> => {
         const directory: string = await mkdtemp(join(homedir(), '.nerva-console-'));
         try {

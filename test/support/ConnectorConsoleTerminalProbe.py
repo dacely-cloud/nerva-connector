@@ -88,7 +88,9 @@ def main(node: str, entry: str, root: str) -> None:
             lambda value: "/ menu" in value and "verified signed Linux installation" not in value,
             "reconnect-after-permissions",
         )
-        os.write(master, b"/he")
+        os.write(master, b"/he lp")
+        wait(lambda value: "› /he lp" in value, "literal-space")
+        os.write(master, b"\x7f\x7f\x7f ")
         wait(lambda value: "Show every command" in value, "palette")
         os.write(master, b"\x1b[B\r")
         wait(lambda value: "Show every command" in value and "Esc close" in value, "help")
@@ -98,7 +100,7 @@ def main(node: str, entry: str, root: str) -> None:
         wait(lambda value: "/ Activity" in value and "requests so far" in value, "activity-view")
         os.write(master, b"\t")
         wait(lambda value: "Tab activity" in value and "/ Activity" not in value, "home-view")
-        os.write(master, b"/quit\r")
+        os.write(master, b" /quit \r")
         end = time.monotonic() + 5
         while child.poll() is None and time.monotonic() < end:
             read(0.05)
