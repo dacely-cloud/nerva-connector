@@ -10,6 +10,7 @@ import { promisify } from 'node:util';
 import { expect, it } from 'vitest';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { ConnectorWindowsCompiler } from '../script/ConnectorWindowsCompiler.ts';
+import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { HostApplication, type HostDesktopFrame } from '../src/host/HostApplication.js';
 
 it.skipIf(
@@ -22,13 +23,9 @@ it.skipIf(
             const executable: string = join(directory, 'frame.exe');
             await ConnectorWindowsCompiler.compile({
                 sources: [
-                    'test/support/WindowsDesktopFrameFixture.cs',
-                    'native/windows/HostDesktopFrame.cs',
-                    'native/windows/HostDesktop.cs',
-                    'native/windows/HostDesktopNative.cs',
-                    'native/windows/HostApplication.cs',
-                    'native/windows/HostApplicationCatalog.cs',
-                ].map((path: string): string => resolve(path)),
+                    ...ConnectorWindowsSources.desktop,
+                    resolve('test/support/WindowsDesktopFrameFixture.cs'),
+                ],
                 entrypoint: 'NexaConnectorDesktopFrameFixture',
                 destination: executable,
             });

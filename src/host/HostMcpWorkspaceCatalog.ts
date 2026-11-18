@@ -169,8 +169,11 @@ export class HostMcpWorkspaceCatalog {
             ),
             this.#tool(
                 'application_open',
-                'Windows: resolve an installed Start menu application by name or AppID, open it through the user shell and return launch acceptance, observed window presence and one inline screenshot. Ambiguous or missing names never launch anything. No PowerShell, command shell, temporary files or task-lifetime process is used. A missing window or screenshot is explicit uncertainty, never permission to repeat the launch.',
-                { name: { type: 'string', minLength: 1, maxLength: 4096 } },
+                'Windows: open an installed application and return its launch receipt and screen. For registered Chrome, Firefox or Edge, an optional HTTP(S) URL opens directly in that browser without global keyboard input. Ambiguous or missing names never launch. A visible browser window does not prove the web page loaded.',
+                {
+                    name: { type: 'string', minLength: 1, maxLength: 4096 },
+                    url: { type: 'string', minLength: 8, maxLength: 4096 },
+                },
                 ['name'],
             ),
             this.#tool(
@@ -223,17 +226,18 @@ export class HostMcpWorkspaceCatalog {
             ),
             this.#tool(
                 'desktop_key',
-                'Press, hold or release a named key/modifier in the foreground desktop application. Release held inputs after the intended chord; session cleanup also releases owned held inputs.',
+                'Press a key or atomic Windows chord such as Control+l, or hold/release a single key. Windows fresh input requires target from the intended windowTarget returned by a snapshot or verified application launch. Release held inputs after use.',
                 {
                     key: text,
                     action: { type: 'string', enum: Object.values(HostDesktopKeyAction) },
+                    target: { type: 'string', maxLength: 60 },
                 },
                 ['key', 'action'],
             ),
             this.#tool(
                 'desktop_text',
-                'Type Unicode text into the currently focused desktop application. Use desktop_key for shortcuts and navigation.',
-                { text },
+                'Windows requires a windowTarget as target. Exact accessibility field name or ID plus replace:true replaces one unique standard Windows Edit control and verifies the value without focusing the app. Unsupported controls fail with no typing fallback. Without field, text is guarded foreground input.',
+                { text, target: { type: 'string', maxLength: 60 }, field: { type: 'string', maxLength: 256 }, replace: { type: 'boolean', enum: [true] } },
                 ['text'],
             ),
             this.#tool(

@@ -15,14 +15,19 @@ import {
 export class HostDesktopCoordinates {
     /** External screenshot geometry is a closed shape; origins may be negative on multi-monitor desktops. */
     public static read(raw: unknown): HostDesktopViewport {
-        const value: Readonly<Record<string, unknown>> = Boundary.record(raw, [
-            'width',
-            'height',
-            'sourceX',
-            'sourceY',
-            'sourceWidth',
-            'sourceHeight',
-        ]);
+        let value: Readonly<Record<string, unknown>>;
+        try {
+            value = Boundary.record(raw, [
+                'width',
+                'height',
+                'sourceX',
+                'sourceY',
+                'sourceWidth',
+                'sourceHeight',
+            ]);
+        } catch {
+            throw new HostDesktopError('pointer', 'screenshot-geometry-invalid', null);
+        }
         return {
             width: this.#integer(value['width'], 1, HostDesktopLimits.dimension),
             height: this.#integer(value['height'], 1, HostDesktopLimits.dimension),

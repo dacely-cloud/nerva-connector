@@ -19,6 +19,7 @@ import type {
     HostDesktopPointerRequest,
     HostDesktopKeyRequest,
     HostDesktopViewport,
+    HostDesktopTextField,
 } from './HostDesktopTypes.js';
 import { HostFileDigest } from './HostFileDigest.js';
 import { HostFilesystem } from './HostFilesystem.js';
@@ -342,7 +343,7 @@ export class HostWorkspace implements AsyncDisposable {
     }
 
     /** The current full-computer authority covers one installed application launch and its screen observation. */
-    public async openApplication(name: string): Promise<HostApplicationResult> {
+    public async openApplication(name: string, url?: string): Promise<HostApplicationResult> {
         if (
             typeof name !== 'string' ||
             name.trim().length === 0 ||
@@ -362,7 +363,7 @@ export class HostWorkspace implements AsyncDisposable {
                 destinationPath: null,
                 processId: null,
             },
-            (): Promise<HostApplicationResult> => this.#desktopOwner().openApplication(name),
+            (): Promise<HostApplicationResult> => this.#desktopOwner().openApplication(name, url),
         );
     }
 
@@ -418,11 +419,11 @@ export class HostWorkspace implements AsyncDisposable {
         );
     }
 
-    /** Text entry sends data to the actual foreground desktop application. */
-    public async desktopText(text: string): Promise<void> {
+    /** Text authorization covers guarded foreground input or an explicit verified application field replacement. */
+    public async desktopText(text: string, target?: string, field?: HostDesktopTextField): Promise<void> {
         await this.#run(
             { operation: HostOperation.Text, path: null, destinationPath: null, processId: null },
-            (): Promise<void> => this.#desktopOwner().text(text),
+            (): Promise<void> => this.#desktopOwner().text(text, target, field),
         );
     }
 

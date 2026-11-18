@@ -12,7 +12,7 @@ using System.Threading;
 /// <summary>Resolve only installed Start menu applications and delegate one launch to the user's shell.</summary>
 internal static class NexaConnectorHostApplication
 {
-    internal static Dictionary<string, object> Open(string name)
+    internal static Dictionary<string, object> Open(string name, string url = null)
     {
         if (
             String.IsNullOrWhiteSpace(name)
@@ -22,9 +22,11 @@ internal static class NexaConnectorHostApplication
         {
             throw new InvalidOperationException("application-name");
         }
-        List<NexaConnectorApplicationEntry> matches = NexaConnectorHostApplicationCatalog.Find(
-            name.Trim()
-        );
+        string address = url == null ? null : BrowserAddress(url);
+        List<NexaConnectorApplicationEntry> matches =
+            address == null
+                ? NexaConnectorHostApplicationCatalog.Find(name.Trim())
+                : NexaConnectorHostApplicationCatalog.Browser(name.Trim());
         List<Dictionary<string, object>> candidates = new List<Dictionary<string, object>>();
         foreach (NexaConnectorApplicationEntry application in matches)
         {
@@ -59,7 +61,7 @@ internal static class NexaConnectorHostApplication
             || selected.Id.StartsWith("shell:", StringComparison.OrdinalIgnoreCase)
                 ? selected.Id
                 : "shell:AppsFolder\\" + selected.Id,
-            null,
+            address == null ? null : "\"" + address + "\"",
             null,
             1
         );
@@ -70,9 +72,26 @@ internal static class NexaConnectorHostApplication
         Stopwatch elapsed = Stopwatch.StartNew();
         do
         {
-            if (ActivateWindow(selected.Name))
+            IntPtr window =
+                address == null ? ActivateWindow(selected.Name) : BrowserWindow(selected.Id);
+            if (window != IntPtr.Zero)
             {
                 result["windowObserved"] = true;
+                if (
+                    Path.IsPathRooted(selected.Id)
+                    && String.Equals(
+                        NexaConnectorHostDesktopWindow.ExecutablePath(window),
+                        selected.Id,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    string target = NexaConnectorHostDesktopWindow.Observe(window);
+                    if (target != null)
+                    {
+                        result["windowTarget"] = target;
+                    }
+                }
                 Thread.Sleep(100);
                 break;
             }
@@ -82,22 +101,62 @@ internal static class NexaConnectorHostApplication
         return result;
     }
 
-    /// <summary>Window titles are observed evidence, not an assertion that a launched process is ready.</summary>
-    private static bool ActivateWindow(string name)
+    /// <summary>One web address becomes one literal browser argument; local files, arguments and custom schemes cannot cross.</summary>
+    private static string BrowserAddress(string value)
     {
-        bool found = false;
+        Uri uri;
+        if (
+            value.Length > 4096
+            || value.IndexOfAny(new char[] { '\0', '\r', '\n', '"', '\\' }) >= 0
+            || !Uri.TryCreate(value, UriKind.Absolute, out uri)
+            || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)
+            || uri.Host.Length == 0
+            || uri.UserInfo.Length != 0
+            || uri.AbsoluteUri.IndexOfAny(new char[] { '"', '\\' }) >= 0
+        )
+        {
+            throw new InvalidOperationException("application-browser-url");
+        }
+        return uri.AbsoluteUri;
+    }
+
+    /// <summary>For a browser launch, verify its actual registered executable without changing keyboard focus.</summary>
+    private static IntPtr BrowserWindow(string executable)
+    {
+        IntPtr found = IntPtr.Zero;
         EnumWindows(
             delegate(IntPtr window, IntPtr ignored)
             {
-                if (!IsWindowVisible(window))
+                if (!Visible(window))
                 {
                     return true;
                 }
-                int cloaked;
                 if (
-                    DwmGetWindowAttribute(window, 14, out cloaked, sizeof(int)) != 0
-                    || cloaked != 0
+                    String.Equals(
+                        NexaConnectorHostDesktopWindow.ExecutablePath(window),
+                        executable,
+                        StringComparison.OrdinalIgnoreCase
+                    )
                 )
+                {
+                    found = window;
+                    return false;
+                }
+                return true;
+            },
+            IntPtr.Zero
+        );
+        return found;
+    }
+
+    /// <summary>Window titles are observed evidence, not an assertion that a launched process is ready.</summary>
+    private static IntPtr ActivateWindow(string name)
+    {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows(
+            delegate(IntPtr window, IntPtr ignored)
+            {
+                if (!Visible(window))
                 {
                     return true;
                 }
@@ -120,12 +179,20 @@ internal static class NexaConnectorHostApplication
                 {
                     return true;
                 }
-                found = true;
+                found = window;
                 return false;
             },
             IntPtr.Zero
         );
         return found;
+    }
+
+    private static bool Visible(IntPtr window)
+    {
+        int cloaked;
+        return IsWindowVisible(window)
+            && DwmGetWindowAttribute(window, 14, out cloaked, sizeof(int)) == 0
+            && cloaked == 0;
     }
 
     private delegate bool WindowCallback(IntPtr window, IntPtr parameter);

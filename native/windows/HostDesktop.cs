@@ -58,6 +58,7 @@ internal static partial class NexaConnectorHostDesktop
                     "pointer",
                     "button-up",
                     "key",
+                    "key-release",
                     "text",
                 }.Contains(operation)
             )
@@ -92,15 +93,22 @@ internal static partial class NexaConnectorHostDesktop
             }
             if (operation == "application-open")
             {
-                Fields(request, "operation", "name");
+                bool navigate = request.ContainsKey("url");
+                Fields(
+                    request,
+                    navigate
+                        ? new string[] { "operation", "name", "url" }
+                        : new string[] { "operation", "name" }
+                );
                 Dictionary<string, object> result = NexaConnectorHostApplication.Open(
-                    Text(request, "name")
+                    Text(request, "name"),
+                    navigate ? Text(request, "url") : null
                 );
                 if ((string)result["status"] == "launched")
                 {
                     try
                     {
-                        result["screenshot"] = NexaConnectorHostDesktopFrame.Capture(bounds);
+                        result["screenshot"] = Snapshot(bounds);
                     }
                     catch
                     {
@@ -115,9 +123,7 @@ internal static partial class NexaConnectorHostDesktop
             {
                 Fields(request, "operation");
                 serializer.MaxJsonLength = 1048576;
-                Console.WriteLine(
-                    serializer.Serialize(NexaConnectorHostDesktopFrame.Capture(bounds))
-                );
+                Console.WriteLine(serializer.Serialize(Snapshot(bounds)));
                 return 0;
             }
             if (operation == "screenshot")
@@ -163,30 +169,67 @@ internal static partial class NexaConnectorHostDesktop
             }
             else if (operation == "key")
             {
-                Fields(request, "operation", "key", "action");
-                Key(Text(request, "key"), Text(request, "action"));
+                string target = InputTarget(request);
+                Fields(
+                    request,
+                    request.ContainsKey("held")
+                        ? new[] { "operation", "key", "action", "target", "held" }
+                        : new[] { "operation", "key", "action", "target" }
+                );
+                using (
+                    NexaConnectorHostDesktopWindow window = NexaConnectorHostDesktopWindow.Acquire(
+                        target
+                    )
+                )
+                    NexaConnectorHostKeyboard.Key(
+                        Text(request, "key"),
+                        Text(request, "action"),
+                        request.ContainsKey("held") ? Text(request, "held") : "",
+                        window,
+                        new KeyboardSender()
+                    );
+            }
+            else if (operation == "key-release")
+            {
+                Fields(request, "operation", "key");
+                NexaConnectorHostKeyboard.Release(Text(request, "key"), new KeyboardSender());
             }
             else if (operation == "text")
             {
-                Fields(request, "operation", "text");
-                string text = Text(request, "text");
-                IntPtr foreground = GetForegroundWindow();
-                if (foreground == IntPtr.Zero)
-                    throw new InvalidOperationException("keyboard-focus-unavailable");
-                if (Encoding.UTF8.GetByteCount(text) > 16384)
+                string target = InputTarget(request);
+                if (request.ContainsKey("field") || request.ContainsKey("replace"))
                 {
-                    return 70;
+                    if (
+                        !request.ContainsKey("field")
+                        || !request.ContainsKey("replace")
+                        || !(request["field"] is string)
+                        || !(request["replace"] is bool)
+                        || !(bool)request["replace"]
+                    )
+                        throw new NexaConnectorHostTextFieldFailure("keyboard-field-invalid", null);
+                    Fields(request, "operation", "text", "target", "field", "replace");
+                    using (
+                        NexaConnectorHostDesktopWindow window =
+                            NexaConnectorHostDesktopWindow.Acquire(target)
+                    )
+                        NexaConnectorHostTextField.Replace(
+                            Text(request, "text"),
+                            Text(request, "field"),
+                            window
+                        );
                 }
-                foreach (char character in text)
+                else
                 {
-                    if (GetForegroundWindow() != foreground)
-                        throw new InvalidOperationException("keyboard-focus-changed");
-                    if (character == '\0')
-                    {
-                        return 70;
-                    }
-                    Input[] input = { Keyboard(0, character, 4), Keyboard(0, character, 6) };
-                    Send(input);
+                    Fields(request, "operation", "text", "target");
+                    using (
+                        NexaConnectorHostDesktopWindow window =
+                            NexaConnectorHostDesktopWindow.Acquire(target)
+                    )
+                        NexaConnectorHostKeyboard.Text(
+                            Text(request, "text"),
+                            window,
+                            new KeyboardSender()
+                        );
                 }
             }
             else
@@ -205,7 +248,31 @@ internal static partial class NexaConnectorHostDesktop
                 "pointer-position-unconfirmed",
                 "keyboard-focus-unavailable",
                 "keyboard-focus-changed",
+                "keyboard-target-required",
+                "keyboard-target-invalid",
+                "keyboard-target-stale",
+                "keyboard-target-unavailable",
+                "keyboard-focus-denied",
+                "keyboard-modifiers-active",
+                "keyboard-key-active",
+                "keyboard-owned-input-changed",
+                "keyboard-text-invalid",
+                "keyboard-input-rejected",
+                "keyboard-input-partial",
+                "keyboard-release-unconfirmed",
+                "keyboard-field-invalid",
+                "keyboard-field-unsupported",
+                "keyboard-field-not-found",
+                "keyboard-field-ambiguous",
+                "keyboard-field-read-only",
+                "keyboard-field-unavailable",
+                "keyboard-field-search-limit",
+                "keyboard-field-write-unconfirmed",
+                "key-chord",
                 "desktop-unavailable",
+                "application-name",
+                "application-browser-url",
+                "application-browser-name",
                 "application-launch-rejected",
                 "application-catalog-limit",
                 "desktop-fields",
@@ -224,13 +291,19 @@ internal static partial class NexaConnectorHostDesktop
                 ? failure.Message
                 : "operation-failed";
             Win32Exception native = failure as Win32Exception;
+            NexaConnectorHostTextFieldFailure fieldFailure =
+                failure as NexaConnectorHostTextFieldFailure;
             Console.Error.WriteLine(
                 "NERVA_DESKTOP operation="
                     + diagnosticOperation
                     + " reason="
                     + reason
                     + " native="
-                    + (native == null ? 0 : native.NativeErrorCode).ToString()
+                    + (
+                        fieldFailure != null ? fieldFailure.NativeCode
+                        : native == null ? 0u
+                        : unchecked((uint)native.NativeErrorCode)
+                    ).ToString()
             );
             return 70;
         }
@@ -338,6 +411,18 @@ internal static partial class NexaConnectorHostDesktop
         }
     }
 
+    /// <summary>Only bind a screenshot to a window that stayed foreground throughout capture.</summary>
+    private static Dictionary<string, object> Snapshot(Rectangle bounds)
+    {
+        string target = NexaConnectorHostDesktopWindow.ForegroundTarget();
+        Dictionary<string, object> frame = NexaConnectorHostDesktopFrame.Capture(bounds);
+        if (target != null && target == NexaConnectorHostDesktopWindow.ForegroundTarget())
+        {
+            frame["windowTarget"] = target;
+        }
+        return frame;
+    }
+
     private static void Button(string button, string action)
     {
         uint down =
@@ -359,72 +444,17 @@ internal static partial class NexaConnectorHostDesktop
         }
     }
 
-    private static void Key(string key, string action)
+    /// <summary>Missing targets never fall back to a newly focused unrelated application.</summary>
+    private static string InputTarget(Dictionary<string, object> request)
     {
-        Dictionary<string, ushort> keys = new Dictionary<string, ushort>
-        {
-            { "Control", 0x11 },
-            { "Alt", 0x12 },
-            { "Shift", 0x10 },
-            { "Meta", 0x5B },
-            { "Enter", 0x0D },
-            { "Tab", 9 },
-            { "Escape", 0x1B },
-            { "Backspace", 8 },
-            { "Delete", 0x2E },
-            { "Insert", 0x2D },
-            { "Home", 0x24 },
-            { "End", 0x23 },
-            { "PageUp", 0x21 },
-            { "PageDown", 0x22 },
-            { "Up", 0x26 },
-            { "Down", 0x28 },
-            { "Left", 0x25 },
-            { "Right", 0x27 },
-            { "Space", 0x20 },
-        };
-        ushort value;
-        if (!keys.TryGetValue(key, out value))
-        {
-            int function;
-            if (
-                key.Length == 1
-                && (
-                    (key[0] >= 'a' && key[0] <= 'z')
-                    || (key[0] >= 'A' && key[0] <= 'Z')
-                    || (key[0] >= '0' && key[0] <= '9')
-                )
-            )
-            {
-                value = Char.ToUpperInvariant(key[0]);
-            }
-            else if (
-                key.StartsWith("F", StringComparison.Ordinal)
-                && Int32.TryParse(key.Substring(1), out function)
-                && function >= 1
-                && function <= 12
-            )
-            {
-                value = (ushort)(0x6F + function);
-            }
-            else
-            {
-                throw new InvalidOperationException("key");
-            }
-        }
-        uint extended = value >= 0x21 && value <= 0x2E || value == 0x5B ? 1u : 0u;
-        if (action == "press")
-        {
-            Send(new Input[] { Keyboard(value, 0, extended), Keyboard(value, 0, extended | 2) });
-        }
-        else if (action == "down" || action == "up")
-        {
-            Send(new Input[] { Keyboard(value, 0, action == "up" ? extended | 2 : extended) });
-        }
-        else
-        {
-            throw new InvalidOperationException("key-action");
-        }
+        object value;
+        if (!request.TryGetValue("target", out value) || value == null)
+            throw new InvalidOperationException("keyboard-target-required");
+        string token = value as string;
+        if (token == null)
+            throw new InvalidOperationException("keyboard-target-invalid");
+        NexaConnectorHostDesktopWindow.Parse(token);
+        return token;
     }
 
     private static Input Mouse(uint flags)

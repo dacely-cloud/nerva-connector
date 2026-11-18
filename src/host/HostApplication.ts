@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import { HostDesktopWindowTarget } from './HostDesktopWindowTarget.js';
 import { HostDesktopLimits, type HostDesktopViewport } from './HostDesktopTypes.js';
 
 /** Resolution never launches an ambiguous or missing application. */
@@ -24,6 +25,8 @@ export interface HostApplicationEntry {
 export interface HostDesktopFrame extends HostDesktopViewport {
     readonly mimeType: 'image/jpeg';
     readonly data: string;
+    /** Opaque foreground window identity, present only when stable across the capture. */
+    readonly windowTarget?: string;
 }
 
 /** Shell acceptance, observed window presence and the captured screen remain independent evidence. */
@@ -32,10 +35,35 @@ export interface HostApplicationResult {
     readonly candidates: readonly HostApplicationEntry[];
     readonly windowObserved: boolean;
     readonly screenshot: HostDesktopFrame | null;
+    /** A verified window of the selected executable, when it could be identified. */
+    readonly windowTarget?: string;
 }
 
 /** Validate untrusted native JSON before returning it through a signed host receipt. */
 export class HostApplication {
+    /** Narrow browser navigation to one bounded HTTP(S) address before any native launch. */
+    public static address(value: string): string {
+        if (value.length > 4096 || !/^https?:\/\//iu.test(value)) {
+            throw new Error('Invalid browser address');
+        }
+        for (let index: number = 0; index < value.length; index += 1) {
+            const character: string = value.charAt(index);
+            if (character <= ' ' || character === '"' || character === '\\') {
+                throw new Error('Invalid browser address');
+            }
+        }
+        const address: URL = new URL(value);
+        if (
+            address.hostname === '' ||
+            address.username !== '' ||
+            address.password !== '' ||
+            address.href.length > 4096
+        ) {
+            throw new Error('Invalid browser address');
+        }
+        return address.href;
+    }
+
     /** A missing image stays explicit; launch acceptance alone never proves visual readiness. */
     public static result(raw: unknown): HostApplicationResult {
         const value: Readonly<Record<string, unknown>> = Boundary.record(raw, [
@@ -44,6 +72,7 @@ export class HostApplication {
             'windowObserved',
             'screenshot',
             'elapsedMs',
+            'windowTarget',
         ]);
         const status: HostApplicationStatus | undefined = Object.values(HostApplicationStatus).find(
             (entry: HostApplicationStatus): boolean => entry === value['status'],
@@ -69,9 +98,11 @@ export class HostApplication {
             throw new Error('Invalid native application resolution');
         }
         const windowObserved: boolean = Boundary.boolean(value['windowObserved']);
+        const windowTarget: string | undefined = this.#windowTarget(value['windowTarget']);
         if (
-            status !== HostApplicationStatus.Launched &&
-            (windowObserved || value['screenshot'] != null)
+            (status !== HostApplicationStatus.Launched &&
+                (windowObserved || value['screenshot'] != null)) ||
+            (windowTarget !== undefined && !windowObserved)
         ) {
             throw new Error('Unlaunched application cannot have launch evidence');
         }
@@ -80,6 +111,7 @@ export class HostApplication {
             candidates,
             windowObserved,
             screenshot: value['screenshot'] == null ? null : this.frame(value['screenshot']),
+            ...(windowTarget === undefined ? {} : { windowTarget }),
         };
     }
 
@@ -94,6 +126,7 @@ export class HostApplication {
             'sourceY',
             'sourceWidth',
             'sourceHeight',
+            'windowTarget',
         ]);
         const data: string = this.#text(value['data'], HostDesktopLimits.inlineBase64);
         const bytes: Buffer = Buffer.from(data, 'base64');
@@ -109,6 +142,7 @@ export class HostApplication {
         ) {
             throw new Error('Invalid native desktop image');
         }
+        const windowTarget: string | undefined = this.#windowTarget(value['windowTarget']);
         return {
             mimeType: 'image/jpeg',
             data,
@@ -118,7 +152,15 @@ export class HostApplication {
             sourceY: this.#coordinate(value['sourceY']),
             sourceWidth: this.#positive(value['sourceWidth'], 65535),
             sourceHeight: this.#positive(value['sourceHeight'], 65535),
+            ...(windowTarget === undefined ? {} : { windowTarget }),
         };
+    }
+
+    static #windowTarget(value: unknown): string | undefined {
+        if (value === undefined || value === null) {
+            return undefined;
+        }
+        return HostDesktopWindowTarget.read(value);
     }
 
     static #text(raw: unknown, maximum: number): string {

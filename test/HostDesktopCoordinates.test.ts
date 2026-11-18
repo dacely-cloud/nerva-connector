@@ -66,6 +66,11 @@ it('rejects stale geometry, out-of-image coordinates and malformed metadata befo
         { ...image, hidden: true },
         { ...image, height: Number.POSITIVE_INFINITY },
     ]) {
-        expect((): HostDesktopViewport => HostDesktopCoordinates.read(raw)).toThrow();
+        expect((): HostDesktopViewport => HostDesktopCoordinates.read(raw)).toThrow(
+            expect.objectContaining({
+                reason: 'screenshot-geometry-invalid',
+                definitive: true,
+            }),
+        );
     }
 });

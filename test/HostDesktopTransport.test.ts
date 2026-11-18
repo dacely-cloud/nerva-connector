@@ -64,14 +64,15 @@ it('the Windows driver puts only its fixed mode in argv and sends request JSON a
         .mockResolvedValue(Buffer.from('{"ok":true}'));
     try {
         const text: string = 'private desktop input Ω';
+        const target: string = 'win32:v1:00000000000000ff:0000002a:01dc000000000001:00000037';
         const driver: HostDesktopWindows = new HostDesktopWindows('verified-helper.exe', {});
-        await driver.text(text);
+        await driver.text(text, target);
         expect(run).toHaveBeenCalledWith(
             'verified-helper.exe',
             ['--desktop'],
             {},
             4096,
-            JSON.stringify({ operation: 'text', text }),
+            JSON.stringify({ operation: 'text', text, target }),
         );
     } finally {
         run.mockRestore();

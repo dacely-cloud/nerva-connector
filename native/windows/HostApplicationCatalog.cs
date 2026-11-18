@@ -37,6 +37,86 @@ internal static class NexaConnectorHostApplicationCatalog
         return Select(query, Packages(query));
     }
 
+    /// <summary>Resolve one supported browser directly from its per-user or machine App Paths registration.</summary>
+    internal static List<NexaConnectorApplicationEntry> Browser(string query)
+    {
+        string name;
+        string executable;
+        switch (Compact(query).ToLowerInvariant())
+        {
+            case "chrome":
+            case "googlechrome":
+                name = "Google Chrome";
+                executable = "chrome.exe";
+                break;
+            case "firefox":
+            case "mozillafirefox":
+                name = "Mozilla Firefox";
+                executable = "firefox.exe";
+                break;
+            case "edge":
+            case "microsoftedge":
+                name = "Microsoft Edge";
+                executable = "msedge.exe";
+                break;
+            default:
+                throw new InvalidOperationException("application-browser-name");
+        }
+        foreach (
+            RegistryHive hive in new RegistryHive[]
+            {
+                RegistryHive.CurrentUser,
+                RegistryHive.LocalMachine,
+            }
+        )
+        foreach (
+            RegistryView view in new RegistryView[]
+            {
+                RegistryView.Registry64,
+                RegistryView.Registry32,
+            }
+        )
+        {
+            try
+            {
+                using (RegistryKey root = RegistryKey.OpenBaseKey(hive, view))
+                using (
+                    RegistryKey entry = root.OpenSubKey(
+                        @"Software\Microsoft\Windows\CurrentVersion\App Paths\" + executable
+                    )
+                )
+                {
+                    string path = entry == null ? null : entry.GetValue(null) as string;
+                    if (String.IsNullOrWhiteSpace(path) || path.Length > 4096)
+                    {
+                        continue;
+                    }
+                    path = Environment.ExpandEnvironmentVariables(
+                        path.Trim().Trim(new char[] { '"' })
+                    );
+                    if (
+                        Path.IsPathRooted(path)
+                        && String.Equals(
+                            Path.GetFileName(path),
+                            executable,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                        && File.Exists(path)
+                    )
+                    {
+                        return new List<NexaConnectorApplicationEntry>
+                        {
+                            new NexaConnectorApplicationEntry { Name = name, Id = path },
+                        };
+                    }
+                }
+            }
+            catch (SecurityException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+        return new List<NexaConnectorApplicationEntry>();
+    }
+
     /// <summary>Spacing and compatibility Unicode do not turn grandMA3 into a different application name.</summary>
     internal static string Compact(string value)
     {

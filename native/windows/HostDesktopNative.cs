@@ -8,6 +8,37 @@ using System.Text;
 /// <summary>Win32 desktop input layouts and imports use the exact native field order.</summary>
 internal static partial class NexaConnectorHostDesktop
 {
+    /// <summary>Logical keyboard batches share the already qualified INPUT layout.</summary>
+    private sealed class KeyboardSender : INexaConnectorHostKeyboardSender
+    {
+        private int error;
+
+        public int Error
+        {
+            get { return error; }
+        }
+
+        public bool Down(ushort key)
+        {
+            return (GetAsyncKeyState(key) & 0x8000) != 0;
+        }
+
+        public uint Send(NexaConnectorHostKeyboardStroke[] strokes)
+        {
+            Input[] input = new Input[strokes.Length];
+            for (int index = 0; index < strokes.Length; index++)
+                input[index] = Keyboard(
+                    strokes[index].Key,
+                    strokes[index].Scan,
+                    strokes[index].Flags
+                );
+            ClearLastError(0);
+            uint accepted = SendInput((uint)input.Length, input, Marshal.SizeOf(typeof(Input)));
+            error = Marshal.GetLastWin32Error();
+            return accepted;
+        }
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct Input
     {
@@ -66,6 +97,12 @@ internal static partial class NexaConnectorHostDesktop
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int key);
+
+    [DllImport("kernel32.dll", EntryPoint = "SetLastError")]
+    private static extern void ClearLastError(uint error);
 
     [DllImport("user32.dll")]
     private static extern int GetSystemMetrics(int index);

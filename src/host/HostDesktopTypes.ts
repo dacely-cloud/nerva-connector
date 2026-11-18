@@ -103,6 +103,14 @@ export type HostDesktopKeyAction = (typeof HostDesktopKeyAction)[keyof typeof Ho
 export interface HostDesktopKeyRequest {
     readonly key: string;
     readonly action: HostDesktopKeyAction;
+    /** Windows fresh input requires a signed launch/snapshot window selector. */
+    readonly target?: string;
+}
+
+/** Explicit replacement targets one unique editable accessibility field in the selected Windows application. */
+export interface HostDesktopTextField {
+    readonly field: string;
+    readonly replace: true;
 }
 
 /** Desktop commands inherit the connector session unless an explicit local session environment is supplied. */
@@ -143,8 +151,8 @@ export interface HostDesktopDriver {
     releaseButton(button: HostDesktopButton): Promise<void>;
     /** Apply an already validated key action. */
     key(request: HostDesktopKeyRequest): Promise<void>;
-    /** Type bounded text as data. */
-    text(text: string): Promise<void>;
+    /** Apply bounded text as foreground data or one explicitly selected field replacement. */
+    text(text: string, target?: string, field?: HostDesktopTextField): Promise<void>;
     /** Persistent backends close their portal/session and join pending consent or capture before returning. */
     [Symbol.asyncDispose]?(): Promise<void>;
 }

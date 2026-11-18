@@ -14,6 +14,7 @@ import { HostHttpMethod, type HostHttpRequest, type HostHttpRead } from './HostH
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from './HostTerminalTypes.js';
 import { HostOperationError } from './HostOperationError.js';
+import { HostDesktopTextFieldOptions } from './HostDesktopTextFieldOptions.js';
 import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
 import {
     HostDesktopPointerAction,
@@ -22,6 +23,7 @@ import {
     HostDesktopLimits,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
+    type HostDesktopTextField,
 } from './HostDesktopTypes.js';
 import {
     HostShell,
@@ -155,7 +157,10 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 return this.#serialize(await this.workspace.desktopInfo());
             case 'application_open':
                 return this.#serialize(
-                    await this.workspace.openApplication(this.#text(args['name'])),
+                    await this.workspace.openApplication(
+                        this.#text(args['name']),
+                        args['url'] === undefined ? undefined : this.#text(args['url']),
+                    ),
                 );
             case 'desktop_snapshot':
                 return this.#serialize(await this.workspace.desktopSnapshot());
@@ -200,13 +205,20 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 const request: HostDesktopKeyRequest = {
                     key: this.#text(args['key']),
                     action: this.#choice(args['action'], Object.values(HostDesktopKeyAction)),
+                    ...(args['target'] === undefined ? {} : { target: this.#text(args['target']) }),
                 };
                 await this.workspace.desktopKey(request);
                 return '{"sent":true}';
             }
-            case 'desktop_text':
-                await this.workspace.desktopText(this.#text(args['text'], true));
-                return '{"sent":true}';
+            case 'desktop_text': {
+                const field: HostDesktopTextField | undefined = HostDesktopTextFieldOptions.read(args['field'], args['replace']);
+                await this.workspace.desktopText(
+                    this.#text(args['text'], true),
+                    args['target'] === undefined ? undefined : this.#text(args['target']),
+                    field,
+                );
+                return field === undefined ? '{"sent":true}' : '{"sent":true,"replaced":true,"verified":true}';
+            }
             case 'computer_info':
                 return this.#serialize(await SystemInfo.read(this.signal));
             case 'file_read': {

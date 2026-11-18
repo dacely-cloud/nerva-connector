@@ -103,3 +103,45 @@ it('bounds native application metadata and rejects images on non-launching outco
         }),
     ).toThrow();
 });
+
+it('passes only a canonical HTTP address as a single native browser argument', async (): Promise<void> => {
+    const result: HostApplicationResult = {
+        status: HostApplicationStatus.Launched,
+        candidates: [{ name: 'Google Chrome', id: 'installed-browser' }],
+        windowObserved: true,
+        screenshot: null,
+        windowTarget: 'win32:v1:0000000000123456:00000022:01dc000000000000:00000033',
+    };
+    const run: MockInstance<typeof HostDesktopCommand.run> = vi
+        .spyOn(HostDesktopCommand, 'run')
+        .mockResolvedValue(Buffer.from(JSON.stringify(result)));
+    try {
+        const driver: HostDesktopWindows = new HostDesktopWindows('verified-helper.exe', {});
+        for (const invalid of [
+            'file:///test',
+            'https://user:password@example.com/',
+            'https://example.com/" --new-window',
+            'https://example.com/\\test',
+        ]) {
+            await expect(driver.openApplication('Chrome', invalid)).rejects.toMatchObject({
+                reason: 'application-browser-url',
+                definitive: true,
+            });
+        }
+        expect(run).not.toHaveBeenCalled();
+        expect(await driver.openApplication('Chrome', 'HTTPS://Example.COM')).toEqual(result);
+        expect(run).toHaveBeenCalledExactlyOnceWith(
+            'verified-helper.exe',
+            ['--desktop'],
+            {},
+            1048576,
+            JSON.stringify({
+                operation: 'application-open',
+                name: 'Chrome',
+                url: 'https://example.com/',
+            }),
+        );
+    } finally {
+        run.mockRestore();
+    }
+});

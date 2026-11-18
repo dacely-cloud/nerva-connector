@@ -55,6 +55,11 @@ export class ConnectorWindowsSources {
     public static readonly desktop: readonly string[] = [
         'HostDesktop.cs',
         'HostDesktopNative.cs',
+        'HostDesktopWindow.cs',
+        'HostDesktopKeyboard.cs',
+        'HostDesktopTextField.cs',
+        'HostDesktopTextFieldAutomation.cs',
+        'HostDesktopTextFieldEdit.cs',
         'HostApplication.cs',
         'HostApplicationCatalog.cs',
         'HostDesktopFrame.cs',

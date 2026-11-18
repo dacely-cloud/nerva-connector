@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { HostOperationError } from '../host/HostOperationError.js';
+import { HostDesktopError } from '../host/HostDesktopError.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
@@ -30,7 +31,8 @@ export class ConnectorHostFailure {
         return {
             outcome:
                 this.#observations.has(tool) ||
-                (caught instanceof HostOperationError && caught.definitive)
+                (caught instanceof HostOperationError && caught.definitive) ||
+                (caught instanceof HostDesktopError && caught.definitive)
                     ? ConnectorHostOutcome.Failed
                     : ConnectorHostOutcome.Indeterminate,
             resultJson: null,

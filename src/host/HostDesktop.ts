@@ -8,6 +8,8 @@ import { HostDesktopCoordinates } from './HostDesktopCoordinates.js';
 import { HostDesktopX11 } from './HostDesktopX11.js';
 import { HostDesktopWayland } from './HostDesktopWayland.js';
 import { HostDesktopWindows } from './HostDesktopWindows.js';
+import { HostDesktopKeyChord } from './HostDesktopKeyChord.js';
+import { HostDesktopError } from './HostDesktopError.js';
 import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
 import { HostOperationError } from './HostOperationError.js';
 import { ConnectorHostErrorCode } from '../protocol/ConnectorHost.js';
@@ -24,6 +26,7 @@ import {
     type HostDesktopOptions,
     type HostDesktopDriver,
     type HostDesktopViewport,
+    type HostDesktopTextField,
 } from './HostDesktopTypes.js';
 
 /** One desktop session owns held inputs and uses the connector user's actual interactive display. */
@@ -75,7 +78,7 @@ export class HostDesktop implements AsyncDisposable {
     }
 
     /** Launch exactly one installed Windows application without shell scripts, then capture the screen once. */
-    public async openApplication(name: string): Promise<HostApplicationResult> {
+    public async openApplication(name: string, url?: string): Promise<HostApplicationResult> {
         return await this.#operate(async (): Promise<HostApplicationResult> => {
             this.#active();
             if (!(this.#driver instanceof HostDesktopWindows)) {
@@ -85,7 +88,7 @@ export class HostDesktop implements AsyncDisposable {
                     true,
                 );
             }
-            return await this.#driver.openApplication(name);
+            return await this.#driver.openApplication(name, url);
         });
     }
 
@@ -181,17 +184,43 @@ export class HostDesktop implements AsyncDisposable {
         return await this.#operate(async (): Promise<void> => {
             this.#active();
             await this.#available();
-            const key: string = this.#key(request.key);
+            const windows: boolean = this.#driver instanceof HostDesktopWindows;
+            if (request.target !== undefined && !windows) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Window targets require Windows desktop input',
+                    true,
+                );
+            }
+            let key: string;
+            try {
+                key = windows
+                    ? HostDesktopKeyChord.read(request.key, request.action)
+                    : this.#key(request.key);
+            } catch (error: unknown) {
+                if (windows) {
+                    throw new HostDesktopError('key', 'key-chord', 0);
+                }
+                throw error;
+            }
             if (!Object.values(HostDesktopKeyAction).includes(request.action)) {
                 throw new Error('Invalid desktop key action');
             }
+            const owned: boolean = this.#keys.has(key);
             if (
                 request.action === HostDesktopKeyAction.Down ||
-                request.action === HostDesktopKeyAction.Press
+                (!windows && request.action === HostDesktopKeyAction.Press)
             ) {
                 this.#keys.add(key);
             }
-            await this.#driver.key({ ...request, key });
+            try {
+                await this.#driver.key({ ...request, key });
+            } catch (error: unknown) {
+                if (!owned && error instanceof HostDesktopError && error.definitive) {
+                    this.#keys.delete(key);
+                }
+                throw error;
+            }
             if (
                 request.action === HostDesktopKeyAction.Press ||
                 request.action === HostDesktopKeyAction.Up
@@ -202,10 +231,17 @@ export class HostDesktop implements AsyncDisposable {
     }
 
     /** Unicode text is data and never interpreted as shell or key syntax. */
-    public async text(text: string): Promise<void> {
+    public async text(text: string, target?: string, field?: HostDesktopTextField): Promise<void> {
         return await this.#operate(async (): Promise<void> => {
             this.#active();
             await this.#available();
+            if ((target !== undefined || field !== undefined) && !(this.#driver instanceof HostDesktopWindows)) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Window targets require Windows desktop input',
+                    true,
+                );
+            }
             if (
                 typeof text !== 'string' ||
                 text.includes('\0') ||
@@ -213,7 +249,7 @@ export class HostDesktop implements AsyncDisposable {
             ) {
                 throw new Error('Desktop text exceeds limit');
             }
-            await this.#driver.text(text);
+            await this.#driver.text(text, target, field);
         });
     }
 
