@@ -40,6 +40,7 @@ import { ConnectorActivityFeed } from '../runtime/ConnectorActivityFeed.js';
 import type { ConnectorSetupProfile } from '../runtime/ConnectorSetupProfile.js';
 import { ConnectorConnectionLog } from '../runtime/ConnectorConnectionLog.js';
 import { ConnectorLogSummary } from './ConnectorLogSummary.js';
+import { WindowsStateError } from '../windows/WindowsStateProtocol.js';
 import { WindowsBackgroundStartup } from '../windows/WindowsBackgroundStartup.js';
 import { ConnectorUpdateChannel } from './ConnectorUpdateChannel.js';
 import { ConnectorConsoleView } from './ConnectorConsoleScreen.js';
@@ -61,6 +62,7 @@ export class ConnectorConsoleApp {
     #view: ConnectorConsole | null = null;
     #action: Promise<void> | null = null;
     #updates: ConnectorUpdateChannel | null = null;
+    #startupComplete: boolean = false;
 
     /** The installer chooses the private pairing file; the terminal never asks users to author it. */
     public constructor(public readonly source: ConnectorConsoleSource) {
@@ -122,33 +124,21 @@ export class ConnectorConsoleApp {
             if (this.#startup !== null) {
                 void this.#readStartup();
             }
-            let linked: ConnectorPairCompleted | null = null;
-            let start: boolean = true;
+            const starting: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
             if (
                 process.stdin.isTTY &&
                 process.stdout.isTTY &&
-                this.source.kind !== ConnectorConsoleSourceKind.Pairing &&
-                (await this.#setup.load()) === null
+                this.source.kind !== ConnectorConsoleSourceKind.Pairing
             ) {
-                const outcome: ConnectorLinkOutcome | null = await view.withPrompt(
-                    (): Promise<ConnectorLinkOutcome | null> => this.#firstRun(),
-                );
-                if (outcome === null || outcome.kind === ConnectorLinkOutcomeKind.Canceled) {
-                    abort();
-                    return;
-                }
-                this.#profile();
-                if (outcome.kind === ConnectorLinkOutcomeKind.Linked) {
-                    linked = outcome.completed;
-                } else {
-                    start = false;
-                    this.#model.notLinked();
-                    view.draw();
-                }
+                this.#action = starting.promise;
             }
-            this.#profile();
-            if (start) {
-                await this.#connection.restart(linked);
+            try {
+                await this.#start(view);
+            } finally {
+                if (this.#action === starting.promise) {
+                    this.#action = null;
+                }
+                starting.resolve(undefined);
             }
             await this.#quit.promise;
         } finally {
@@ -161,6 +151,74 @@ export class ConnectorConsoleApp {
             this.#view = null;
             this.#updates = null;
             signal.removeEventListener('abort', abort);
+        }
+    }
+
+    /** Keep the console and its recovery commands open when saved local setup cannot be read. */
+    async #start(view: ConnectorConsole): Promise<void> {
+        try {
+            let linked: ConnectorPairCompleted | null = null;
+            if (
+                process.stdin.isTTY &&
+                process.stdout.isTTY &&
+                this.source.kind !== ConnectorConsoleSourceKind.Pairing &&
+                (await this.#setup.load()) === null
+            ) {
+                const outcome: ConnectorLinkOutcome | null = await view.withPrompt(
+                    (): Promise<ConnectorLinkOutcome | null> => this.#firstRun(),
+                );
+                if (outcome === null || outcome.kind === ConnectorLinkOutcomeKind.Canceled) {
+                    this.#close();
+                    return;
+                }
+                if (outcome.kind === ConnectorLinkOutcomeKind.Linked) {
+                    linked = outcome.completed;
+                } else {
+                    this.#startupComplete = true;
+                    this.#profile();
+                    this.#model.notLinked();
+                    return;
+                }
+            }
+            this.#profile();
+            this.#startupComplete = true;
+            await this.#connection.restart(linked);
+        } catch (caught: unknown) {
+            this.#startupComplete = false;
+            if (this.#stop.signal.aborted) {
+                return;
+            }
+            // A malformed preferences file can put its raw contents in a JSON parser message.
+            const reason: ConnectorFailureReason = ConnectorFailure.classify({
+                error: caught instanceof SyntaxError ? null : caught,
+                stage: ConnectorStartupStage.Configuration,
+                httpStatus: null,
+                event: null,
+                codeShown: false,
+            });
+            this.#log.record('startup-failed', {
+                stage: ConnectorStartupStage.Configuration,
+                reason: reason.kind,
+                code:
+                    caught instanceof WindowsStateError
+                        ? caught.failure
+                        : caught instanceof SyntaxError
+                          ? 'invalid-json'
+                          : null,
+            });
+            this.#model.failure(reason, null);
+            this.#model.details = ['Startup log: ' + this.#log.path];
+        } finally {
+            view.draw();
+        }
+    }
+
+    /** Retry local startup before attempting to reconnect an initialized console. */
+    async #reconnect(): Promise<void> {
+        if (!this.#startupComplete && this.#view !== null) {
+            await this.#start(this.#view);
+        } else {
+            await this.#connection.restart(null);
         }
     }
 
@@ -200,7 +258,7 @@ export class ConnectorConsoleApp {
     ): Promise<void> {
         try {
             if (command === ConnectorConsoleCommand.Reconnect) {
-                await this.#connection.restart(null);
+                await this.#reconnect();
             } else if (command === ConnectorConsoleCommand.Logout) {
                 await this.#logout();
             } else if (command === ConnectorConsoleCommand.Pair) {
@@ -209,7 +267,7 @@ export class ConnectorConsoleApp {
                         'This computer is already linked to your Nerva account.',
                     ];
                 } else {
-                    await this.#connection.restart(null);
+                    await this.#reconnect();
                 }
             } else if (command === ConnectorConsoleCommand.Settings) {
                 await this.#reviewSetup();

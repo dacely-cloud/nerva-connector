@@ -14,6 +14,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
 {
     private void Start()
     {
+        restartTimer.Stop();
         string node = Path.Combine(directory, "node.exe");
         string application = Path.Combine(directory, "nerva-connector.mjs");
         if (!File.Exists(node) || !File.Exists(application))
@@ -48,6 +49,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         StringBuilder command = new StringBuilder(
             "\"" + node + "\" \"" + application + "\" connector"
         );
+        started = DateTime.UtcNow;
         if (
             !NexaConnectorSupervisorNative.CreateProcessW(
                 node,
@@ -70,7 +72,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         NexaConnectorSupervisorNative.CloseHandle(created.hThread);
         process = created.hProcess;
         processId = created.dwProcessId;
-        started = DateTime.UtcNow;
         window = IntPtr.Zero;
         findAttempts = 0;
         finder.Start();
@@ -143,8 +144,11 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         if (process == IntPtr.Zero)
         {
             showWhenFound = true;
-            failures = 0;
-            Start();
+            if (!restartTimer.Enabled)
+            {
+                failures = 0;
+                Start();
+            }
             return;
         }
         if (window == IntPtr.Zero)
@@ -242,19 +246,21 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     /// <summary>Starts the connector again after 5 seconds, doubling up to a minute while it keeps stopping soon after it starts.</summary>
     private void Restart()
     {
-        failures =
-            DateTime.UtcNow - started > TimeSpan.FromMinutes(2) ? 1 : Math.Min(failures + 1, 5);
-        System.Windows.Forms.Timer wait = new System.Windows.Forms.Timer();
-        wait.Interval = (int)Math.Min(60000, 5000 * Math.Pow(2, failures - 1));
-        wait.Tick += delegate
+        TimeSpan running = DateTime.UtcNow - started;
+        failures = running > TimeSpan.FromMinutes(2) ? 1 : Math.Min(failures + 1, 5);
+        if (running < TimeSpan.FromSeconds(2) && failures >= 3)
         {
-            wait.Dispose();
-            if (!quitting && pendingUpdate == null && process == IntPtr.Zero)
-            {
-                Start();
-            }
-        };
-        wait.Start();
+            log.Write("automatic startup paused after repeated immediate exits");
+            tray.ShowBalloonTip(
+                10000,
+                "Nerva Connector didn't start",
+                "See the startup error in %LOCALAPPDATA%\\Nerva Connector\\Logs.",
+                ToolTipIcon.Error
+            );
+            return;
+        }
+        restartTimer.Interval = (int)Math.Min(60000, 5000 * Math.Pow(2, failures - 1));
+        restartTimer.Start();
     }
 
     private void Quit()

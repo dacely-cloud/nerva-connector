@@ -10,9 +10,11 @@ import {
     ConnectorConsolePhase,
 } from '../src/cli/ConnectorConsoleModel.js';
 import { ConnectorCloudConfiguration } from '../src/runtime/ConnectorCloudConfiguration.js';
+import { ConnectorConnectionLog } from '../src/runtime/ConnectorConnectionLog.js';
 import { SystemInfo } from '../src/system/SystemInfo.js';
 import { ConnectorSetupSession } from '../src/cli/ConnectorSetupSession.js';
 import type { ConnectorPermissionQuestions } from '../src/cli/ConnectorPermissionPrompt.js';
+import { WindowsStateError, WindowsStateFailure } from '../src/windows/WindowsStateProtocol.js';
 import {
     GpuInventoryState,
     SystemPlatform,
@@ -83,6 +85,59 @@ afterEach((): void => {
     capture.command = null;
     capture.frames = [];
     capture.prompts = 0;
+});
+
+it('keeps the first-run screen open on a Windows storage failure and retries the same local check', async (): Promise<void> => {
+    const tty: readonly [PropertyDescriptor | undefined, PropertyDescriptor | undefined] = [
+        Object.getOwnPropertyDescriptor(process.stdin, 'isTTY'),
+        Object.getOwnPropertyDescriptor(process.stdout, 'isTTY'),
+    ];
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+    const load: MockInstance<ConnectorSetupSession['load']> = vi
+        .spyOn(ConnectorSetupSession.prototype, 'load')
+        .mockRejectedValue(new WindowsStateError(WindowsStateFailure.Untrusted));
+    const log: MockInstance<ConnectorConnectionLog['record']> = vi
+        .spyOn(ConnectorConnectionLog.prototype, 'record')
+        .mockImplementation((): void => {});
+    const prepare: MockInstance<typeof ConnectorCloudConfiguration.prepare> = vi.spyOn(
+        ConnectorCloudConfiguration,
+        'prepare',
+    );
+    const stop: AbortController = new AbortController();
+    const running: Promise<void> = new ConnectorConsoleApp({
+        kind: ConnectorConsoleSourceKind.Cloud,
+        path: '/owned-test-state',
+    }).run(stop.signal);
+    try {
+        await vi.waitFor((): void => {
+            expect(capture.model?.phase).toBe(ConnectorConsolePhase.Unavailable);
+        });
+        expect(capture.model?.message).toContain('Windows folder permissions block the connector');
+        expect(log).toHaveBeenCalledWith('startup-failed', {
+            stage: 'Checking saved configuration',
+            reason: 'folder-permissions',
+            code: WindowsStateFailure.Untrusted,
+        });
+        capture.command?.(ConnectorConsoleCommand.Reconnect);
+        await vi.waitFor((): void => {
+            expect(load).toHaveBeenCalledTimes(2);
+        });
+        expect(prepare).not.toHaveBeenCalled();
+    } finally {
+        stop.abort();
+        await running;
+        for (const [target, descriptor] of [
+            [process.stdin, tty[0]],
+            [process.stdout, tty[1]],
+        ] as const) {
+            if (descriptor === undefined) {
+                Reflect.deleteProperty(target, 'isTTY');
+            } else {
+                Object.defineProperty(target, 'isTTY', descriptor);
+            }
+        }
+    }
 });
 
 /** A delayed local operation retains normal cooperative cancellation and unregisters its exact listener. */

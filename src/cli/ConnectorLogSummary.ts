@@ -14,6 +14,7 @@ export class ConnectorLogSummary {
         'closed',
         'stall',
         'failed',
+        'startup-failed',
         'host-operation-failed',
         'host-application-result',
     ]);
@@ -103,6 +104,14 @@ export class ConnectorLogSummary {
                 (blocked === null ? '' : ' for ' + (blocked / 1000).toFixed(1) + 's') +
                 ' after ' +
                 (text('after') ?? 'an unknown step')
+            );
+        }
+        if (event === 'startup-failed') {
+            const code: string | null = text('code');
+            return (
+                'Startup failed: ' +
+                (text('error') ?? text('stage') ?? 'Unknown startup step') +
+                (code === null ? '' : ' [' + code + ']')
             );
         }
         const error: string | null = text('error');

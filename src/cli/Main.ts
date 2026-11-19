@@ -545,8 +545,8 @@ try {
     }
 } catch (caught: unknown) {
     progress.pause();
-    process.stderr.write(
-        (caught instanceof WindowsUpdateFetchError ||
+    const message: string =
+        caught instanceof WindowsUpdateFetchError ||
         caught instanceof ConnectorRuntimeUnsupported ||
         caught instanceof WindowsStateError ||
         caught instanceof ConnectorPermissionError ||
@@ -562,8 +562,18 @@ try {
               ? caught.message
               : args[0] === ConnectorLocalCommand.Logout.valueOf()
                 ? 'Unpairing is not confirmed. Your pairing is preserved. Retry nexa connector logout when connected.'
-                : 'Connector configuration or runtime failed') + '\n',
-    );
+                : 'Connector configuration or runtime failed';
+    if (consoleSource !== null && !stop.signal.aborted) {
+        const log: ConnectorConnectionLog = new ConnectorConnectionLog(
+            ConnectorConnectionLog.location(),
+        );
+        log.record('startup-failed', {
+            error: message,
+            code: caught instanceof WindowsStateError ? caught.failure : null,
+        });
+        await log.flush();
+    }
+    process.stderr.write(message + '\n');
     process.exitCode = 1;
 } finally {
     progress[Symbol.dispose]();

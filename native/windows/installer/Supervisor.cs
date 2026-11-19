@@ -24,6 +24,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     );
     private readonly System.Windows.Forms.Timer hider = new System.Windows.Forms.Timer();
     private readonly System.Windows.Forms.Timer finder = new System.Windows.Forms.Timer();
+    private readonly System.Windows.Forms.Timer restartTimer = new System.Windows.Forms.Timer();
     private readonly NexaConnectorSupervisorLog log;
     private readonly System.Windows.Forms.Timer checks;
     private IntPtr process = IntPtr.Zero;
@@ -138,6 +139,14 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         {
             FindWindow();
         };
+        restartTimer.Tick += delegate
+        {
+            restartTimer.Stop();
+            if (!quitting && pendingUpdate == null && process == IntPtr.Zero)
+            {
+                Start();
+            }
+        };
         Listen(NexaConnectorSupervisorProgram.ShowEventName, Show);
         Listen(NexaConnectorSupervisorProgram.QuitEventName, Quit);
         if (NexaConnectorSupervisorUpdates.Configured)
@@ -187,6 +196,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             }
             hider.Dispose();
             finder.Dispose();
+            restartTimer.Dispose();
             tray.Visible = false;
             tray.Dispose();
             smallIcon.Dispose();
