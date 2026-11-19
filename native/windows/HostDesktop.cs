@@ -152,13 +152,7 @@ internal static partial class NexaConnectorHostDesktop
                 {
                     return 70;
                 }
-                if (!SetCursorPos(x, y))
-                {
-                    throw new Win32Exception(Marshal.GetLastWin32Error(), "pointer-move-rejected");
-                }
-                CursorPoint observed;
-                if (!GetCursorPos(out observed) || observed.X != x || observed.Y != y)
-                    throw new InvalidOperationException("pointer-position-unconfirmed");
+                MovePointer(x, y);
                 if (action != "move")
                 {
                     Button(Text(request, "button"), action);
@@ -424,6 +418,52 @@ internal static partial class NexaConnectorHostDesktop
             frame["windowTarget"] = target;
         }
         return frame;
+    }
+
+    /// <summary>Move the real cursor in visible steps and abandon the gesture if its position changes.</summary>
+    private static void MovePointer(int x, int y)
+    {
+        const int pixelsPerStep = 32;
+        const int maximumSteps = 12;
+        const int stepDelayMilliseconds = 12;
+        CursorPoint origin;
+        if (!GetCursorPos(out origin))
+            throw new InvalidOperationException("pointer-position-unconfirmed");
+
+        long deltaX = (long)x - origin.X;
+        long deltaY = (long)y - origin.Y;
+        long distance = Math.Max(Math.Abs(deltaX), Math.Abs(deltaY));
+        if (distance == 0)
+            return;
+
+        int steps = (int)Math.Min(maximumSteps, (distance + pixelsPerStep - 1) / pixelsPerStep);
+        CursorPoint previous = origin;
+        for (int step = 1; step <= steps; step++)
+        {
+            CursorPoint next = new CursorPoint
+            {
+                X = (int)(origin.X + deltaX * step / steps),
+                Y = (int)(origin.Y + deltaY * step / steps),
+            };
+            // Virtual desktop bounds can contain gaps between displays.
+            if (step < steps && MonitorFromPoint(next, 0) == IntPtr.Zero)
+                continue;
+
+            ConfirmPointer(previous);
+            if (!SetCursorPos(next.X, next.Y))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "pointer-move-rejected");
+            ConfirmPointer(next);
+            previous = next;
+            if (step < steps)
+                Thread.Sleep(stepDelayMilliseconds);
+        }
+    }
+
+    private static void ConfirmPointer(CursorPoint expected)
+    {
+        CursorPoint observed;
+        if (!GetCursorPos(out observed) || observed.X != expected.X || observed.Y != expected.Y)
+            throw new InvalidOperationException("pointer-position-unconfirmed");
     }
 
     private static void Button(string button, string action)

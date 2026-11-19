@@ -96,6 +96,9 @@ internal static partial class NexaConnectorHostDesktop
     private static extern bool GetCursorPos(out CursorPoint point);
 
     [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromPoint(CursorPoint point, uint flags);
+
+    [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
