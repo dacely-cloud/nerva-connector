@@ -25,12 +25,6 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
     private readonly System.Windows.Forms.Timer hider = new System.Windows.Forms.Timer();
     private readonly System.Windows.Forms.Timer finder = new System.Windows.Forms.Timer();
     private readonly NexaConnectorSupervisorLog log;
-    private readonly NexaConnectorSupervisorNative.ConsoleHandler ignoreControl = delegate(
-        uint type
-    )
-    {
-        return true;
-    };
     private readonly System.Windows.Forms.Timer checks;
     private IntPtr process = IntPtr.Zero;
     private int processId;

@@ -94,3 +94,29 @@ it('a failure after invoking the operation owner retains uncertainty rather than
         start.mockRestore();
     }
 });
+
+it('identifies rejected launch fields in the local diagnostic without quoting command data', async (): Promise<void> => {
+    await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
+    const tools: HostMcpWorkspaceTools = new HostMcpWorkspaceTools(
+        fixture.host,
+        new AbortController().signal,
+    );
+    await expect(tools.call('process_start', { executable: 'private.exe' })).rejects.toMatchObject({
+        message: 'Host operation requires the timeoutMs field',
+    });
+    await expect(
+        tools.call('process_start', { executable: 'private.exe', timeoutMs: 0 }),
+    ).rejects.toMatchObject({
+        message: 'Program launch requires timeoutMs to be an integer from 1 to 604800000',
+    });
+    await expect(
+        tools.call('process_start', {
+            executable: 'private.exe',
+            shell: 'cmd',
+            command: 'private command',
+            timeoutMs: 1000,
+        }),
+    ).rejects.toMatchObject({
+        message: 'Shell mode requires shell and command. Omit executable and arguments',
+    });
+});

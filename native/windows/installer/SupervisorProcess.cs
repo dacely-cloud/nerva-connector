@@ -34,6 +34,8 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
             "NERVA_CONNECTOR_UPDATE_EVENT",
             NexaConnectorSupervisorUpdates.Configured ? updateEvent : null
         );
+        // New connector processes must receive Ctrl+C even if the supervisor stopped an earlier one.
+        NexaConnectorSupervisorNative.SetConsoleCtrlHandler(IntPtr.Zero, false);
         NexaConnectorSupervisorNative.StartupInfo startup =
             new NexaConnectorSupervisorNative.StartupInfo();
         startup.cb = Marshal.SizeOf(typeof(NexaConnectorSupervisorNative.StartupInfo));
@@ -181,8 +183,17 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
         {
             try
             {
-                NexaConnectorSupervisorNative.SetConsoleCtrlHandler(ignoreControl, true);
-                NexaConnectorSupervisorNative.GenerateConsoleCtrlEvent(0, 0);
+                // Windows delivers Ctrl+C asynchronously. Ignore it at process level because
+                // detaching the console clears registered callbacks before they may have run.
+                if (
+                    !NexaConnectorSupervisorNative.SetConsoleCtrlHandler(IntPtr.Zero, true)
+                    || !NexaConnectorSupervisorNative.GenerateConsoleCtrlEvent(0, 0)
+                )
+                {
+                    log.Write(
+                        "could not signal connector shutdown: " + Marshal.GetLastWin32Error()
+                    );
+                }
             }
             finally
             {

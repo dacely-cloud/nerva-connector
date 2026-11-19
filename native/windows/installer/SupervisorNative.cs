@@ -12,8 +12,6 @@ internal static class NexaConnectorSupervisorNative
     internal const short HideWindow = 0;
     internal const uint CreateNewConsole = 0x00000010;
 
-    internal delegate bool ConsoleHandler(uint type);
-
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct StartupInfo
     {
@@ -76,10 +74,10 @@ internal static class NexaConnectorSupervisorNative
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool GenerateConsoleCtrlEvent(uint controlEvent, uint processGroup);
 
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool SetConsoleCtrlHandler(
-        ConsoleHandler handler,
+        IntPtr handler,
         [MarshalAs(UnmanagedType.Bool)] bool add
     );
 

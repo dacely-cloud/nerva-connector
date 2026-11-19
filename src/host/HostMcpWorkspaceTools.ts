@@ -27,6 +27,7 @@ import {
 } from './HostDesktopTypes.js';
 import {
     HostShell,
+    HostWorkspaceLimits,
     HostWriteMode,
     type HostProcessRequest,
     type HostProcessSnapshot,
@@ -397,12 +398,22 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
         try {
             const args: Readonly<Record<string, unknown>> = Boundary.record(value, fields);
             for (const field of Boundary.array(required, 32)) {
-                if (typeof field !== 'string' || !Object.hasOwn(args, field)) {
-                    throw new Error('Missing required host operation argument');
+                if (typeof field !== 'string') {
+                    throw new Error('Invalid host operation schema');
+                }
+                if (!Object.hasOwn(args, field)) {
+                    throw new HostOperationError(
+                        ConnectorHostErrorCode.InvalidRequest,
+                        `Host operation requires the ${field} field`,
+                        true,
+                    );
                 }
             }
             return args;
         } catch (cause: unknown) {
+            if (cause instanceof HostOperationError) {
+                throw cause;
+            }
             throw new HostOperationError(
                 ConnectorHostErrorCode.InvalidRequest,
                 'Host operation arguments were rejected before execution',
@@ -418,6 +429,9 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             HostWorkspaceValidation.process(request);
             return request;
         } catch (cause: unknown) {
+            if (cause instanceof HostOperationError) {
+                throw cause;
+            }
             throw new HostOperationError(
                 ConnectorHostErrorCode.InvalidRequest,
                 'Host launch arguments were rejected before execution',
@@ -446,6 +460,19 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
     }
 
     #processRequest(args: Readonly<Record<string, unknown>>): HostProcessRequest {
+        const timeoutMs: unknown = args['timeoutMs'];
+        if (
+            typeof timeoutMs !== 'number' ||
+            !Number.isSafeInteger(timeoutMs) ||
+            timeoutMs < 1 ||
+            timeoutMs > HostWorkspaceLimits.timeoutMs
+        ) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                `Program launch requires timeoutMs to be an integer from 1 to ${HostWorkspaceLimits.timeoutMs}`,
+                true,
+            );
+        }
         const environment: Readonly<Record<string, unknown>> = this.#environment(
             args['environment'] ?? {},
         );
@@ -457,7 +484,11 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             shell !== null &&
             !Object.values(HostShell).some((value: HostShell): boolean => value === shell)
         ) {
-            throw new Error('Invalid shell');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Program launch has an unsupported shell value',
+                true,
+            );
         }
         return {
             executable: args['executable'] == null ? null : this.#text(args['executable']),
@@ -468,7 +499,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             command: args['command'] == null ? null : this.#text(args['command']),
             directory: args['directory'] == null ? null : this.#text(args['directory']),
             environment: Object.fromEntries(entries),
-            timeoutMs: Boundary.count(args['timeoutMs'], 604800000),
+            timeoutMs,
             ...(args['retentionAfterTimeoutMs'] === undefined
                 ? {}
                 : {

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { isAbsolute, resolve } from 'node:path';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { HostOperationError } from './HostOperationError.js';
 import { HostShell, HostWorkspaceLimits, type HostProcessRequest } from './HostWorkspaceTypes.js';
 
 /** Validation is repeated at the host operation boundary even for typed callers. */
@@ -84,7 +86,11 @@ export class HostWorkspaceValidation {
                 request.executable === '' ||
                 request.command !== null
             ) {
-                throw new Error('An explicit host executable and argument vector are required');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.InvalidRequest,
+                    'Executable mode requires executable and optional arguments. Omit command',
+                    true,
+                );
             }
         } else if (
             !Object.values(HostShell).includes(request.shell) ||
@@ -92,7 +98,11 @@ export class HostWorkspaceValidation {
             request.executable !== null ||
             request.arguments.length !== 0
         ) {
-            throw new Error('An explicit host shell and command are required');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Shell mode requires shell and command. Omit executable and arguments',
+                true,
+            );
         }
         this.count(request.timeoutMs, 1, HostWorkspaceLimits.timeoutMs);
         if (request.retentionAfterTimeoutMs !== undefined) {
