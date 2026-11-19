@@ -32,6 +32,10 @@ public static partial class NexaConnectorStateOwner
             using (Owner owner = new Owner(sid, local, profile))
             {
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.Root);
+                using (OpenPath(owner, owner.Root, true, true)) { }
+                string oldPairing = Path.Combine(owner.Root, "pairing.json");
+                File.WriteAllText(oldPairing, "existing legacy state");
+                RequireStorageQualification(DefaultStateRoot(owner) == owner.Root);
                 if (shareParent)
                 {
                     Directory.SetAccessControl(appData, FixtureAcl(sid, true));
@@ -52,20 +56,12 @@ public static partial class NexaConnectorStateOwner
                         .GetAccessControl(local)
                         .GetSecurityDescriptorSddlForm(AccessControlSections.Access) == localAcl
                 );
-                RequireStorageQualification(!Directory.Exists(owner.Root));
+                RequireStorageQualification(File.ReadAllText(oldPairing) == "existing legacy state");
                 RequireStorageQualification(
                     Directory
                         .GetAccessControl(appData)
                         .GetSecurityDescriptorSddlForm(AccessControlSections.Access) == parentAcl
                 );
-
-                Directory.CreateDirectory(Path.Combine(local, "Nerva"));
-                RequireStorageRejection(
-                    owner,
-                    "untrusted",
-                    shareParent ? "local-app-data-parent" : "local-app-data"
-                );
-                Directory.Delete(Path.Combine(local, "Nerva"));
 
                 if (shareParent)
                 {
@@ -73,10 +69,17 @@ public static partial class NexaConnectorStateOwner
                 }
                 Directory.SetAccessControl(local, FixtureAcl(sid, false));
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
-                using (OpenPath(owner, owner.Root, true, true)) { }
-                RequireStorageRejection(owner, "migration-required", null);
                 RequireStorageQualification(Directory.Exists(owner.Root));
                 RequireStorageQualification(Directory.Exists(owner.ProfileRoot));
+
+                Directory.SetAccessControl(owner.ProfileRoot, FixtureAcl(sid, true));
+                RequireStorageRejection(owner, "untrusted", "connector-state");
+                Directory.SetAccessControl(owner.ProfileRoot, FixtureAcl(sid, false));
+                Directory.Delete(owner.ProfileRoot);
+                Directory.SetAccessControl(Path.Combine(local, "Nerva"), FixtureAcl(sid, true));
+                RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
+                RequireStorageQualification(!Directory.Exists(owner.ProfileRoot));
+                RequireStorageQualification(File.ReadAllText(oldPairing) == "existing legacy state");
             }
         }
         catch (Failure error)

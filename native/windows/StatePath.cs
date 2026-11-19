@@ -15,22 +15,10 @@ public static partial class NexaConnectorStateOwner
         Owner owner,
         string path,
         bool privateTarget,
-        bool create,
-        bool inspectLocalAppData = false
+        bool create
     )
     {
         path = Canonical(path);
-        if (
-            inspectLocalAppData
-            && (
-                privateTarget
-                || create
-                || !String.Equals(path, owner.Base, StringComparison.OrdinalIgnoreCase)
-            )
-        )
-        {
-            throw new Failure("invalid");
-        }
         PinnedPath held = new PinnedPath();
         string scope = "volume";
         try
@@ -89,15 +77,12 @@ public static partial class NexaConnectorStateOwner
                 );
                 held.Handles.Add(next);
                 CheckObject(next, true);
-                if (!inspectLocalAppData || (!localAppData && !localAppDataParent))
-                {
-                    CheckAcl(
-                        next,
-                        managed || (privateTarget && i == parts.Length - 1),
-                        owner.Sid,
-                        !localAppData
-                    );
-                }
+                CheckAcl(
+                    next,
+                    managed || (privateTarget && i == parts.Length - 1),
+                    owner.Sid,
+                    !localAppData
+                );
             }
             return held;
         }
@@ -118,38 +103,37 @@ public static partial class NexaConnectorStateOwner
     }
 
     /// <summary>
-    /// Use the protected profile directory for a first run when the LocalAppData subtree is shared.
-    /// Never read state through the shared directory or abandon an existing installation.
+    /// A verified profile root stays authoritative. Shared LocalAppData cannot supply configuration
+    /// or prevent setup through a preexisting directory.
     /// </summary>
     private static string DefaultStateRoot(Owner owner)
     {
-        bool profileStateExists = StateDirectoryExists(owner, owner.ProfileRoot);
+        if (StateDirectoryExists(owner, owner.ProfileRoot))
+        {
+            return owner.ProfileRoot;
+        }
         try
         {
-            using (OpenPath(owner, owner.Base, false, false)) { }
+            StateDirectoryExists(owner, owner.Root);
+            return owner.Root;
         }
         catch (Failure error)
         {
             if (
                 error.Code != "untrusted"
                 || error.Check != "unexpected-permission"
-                || (error.Scope != "local-app-data" && error.Scope != "local-app-data-parent")
-                || !SharedLocalAppDataIsEmptyOfNerva(owner)
+                || (
+                    error.Scope != "local-app-data"
+                    && error.Scope != "local-app-data-parent"
+                    && error.Scope != "nerva-folder"
+                    && error.Scope != "connector-state"
+                )
             )
             {
                 throw;
             }
             return owner.ProfileRoot;
         }
-        if (!profileStateExists)
-        {
-            return owner.Root;
-        }
-        if (StateDirectoryExists(owner, owner.Root))
-        {
-            throw new Failure("migration-required");
-        }
-        return owner.ProfileRoot;
     }
 
     private static bool StateDirectoryExists(Owner owner, string path)
@@ -166,24 +150,6 @@ public static partial class NexaConnectorStateOwner
                 throw;
             }
             return false;
-        }
-    }
-
-    private static bool SharedLocalAppDataIsEmptyOfNerva(Owner owner)
-    {
-        // This handle is only used to probe the original root's first component. Since this base
-        // failed verification, its contents must not supply state, even if the child ACL looks safe.
-        using (PinnedPath parent = OpenPath(owner, owner.Base, false, false, true))
-        {
-            try
-            {
-                using (Open(parent.Last, "Nerva", 0x00100080U, 1, true, null, 3)) { }
-                return false;
-            }
-            catch (Failure error)
-            {
-                return error.Code == "not-found";
-            }
         }
     }
 

@@ -37,7 +37,7 @@ it('state bootstrap uses a compiled helper without runtime compilation or embedd
 });
 
 it.skipIf(process.platform !== 'win32')(
-    'qualifies a protected alternate root for a fresh Windows profile with shared LocalAppData',
+    'qualifies protected profile storage when shared LocalAppData already contains Connector state',
     async (): Promise<void> => {
         const directory: string = await mkdtemp(join(homedir(), '.nerva-windows-storage-'));
         try {

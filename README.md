@@ -183,10 +183,9 @@ Settings → Time & language → Date & time and click **Sync now**. A clock mor
 Manager, and open it again.
 
 **"Windows folder permissions block the connector".** The connector could not verify its protected storage.
-On a first run, if `AppData\Local` or a parent between it and the user's profile grants other accounts write access
-and `AppData\Local` has no existing `Nerva` folder,
-the connector uses a protected `%USERPROFILE%\.nerva-connector-state` directory for its private state.
-The connector keeps using that directory after it is created.
+When another account has write access along the Connector's `AppData\Local` storage path, the connector uses
+a protected `%USERPROFILE%\.nerva-connector-state` directory and keeps using it on later starts.
+It leaves the old directory and its files in place. If your pairing was saved there, pair once in the protected directory.
 
 Look for the `storageCheck` field in
 `%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which part of the path was
