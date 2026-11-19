@@ -541,7 +541,7 @@ export class ConnectorClientHost implements AsyncDisposable {
                 outcome: response.outcome,
                 code: response.errorCode,
                 reason:
-                    caught instanceof HostDesktopError
+                    caught instanceof HostDesktopError || caught instanceof HostOperationError
                         ? caught.message
                         : 'The OS or local authority rejected this operation: ' +
                           (response.errorCode ?? 'operation-failed'),

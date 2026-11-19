@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Nerva contributors
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { HostOperationError } from './HostOperationError.js';
+
 /** Native creation must be acknowledged separately from a broker's authenticated control readiness. */
 export class HostProcessStartup {
     readonly #result: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
@@ -57,8 +60,10 @@ export class HostProcessStartup {
                 new Promise<never>(
                     (_resolve: (value: never) => void, reject: (error: Error) => void): void => {
                         timer = setTimeout((): void => {
-                            const error: Error = new Error(
-                                'Host native process creation is unconfirmed',
+                            const error: HostOperationError = new HostOperationError(
+                                ConnectorHostErrorCode.Canceled,
+                                'The job launcher did not confirm process creation within 15 seconds',
+                                false,
                             );
                             this.failed(error);
                             reject(error);

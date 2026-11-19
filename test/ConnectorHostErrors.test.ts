@@ -95,6 +95,11 @@ it.skipIf(process.platform !== 'linux')(
                 code: ConnectorHostErrorCode.NotDirectory,
             },
             {
+                tool: ConnectorHostTool.ProcessRead,
+                args: '{"processId":"00000000-0000-4000-8000-000000000000","stdoutOffset":"0","stderrOffset":"0","maximumBytes":1024}',
+                code: ConnectorHostErrorCode.NotFound,
+            },
+            {
                 tool: ConnectorHostTool.FileWrite,
                 args: '{"path":"existing.txt","mode":"create","encoding":"utf8","data":"overwrite"}',
                 code: ConnectorHostErrorCode.AlreadyExists,

@@ -455,7 +455,11 @@ export class HostWorkspace implements AsyncDisposable {
                     this.#processes.size + this.#starting + this.terminals.size >=
                     HostWorkspaceLimits.processes
                 ) {
-                    throw new Error('Host process limit reached; release completed processes');
+                    throw new HostOperationError(
+                        ConnectorHostErrorCode.ResourceLimit,
+                        'The Connector reached its process limit. Release completed processes before starting more.',
+                        true,
+                    );
                 }
                 const id: string = randomUUID();
                 this.#starting += 1;
@@ -655,7 +659,11 @@ export class HostWorkspace implements AsyncDisposable {
             (): Promise<T> => {
                 const process: HostProcess | undefined = this.#processes.get(processId);
                 if (process === undefined) {
-                    throw new Error('Host process is unavailable');
+                    throw new HostOperationError(
+                        ConnectorHostErrorCode.NotFound,
+                        'The process handle is unavailable on this Connector',
+                        true,
+                    );
                 }
                 return action(process);
             },

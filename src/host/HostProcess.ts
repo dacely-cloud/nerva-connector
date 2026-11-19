@@ -12,6 +12,7 @@ import { HostWindowsProcessChannel } from './HostWindowsProcessChannel.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostProcessStartup } from './HostProcessStartup.js';
 import { HostOperationError } from './HostOperationError.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import type { HostProcessWindowsRejectedFrame } from './HostProcessWindowsProtocol.js';
 import {
     HostProcessFailure,
@@ -76,7 +77,11 @@ export class HostProcess implements AsyncDisposable {
         ];
         if (process.platform === 'win32') {
             if (windowsLauncher === undefined || channel === null) {
-                throw new Error('Windows host execution requires the verified job launcher');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Windows process creation requires the verified job launcher',
+                    true,
+                );
             }
             executable = windowsLauncher;
             arguments_ = [
@@ -85,7 +90,11 @@ export class HostProcess implements AsyncDisposable {
                 channel.token,
             ];
             if (arguments_[0].length > 30000) {
-                throw new Error('Windows host command exceeds the native command-line limit');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.ResourceLimit,
+                    'Windows process arguments exceed the native command-line limit',
+                    true,
+                );
             }
         }
         const child: ChildProcess = spawn(executable, arguments_, {
@@ -109,9 +118,16 @@ export class HostProcess implements AsyncDisposable {
         this.#child.stdout.on('data', (bytes: Buffer): void => this.#output.appendStdout(bytes));
         this.#child.stderr.on('data', (bytes: Buffer): void => this.#output.appendStderr(bytes));
         this.#child.stdin.on('error', (): void => undefined);
-        this.#child.on('error', (): void => {
+        this.#child.on('error', (cause: Error): void => {
             this.#failureChanged(HostProcessFailure.Launch);
-            this.#startup.failed(new Error('Host process broker launch is unconfirmed'));
+            this.#startup.failed(
+                new HostOperationError(
+                    ConnectorHostErrorCode.OperationFailed,
+                    'The job launcher reported a process startup error',
+                    false,
+                    { cause },
+                ),
+            );
         });
         this.#child.on('message', (raw: unknown): void => this.#message(raw));
         this.#child.once('exit', (): void => {
@@ -120,7 +136,11 @@ export class HostProcess implements AsyncDisposable {
         });
         this.#child.once('close', (): void => {
             this.#startup.failed(
-                new Error('Host process closed before native creation was confirmed'),
+                new HostOperationError(
+                    ConnectorHostErrorCode.OperationFailed,
+                    'The job launcher exited before reporting whether it created the process',
+                    false,
+                ),
             );
             clearTimeout(this.#timer);
             this.#ownerRunning = false;
@@ -180,7 +200,11 @@ export class HostProcess implements AsyncDisposable {
                         owner.#treeRunning = null;
                         owner.#failure ??= HostProcessFailure.Launch;
                         owner.#startup.failed(
-                            new Error('Windows host process launch is unconfirmed'),
+                            new HostOperationError(
+                                ConnectorHostErrorCode.OperationFailed,
+                                'The Windows job launcher lost its control connection before confirming process creation',
+                                false,
+                            ),
                         );
                         owner.#stopChanged.resolve(undefined);
                         owner.changes.advance();
@@ -228,10 +252,13 @@ export class HostProcess implements AsyncDisposable {
                 try {
                     await owner[Symbol.asyncDispose]();
                 } catch (cleanup: unknown) {
-                    throw new AggregateError(
-                        [caught, cleanup],
-                        'Host launch cleanup is unconfirmed',
-                        { cause: cleanup },
+                    throw new HostOperationError(
+                        ConnectorHostErrorCode.OperationFailed,
+                        caught instanceof HostOperationError
+                            ? caught.message + '. Process cleanup could not be confirmed.'
+                            : 'Process launch failed and cleanup could not be confirmed',
+                        false,
+                        { cause: new AggregateError([caught, cleanup]) },
                     );
                 }
             }
@@ -382,7 +409,13 @@ export class HostProcess implements AsyncDisposable {
 
     #result(result: HostProcessReport): void {
         if (!this.#startup.confirmed && result.launchFailed) {
-            this.#startup.failed(new Error('Host native launch had an unconfirmed outcome'));
+            this.#startup.failed(
+                new HostOperationError(
+                    ConnectorHostErrorCode.OperationFailed,
+                    'The job launcher reported a failure before confirming process creation',
+                    false,
+                ),
+            );
         }
         this.#output.accept(result);
         this.#targetClosed.resolve(undefined);

@@ -5,7 +5,7 @@ import type { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/C
 
 /** A bounded native error can prove rejection before an operation had effects. */
 export class HostOperationError extends Error {
-    /** Messages stay local; transport exposes only the bounded code and definitive classification. */
+    /** Use fixed diagnostic prose without command arguments or paths. The paired relay receives only the code and effect classification. */
     public constructor(
         public readonly code: ConnectorHostErrorCode,
         message: string,
