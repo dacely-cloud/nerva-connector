@@ -190,8 +190,9 @@ export class ConnectorConsoleScreen {
                 lines.push(ConnectorLogo.line([{ text: row, color: ConnectorTheme.dim }], width));
             }
         }
-        lines.push(this.#blank());
-        lines.push(this.#access(model, width));
+        if (model.phase === ConnectorConsolePhase.Connected) {
+            lines.push(this.#blank(), this.#access(model, width));
+        }
         if (model.details.length > 0) {
             lines.push(this.#blank());
             let remaining: number = 6;
@@ -481,7 +482,7 @@ export class ConnectorConsoleScreen {
               ? 'One folder and its commands'
               : model.files
                 ? 'One folder'
-                : 'Just connected';
+                : 'Connection only';
         const folder: string =
             model.folder === null || (!model.host && !model.files) ? '' : ' · ' + model.folder;
         return ConnectorLogo.line(

@@ -151,6 +151,7 @@ it('the console shows the Nerva logo, the computer, its live state, the access l
     const failed: ConnectorConsoleRender = render(model, feed.snapshot(), {});
     expect(failed.text).toContain("● Can't connect");
     expect(failed.text).toContain('Retrying in 9s…');
+    expect(failed.text).not.toContain('Nexa can use');
 });
 
 it('repaints write only rows that changed, nothing when nothing changed, and clear the screen only on resize', (): void => {

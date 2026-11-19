@@ -63,6 +63,7 @@ export const WindowsStateScope = {
     Volume: 'volume',
     ProfileAncestor: 'profile-ancestor',
     LocalAppData: 'local-app-data',
+    LocalAppDataParent: 'local-app-data-parent',
     NervaFolder: 'nerva-folder',
     ConnectorState: 'connector-state',
     OtherDirectory: 'other-directory',

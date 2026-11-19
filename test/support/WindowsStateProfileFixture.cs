@@ -11,36 +11,37 @@ public static partial class NexaConnectorStateOwner
     /// <summary>Exercises the production path checks on isolated NTFS folders owned by the caller.</summary>
     public static void QualifySharedLocalAppData()
     {
+        QualifySharedLocalAppData(false);
+        QualifySharedLocalAppData(true);
+    }
+
+    private static void QualifySharedLocalAppData(bool shareParent)
+    {
         string profile = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "nerva-storage-qualification-" + Guid.NewGuid().ToString("N")
         );
-        string local = Path.Combine(profile, "AppData", "Local");
+        string appData = Path.Combine(profile, "AppData");
+        string local = Path.Combine(appData, "Local");
         string sid = WindowsIdentity.GetCurrent().User.Value;
-        DirectorySecurity privateAcl = new DirectorySecurity();
-        privateAcl.SetSecurityDescriptorBinaryForm(Descriptor(sid));
-        Directory.CreateDirectory(profile, privateAcl);
+        Directory.CreateDirectory(profile, FixtureAcl(sid, false));
         try
         {
             Directory.CreateDirectory(local);
-            Directory.SetAccessControl(local, privateAcl);
+            Directory.SetAccessControl(local, FixtureAcl(sid, false));
             using (Owner owner = new Owner(sid, local, profile))
             {
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.Root);
-                DirectorySecurity shared = new DirectorySecurity();
-                shared.SetSecurityDescriptorBinaryForm(Descriptor(sid));
-                shared.AddAccessRule(
-                    new FileSystemAccessRule(
-                        new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null),
-                        FileSystemRights.Modify,
-                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
-                        PropagationFlags.None,
-                        AccessControlType.Allow
-                    )
-                );
-                Directory.SetAccessControl(local, shared);
+                if (shareParent)
+                {
+                    Directory.SetAccessControl(appData, FixtureAcl(sid, true));
+                }
+                Directory.SetAccessControl(local, FixtureAcl(sid, true));
                 string localAcl = Directory
                     .GetAccessControl(local)
+                    .GetSecurityDescriptorSddlForm(AccessControlSections.Access);
+                string parentAcl = Directory
+                    .GetAccessControl(appData)
                     .GetSecurityDescriptorSddlForm(AccessControlSections.Access);
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
                 RequireStorageQualification(!Directory.Exists(owner.ProfileRoot));
@@ -52,13 +53,25 @@ public static partial class NexaConnectorStateOwner
                         .GetSecurityDescriptorSddlForm(AccessControlSections.Access) == localAcl
                 );
                 RequireStorageQualification(!Directory.Exists(owner.Root));
+                RequireStorageQualification(
+                    Directory
+                        .GetAccessControl(appData)
+                        .GetSecurityDescriptorSddlForm(AccessControlSections.Access) == parentAcl
+                );
 
                 Directory.CreateDirectory(Path.Combine(local, "Nerva"));
-                RequireStorageRejection(owner, "untrusted", "local-app-data");
+                RequireStorageRejection(
+                    owner,
+                    "untrusted",
+                    shareParent ? "local-app-data-parent" : "local-app-data"
+                );
                 Directory.Delete(Path.Combine(local, "Nerva"));
 
-                privateAcl.SetSecurityDescriptorBinaryForm(Descriptor(sid));
-                Directory.SetAccessControl(local, privateAcl);
+                if (shareParent)
+                {
+                    Directory.SetAccessControl(appData, FixtureAcl(sid, false));
+                }
+                Directory.SetAccessControl(local, FixtureAcl(sid, false));
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
                 using (OpenPath(owner, owner.Root, true, true)) { }
                 RequireStorageRejection(owner, "migration-required", null);
@@ -77,6 +90,34 @@ public static partial class NexaConnectorStateOwner
         {
             Directory.Delete(profile, true);
         }
+    }
+
+    private static DirectorySecurity FixtureAcl(string sid, bool shared)
+    {
+        DirectorySecurity acl = new DirectorySecurity();
+        acl.SetSecurityDescriptorBinaryForm(Descriptor(sid));
+        if (shared)
+        {
+            foreach (
+                SecurityIdentifier principal in new SecurityIdentifier[]
+                {
+                    new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null),
+                    new SecurityIdentifier("S-1-5-21-101-202-303-1002"),
+                }
+            )
+            {
+                acl.AddAccessRule(
+                    new FileSystemAccessRule(
+                        principal,
+                        FileSystemRights.Modify,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow
+                    )
+                );
+            }
+        }
+        return acl;
     }
 
     private static void RequireStorageRejection(Owner owner, string code, string scope)

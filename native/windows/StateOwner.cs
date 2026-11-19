@@ -118,6 +118,7 @@ public static partial class NexaConnectorStateOwner
     {
         internal readonly string Sid;
         internal readonly string Base;
+        internal readonly string Profile;
         internal readonly string Root;
         internal readonly string ProfileRoot;
         internal readonly Dictionary<string, Lease> Leases = new Dictionary<string, Lease>(
@@ -138,6 +139,7 @@ public static partial class NexaConnectorStateOwner
         {
             Sid = sid;
             Base = localAppData;
+            Profile = profile;
             Root = Base + "\\Nerva\\Connector";
             ProfileRoot = profile + "\\.nerva-connector-state";
             NativeRoot(Base);

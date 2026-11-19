@@ -60,6 +60,11 @@ public static partial class NexaConnectorStateOwner
                     owner.Base,
                     StringComparison.OrdinalIgnoreCase
                 );
+                bool localAppDataParent =
+                    !localAppData
+                    && !String.Equals(current, owner.Profile, StringComparison.OrdinalIgnoreCase)
+                    && Inside(current, owner.Profile)
+                    && Inside(owner.Base, current);
                 bool nervaFolder = String.Equals(
                     current,
                     owner.Base + "\\Nerva",
@@ -70,6 +75,7 @@ public static partial class NexaConnectorStateOwner
                     managed ? "connector-state"
                     : nervaFolder ? "nerva-folder"
                     : localAppData ? "local-app-data"
+                    : localAppDataParent ? "local-app-data-parent"
                     : Inside(owner.Base, current) ? "profile-ancestor"
                     : "other-directory";
                 SafeFileHandle next = Open(
@@ -83,7 +89,7 @@ public static partial class NexaConnectorStateOwner
                 );
                 held.Handles.Add(next);
                 CheckObject(next, true);
-                if (!localAppData || !inspectLocalAppData)
+                if (!inspectLocalAppData || (!localAppData && !localAppDataParent))
                 {
                     CheckAcl(
                         next,
@@ -112,31 +118,28 @@ public static partial class NexaConnectorStateOwner
     }
 
     /// <summary>
-    /// Use the protected profile directory for a first run when LocalAppData is shared.
+    /// Use the protected profile directory for a first run when the LocalAppData subtree is shared.
     /// Never read state through the shared directory or abandon an existing installation.
     /// </summary>
     private static string DefaultStateRoot(Owner owner)
     {
         bool profileStateExists = StateDirectoryExists(owner, owner.ProfileRoot);
-        using (PinnedPath local = OpenPath(owner, owner.Base, false, false, true))
+        try
         {
-            try
+            using (OpenPath(owner, owner.Base, false, false)) { }
+        }
+        catch (Failure error)
+        {
+            if (
+                error.Code != "untrusted"
+                || error.Check != "unexpected-permission"
+                || (error.Scope != "local-app-data" && error.Scope != "local-app-data-parent")
+                || !SharedLocalAppDataIsEmptyOfNerva(owner)
+            )
             {
-                CheckAcl(local.Last, false, owner.Sid);
+                throw;
             }
-            catch (Failure error)
-            {
-                error.Scope = "local-app-data";
-                if (
-                    error.Code != "untrusted"
-                    || error.Check != "unexpected-permission"
-                    || !SharedLocalAppDataIsEmptyOfNerva(local.Last)
-                )
-                {
-                    throw;
-                }
-                return owner.ProfileRoot;
-            }
+            return owner.ProfileRoot;
         }
         if (!profileStateExists)
         {
@@ -166,18 +169,21 @@ public static partial class NexaConnectorStateOwner
         }
     }
 
-    private static bool SharedLocalAppDataIsEmptyOfNerva(SafeFileHandle parent)
+    private static bool SharedLocalAppDataIsEmptyOfNerva(Owner owner)
     {
         // This handle is only used to probe the original root's first component. Since this base
         // failed verification, its contents must not supply state, even if the child ACL looks safe.
-        try
+        using (PinnedPath parent = OpenPath(owner, owner.Base, false, false, true))
         {
-            using (Open(parent, "Nerva", 0x00100080U, 1, true, null, 3)) { }
-            return false;
-        }
-        catch (Failure error)
-        {
-            return error.Code == "not-found";
+            try
+            {
+                using (Open(parent.Last, "Nerva", 0x00100080U, 1, true, null, 3)) { }
+                return false;
+            }
+            catch (Failure error)
+            {
+                return error.Code == "not-found";
+            }
         }
     }
 

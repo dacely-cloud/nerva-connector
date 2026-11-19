@@ -183,7 +183,8 @@ Settings → Time & language → Date & time and click **Sync now**. A clock mor
 Manager, and open it again.
 
 **"Windows folder permissions block the connector".** The connector could not verify its protected storage.
-On a first run, if `AppData\Local` grants other accounts write access and has no existing `Nerva` folder,
+On a first run, if `AppData\Local` or a parent between it and the user's profile grants other accounts write access
+and `AppData\Local` has no existing `Nerva` folder,
 the connector uses a protected `%USERPROFILE%\.nerva-connector-state` directory for its private state.
 The connector keeps using that directory after it is created.
 
@@ -193,6 +194,8 @@ rejected and which check failed. These Command Prompt commands show the permissi
 
 ```bat
 icacls "%LOCALAPPDATA%"
+icacls "%USERPROFILE%\AppData"
+icacls "%USERPROFILE%"
 icacls "%LOCALAPPDATA%\Nerva"
 icacls "%LOCALAPPDATA%\Nerva\Connector"
 ```

@@ -382,7 +382,7 @@ export class ConnectorFailure {
                 return {
                     kind,
                     title: 'Windows folder permissions block the connector',
-                    detail: "Another account can change the connector's folder in AppData\\Local. See Troubleshooting in the README.",
+                    detail: 'Windows rejected a storage folder or permission. See the storage check below and the README.',
                     recovery: ConnectorFailureRecovery.Manual,
                 };
             case ConnectorFailureKind.DiskFull:
