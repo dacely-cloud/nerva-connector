@@ -49,16 +49,16 @@ public static partial class NexaConnectorStateOwner
     {
         if (descriptor == null || descriptor.Owner == null || descriptor.DiscretionaryAcl == null)
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "invalid-descriptor");
         }
         string owner = descriptor.Owner.Value;
         if (secret ? owner != expectedSid : !Trusted(owner, expectedSid))
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "unexpected-owner");
         }
         if (secret && (descriptor.ControlFlags & ControlFlags.DiscretionaryAclProtected) == 0)
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "inherited-permissions");
         }
         bool user = false;
         bool system = false;
@@ -69,20 +69,20 @@ public static partial class NexaConnectorStateOwner
             {
                 if (secret)
                 {
-                    throw new Failure("untrusted");
+                    throw new Failure("untrusted", "inherited-permissions");
                 }
                 continue;
             }
             if (ace == null || ace.IsCallback)
             {
-                throw new Failure("untrusted");
+                throw new Failure("untrusted", "unexpected-permission");
             }
             string sid = ace.SecurityIdentifier.Value;
             if (ace.AceQualifier != AceQualifier.AccessAllowed)
             {
                 if (secret)
                 {
-                    throw new Failure("untrusted");
+                    throw new Failure("untrusted", "unexpected-permission");
                 }
                 continue;
             }
@@ -93,7 +93,7 @@ public static partial class NexaConnectorStateOwner
                     || (sid != expectedSid && sid != "S-1-5-18")
                 )
                 {
-                    throw new Failure("untrusted");
+                    throw new Failure("untrusted", "unexpected-permission");
                 }
                 if (sid == expectedSid)
                 {
@@ -110,12 +110,12 @@ public static partial class NexaConnectorStateOwner
                 && (ace.AccessMask & unchecked((int)(ancestor ? 0x500D0150 : 0x500D0156))) != 0
             )
             {
-                throw new Failure("untrusted");
+                throw new Failure("untrusted", "unexpected-permission");
             }
         }
         if (secret && (!user || !system))
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "missing-permission");
         }
     }
 
@@ -167,14 +167,14 @@ public static partial class NexaConnectorStateOwner
         );
         if (status != 0)
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "descriptor-unreadable");
         }
         try
         {
             uint length = Native.GetSecurityDescriptorLength(descriptor);
             if (length == 0 || length > 65536)
             {
-                throw new Failure("untrusted");
+                throw new Failure("untrusted", "invalid-descriptor");
             }
             byte[] bytes = new byte[length];
             Marshal.Copy(descriptor, bytes, 0, checked((int)length));
@@ -191,14 +191,17 @@ public static partial class NexaConnectorStateOwner
         byte[] attributes = Information(handle, 9, 8);
         uint flags = BitConverter.ToUInt32(attributes, 0);
         byte[] standard = Information(handle, 1, 24);
+        if ((flags & 0x400) != 0)
+        {
+            throw new Failure("untrusted", "reparse-point");
+        }
         if (
-            (flags & 0x400) != 0
-            || ((flags & 0x10) != 0) != directory
+            ((flags & 0x10) != 0) != directory
             || standard[20] != 0
             || (!directory && BitConverter.ToUInt32(standard, 16) != 1)
         )
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "unexpected-file-type");
         }
     }
 }

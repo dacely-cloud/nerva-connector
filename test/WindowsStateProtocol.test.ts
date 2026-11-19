@@ -27,6 +27,25 @@ const empty: WindowsStateResponse = {
     sha256: null,
 };
 
+it('accepts only fixed native storage diagnostics attached to permission failures', (): void => {
+    const failure: WindowsStateResponse = {
+        ...empty,
+        ok: false,
+        error: WindowsStateFailure.Untrusted,
+        diagnostic: 'local-app-data/unexpected-permission',
+    };
+    expect(WindowsStateOwner.decode(failure).diagnostic).toBe(failure.diagnostic);
+    for (const raw of [
+        { ...failure, diagnostic: 'C:\\Users\\someone' },
+        { ...failure, diagnostic: 'local-app-data/unexpected-permission/private' },
+        { ...failure, diagnostic: 'connector-state/foreign account' },
+        { ...failure, error: WindowsStateFailure.Io },
+        { ...failure, ok: true, error: null },
+    ]) {
+        expect((): WindowsStateResponse => WindowsStateOwner.decode(raw)).toThrow();
+    }
+});
+
 it('native private bytes retain NUL and non-UTF8 data while canonical encoding and resource bounds remain enforced', (): void => {
     const response: WindowsStateResponse = WindowsStateOwner.decode({
         ...empty,

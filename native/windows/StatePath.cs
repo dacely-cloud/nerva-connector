@@ -11,10 +11,28 @@ using Microsoft.Win32.SafeHandles;
 /// <summary>Canonical paths and volume anchors are resolved through pinned directory handles.</summary>
 public static partial class NexaConnectorStateOwner
 {
-    private static PinnedPath OpenPath(Owner owner, string path, bool privateTarget, bool create)
+    private static PinnedPath OpenPath(
+        Owner owner,
+        string path,
+        bool privateTarget,
+        bool create,
+        bool inspectLocalAppData = false
+    )
     {
         path = Canonical(path);
+        if (
+            inspectLocalAppData
+            && (
+                privateTarget
+                || create
+                || !String.Equals(path, owner.Base, StringComparison.OrdinalIgnoreCase)
+            )
+        )
+        {
+            throw new Failure("invalid");
+        }
         PinnedPath held = new PinnedPath();
+        string scope = "volume";
         try
         {
             string root = path.Substring(0, 3);
@@ -36,14 +54,24 @@ public static partial class NexaConnectorStateOwner
             for (int i = 0; i < parts.Length; i++)
             {
                 current += "\\" + parts[i];
-                bool managed = Inside(current, owner.Root);
-                bool creatable =
-                    managed
-                    || String.Equals(
-                        current,
-                        owner.Base + "\\Nerva",
-                        StringComparison.OrdinalIgnoreCase
-                    );
+                bool managed = owner.Managed(current);
+                bool localAppData = String.Equals(
+                    current,
+                    owner.Base,
+                    StringComparison.OrdinalIgnoreCase
+                );
+                bool nervaFolder = String.Equals(
+                    current,
+                    owner.Base + "\\Nerva",
+                    StringComparison.OrdinalIgnoreCase
+                );
+                bool creatable = managed || nervaFolder;
+                scope =
+                    managed ? "connector-state"
+                    : nervaFolder ? "nerva-folder"
+                    : localAppData ? "local-app-data"
+                    : Inside(owner.Base, current) ? "profile-ancestor"
+                    : "other-directory";
                 SafeFileHandle next = Open(
                     held.Last,
                     parts[i],
@@ -55,19 +83,101 @@ public static partial class NexaConnectorStateOwner
                 );
                 held.Handles.Add(next);
                 CheckObject(next, true);
-                CheckAcl(
-                    next,
-                    managed || (privateTarget && i == parts.Length - 1),
-                    owner.Sid,
-                    !String.Equals(current, owner.Base, StringComparison.OrdinalIgnoreCase)
-                );
+                if (!localAppData || !inspectLocalAppData)
+                {
+                    CheckAcl(
+                        next,
+                        managed || (privateTarget && i == parts.Length - 1),
+                        owner.Sid,
+                        !localAppData
+                    );
+                }
             }
             return held;
+        }
+        catch (Failure error)
+        {
+            if (error.Check != null)
+            {
+                error.Scope = scope;
+            }
+            held.Dispose();
+            throw;
         }
         catch
         {
             held.Dispose();
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Use the protected profile directory for a first run when LocalAppData is shared.
+    /// Never read state through the shared directory or abandon an existing installation.
+    /// </summary>
+    private static string DefaultStateRoot(Owner owner)
+    {
+        bool profileStateExists = StateDirectoryExists(owner, owner.ProfileRoot);
+        using (PinnedPath local = OpenPath(owner, owner.Base, false, false, true))
+        {
+            try
+            {
+                CheckAcl(local.Last, false, owner.Sid);
+            }
+            catch (Failure error)
+            {
+                error.Scope = "local-app-data";
+                if (
+                    error.Code != "untrusted"
+                    || error.Check != "unexpected-permission"
+                    || !SharedLocalAppDataIsEmptyOfNerva(local.Last)
+                )
+                {
+                    throw;
+                }
+                return owner.ProfileRoot;
+            }
+        }
+        if (!profileStateExists)
+        {
+            return owner.Root;
+        }
+        if (StateDirectoryExists(owner, owner.Root))
+        {
+            throw new Failure("migration-required");
+        }
+        return owner.ProfileRoot;
+    }
+
+    private static bool StateDirectoryExists(Owner owner, string path)
+    {
+        try
+        {
+            using (OpenPath(owner, path, true, false)) { }
+            return true;
+        }
+        catch (Failure error)
+        {
+            if (error.Code != "not-found")
+            {
+                throw;
+            }
+            return false;
+        }
+    }
+
+    private static bool SharedLocalAppDataIsEmptyOfNerva(SafeFileHandle parent)
+    {
+        // This handle is only used to probe the original root's first component. Since this base
+        // failed verification, its contents must not supply state, even if the child ACL looks safe.
+        try
+        {
+            using (Open(parent, "Nerva", 0x00100080U, 1, true, null, 3)) { }
+            return false;
+        }
+        catch (Failure error)
+        {
+            return error.Code == "not-found";
         }
     }
 
@@ -230,7 +340,7 @@ public static partial class NexaConnectorStateOwner
             )
         )
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "unsupported-volume") { Scope = "volume" };
         }
         return mapping + "\\";
     }
@@ -245,12 +355,12 @@ public static partial class NexaConnectorStateOwner
         }
         if (count > buffer.Length || buffer[count - 1] != '\0')
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "unsupported-volume") { Scope = "volume" };
         }
         int end = Array.IndexOf(buffer, '\0');
         if (end <= 0 || end >= count)
         {
-            throw new Failure("untrusted");
+            throw new Failure("untrusted", "unsupported-volume") { Scope = "volume" };
         }
         return ValidateVolumeTarget(new string(buffer, 0, end));
     }

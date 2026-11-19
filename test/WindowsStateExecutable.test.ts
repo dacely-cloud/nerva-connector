@@ -15,6 +15,7 @@ import { WindowsStateBuild } from '../src/windows/WindowsStateBuild.js';
 import { WindowsStateFailure } from '../src/windows/WindowsStateProtocol.js';
 import type { WindowsStateArtifact } from '../src/windows/WindowsStateArtifact.js';
 import { ConnectorWindowsBuild } from '../script/ConnectorWindowsBuild.ts';
+import { ConnectorWindowsCompiler } from '../script/ConnectorWindowsCompiler.ts';
 import { ConnectorReleaseLimits } from '../src/install/ConnectorReleaseLimits.js';
 
 it('state bootstrap uses a compiled helper without runtime compilation or embedded helper source', async (): Promise<void> => {
@@ -34,6 +35,31 @@ it('state bootstrap uses a compiled helper without runtime compilation or embedd
         expect(source.includes('-EncodedCommand')).toBe(false);
     }
 });
+
+it.skipIf(process.platform !== 'win32')(
+    'qualifies a protected alternate root for a fresh Windows profile with shared LocalAppData',
+    async (): Promise<void> => {
+        const directory: string = await mkdtemp(join(homedir(), '.nerva-windows-storage-'));
+        try {
+            const executable: string = join(directory, 'storage.exe');
+            await ConnectorWindowsCompiler.compile({
+                sources: [
+                    ...ConnectorWindowsSources.state,
+                    resolve('test/support/WindowsStateProfileFixture.cs'),
+                ],
+                entrypoint: 'WindowsStateProfileFixture',
+                destination: executable,
+            });
+            const output: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
+                execFile,
+            )(executable, [], { timeout: 30000, maxBuffer: 16384, windowsHide: true });
+            expect(output.stdout.toString().trim()).toBe('windows-state-profile-qualified');
+        } finally {
+            await rm(directory, { recursive: true, force: true });
+        }
+    },
+    60000,
+);
 
 it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs')).each([
     ['WindowsStatePolicyFixture', /windows-state-policy-checks=\d+/u],

@@ -55,6 +55,38 @@ export const WindowsStateFailure = {
 /** Only these safe failure categories may leave the native owner. */
 export type WindowsStateFailure = (typeof WindowsStateFailure)[keyof typeof WindowsStateFailure];
 
+/** Fixed native diagnostics identify the failing check without exposing paths, owners or ACL entries. */
+export type WindowsStateDiagnostic = `${WindowsStateScope}/${WindowsStateCheck}`;
+
+/** Storage locations grouped by their role in the protected path. */
+export const WindowsStateScope = {
+    Volume: 'volume',
+    ProfileAncestor: 'profile-ancestor',
+    LocalAppData: 'local-app-data',
+    NervaFolder: 'nerva-folder',
+    ConnectorState: 'connector-state',
+    OtherDirectory: 'other-directory',
+    StateObject: 'state-object',
+} as const;
+/** Storage locations derive from the native labels. */
+export type WindowsStateScope = (typeof WindowsStateScope)[keyof typeof WindowsStateScope];
+
+/** Storage checks that can reject an object without disclosing its contents. */
+export const WindowsStateCheck = {
+    AccessDenied: 'access-denied',
+    ReparsePoint: 'reparse-point',
+    UnsupportedVolume: 'unsupported-volume',
+    UnexpectedFileType: 'unexpected-file-type',
+    DescriptorUnreadable: 'descriptor-unreadable',
+    InvalidDescriptor: 'invalid-descriptor',
+    UnexpectedOwner: 'unexpected-owner',
+    InheritedPermissions: 'inherited-permissions',
+    UnexpectedPermission: 'unexpected-permission',
+    MissingPermission: 'missing-permission',
+} as const;
+/** Storage checks derive from the native labels. */
+export type WindowsStateCheck = (typeof WindowsStateCheck)[keyof typeof WindowsStateCheck];
+
 /** Named optional arguments become an exact fixed-field native envelope before serialization. */
 export interface WindowsStateParameters {
     readonly path?: string;
@@ -97,6 +129,7 @@ export interface WindowsStateResponse {
     readonly names: readonly string[] | null;
     readonly dataBase64: string | null;
     readonly error: WindowsStateFailure | null;
+    readonly diagnostic?: WindowsStateDiagnostic;
     readonly sizeBytes: bigint | null;
     readonly sha256: string | null;
 }
@@ -107,7 +140,10 @@ export class WindowsStateError extends Error {
     public readonly code: string;
 
     /** The UI can explain actual permission or competing-owner failures without disclosing physical paths. */
-    public constructor(public readonly failure: WindowsStateFailure) {
+    public constructor(
+        public readonly failure: WindowsStateFailure,
+        public readonly diagnostic?: WindowsStateDiagnostic,
+    ) {
         super(
             failure === WindowsStateFailure.Untrusted
                 ? 'Windows connector storage permissions could not be verified. Existing keys were preserved.'

@@ -304,7 +304,8 @@ public static partial class NexaConnectorStateOwner
         string id,
         bool ok,
         Dictionary<string, object> values,
-        string error
+        string error,
+        string diagnostic = null
     )
     {
         Dictionary<string, object> result = new Dictionary<string, object>
@@ -326,6 +327,10 @@ public static partial class NexaConnectorStateOwner
             {
                 result[item.Key] = item.Value;
             }
+        }
+        if (diagnostic != null)
+        {
+            result["diagnostic"] = diagnostic;
         }
         Console.Out.WriteLine(Json.Serialize(result));
         Console.Out.Flush();

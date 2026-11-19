@@ -146,7 +146,10 @@ it.skipIf(process.platform !== 'win32')(
             await symlink(directory, join(directory, 'junction'), 'junction');
             await expect(
                 ProtectedFiles.directory(join(directory, 'junction')),
-            ).rejects.toMatchObject({ failure: WindowsStateFailure.Untrusted });
+            ).rejects.toMatchObject({
+                failure: WindowsStateFailure.Untrusted,
+                diagnostic: 'connector-state/reparse-point',
+            });
             await owner.write('unsafe-acl', value, 16, true);
             const systemRoot: string | undefined = process.env['SystemRoot'];
             if (systemRoot === undefined) {
@@ -159,7 +162,10 @@ it.skipIf(process.platform !== 'win32')(
             );
             await expect(
                 ProtectedFiles.readPrivate(join(directory, 'unsafe-acl'), 16),
-            ).rejects.toMatchObject({ failure: WindowsStateFailure.Untrusted });
+            ).rejects.toMatchObject({
+                failure: WindowsStateFailure.Untrusted,
+                diagnostic: 'state-object/unexpected-permission',
+            });
         } finally {
             await WindowsStateOwner.close();
             if (created) {

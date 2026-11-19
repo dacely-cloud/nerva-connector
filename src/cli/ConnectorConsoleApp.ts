@@ -199,6 +199,9 @@ export class ConnectorConsoleApp {
             this.#log.record('startup-failed', {
                 stage: ConnectorStartupStage.Configuration,
                 reason: reason.kind,
+                ...(caught instanceof WindowsStateError && caught.diagnostic !== undefined
+                    ? { storageCheck: caught.diagnostic }
+                    : {}),
                 code:
                     caught instanceof WindowsStateError
                         ? caught.failure
@@ -207,7 +210,12 @@ export class ConnectorConsoleApp {
                           : null,
             });
             this.#model.failure(reason, null);
-            this.#model.details = ['Startup log: ' + this.#log.path];
+            this.#model.details = [
+                ...(caught instanceof WindowsStateError && caught.diagnostic !== undefined
+                    ? ['Windows storage check: ' + caught.diagnostic]
+                    : []),
+                'Startup log: ' + this.#log.path,
+            ];
         } finally {
             view.draw();
         }

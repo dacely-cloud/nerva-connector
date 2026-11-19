@@ -96,7 +96,12 @@ it('keeps the first-run screen open on a Windows storage failure and retries the
     Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
     const load: MockInstance<ConnectorSetupSession['load']> = vi
         .spyOn(ConnectorSetupSession.prototype, 'load')
-        .mockRejectedValue(new WindowsStateError(WindowsStateFailure.Untrusted));
+        .mockRejectedValue(
+            new WindowsStateError(
+                WindowsStateFailure.Untrusted,
+                'nerva-folder/unexpected-permission',
+            ),
+        );
     const log: MockInstance<ConnectorConnectionLog['record']> = vi
         .spyOn(ConnectorConnectionLog.prototype, 'record')
         .mockImplementation((): void => {});
@@ -117,8 +122,12 @@ it('keeps the first-run screen open on a Windows storage failure and retries the
         expect(log).toHaveBeenCalledWith('startup-failed', {
             stage: 'Checking saved configuration',
             reason: 'folder-permissions',
+            storageCheck: 'nerva-folder/unexpected-permission',
             code: WindowsStateFailure.Untrusted,
         });
+        expect(capture.model?.details).toContain(
+            'Windows storage check: nerva-folder/unexpected-permission',
+        );
         capture.command?.(ConnectorConsoleCommand.Reconnect);
         await vi.waitFor((): void => {
             expect(load).toHaveBeenCalledTimes(2);

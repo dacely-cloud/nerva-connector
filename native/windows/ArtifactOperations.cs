@@ -167,7 +167,7 @@ public static partial class NexaConnectorStateOwner
             return VerifyArtifactHandle(
                 owner,
                 file,
-                Inside(full, owner.Root),
+                owner.Managed(full),
                 maximum,
                 expected,
                 hash,
@@ -333,7 +333,7 @@ public static partial class NexaConnectorStateOwner
         )
         {
             CheckObject(input, false);
-            CheckAcl(input, Inside(full, owner.Root), owner.Sid);
+            CheckAcl(input, owner.Managed(full), owner.Sid);
             try
             {
                 using (
@@ -392,7 +392,7 @@ public static partial class NexaConnectorStateOwner
                     ArtifactMetadata result = VerifyArtifactHandle(
                         owner,
                         input,
-                        Inside(full, owner.Root),
+                        owner.Managed(full),
                         maximum,
                         expected,
                         hash,

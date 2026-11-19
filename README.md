@@ -182,22 +182,23 @@ Settings → Time & language → Date & time and click **Sync now**. A clock mor
 **"Nerva Connector is already running on this computer".** Close the other connector window, or stop it in Task
 Manager, and open it again.
 
-**"Windows folder permissions block the connector".** Another Windows account can change the connector's folder.
-In Command Prompt, look at who has access:
+**"Windows folder permissions block the connector".** The connector could not verify its protected storage.
+On a first run, if `AppData\Local` grants other accounts write access and has no existing `Nerva` folder,
+the connector uses a protected `%USERPROFILE%\.nerva-connector-state` directory for its private state.
+The connector keeps using that directory after it is created.
+
+Look for the `storageCheck` field in
+`%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which part of the path was
+rejected and which check failed. These Command Prompt commands show the permissions for the default storage:
 
 ```bat
+icacls "%LOCALAPPDATA%"
 icacls "%LOCALAPPDATA%\Nerva"
 icacls "%LOCALAPPDATA%\Nerva\Connector"
 ```
 
-Only your account, `SYSTEM` and `Administrators` should have `(F)`, `(M)` or `(W)`. Sandboxed app entries
-(`ALL APPLICATION PACKAGES`, `S-1-15-…`) are fine. Remove any other entry, replacing `NAME` with what icacls shows:
-
-```bat
-icacls "%LOCALAPPDATA%\Nerva" /remove:g "NAME"
-```
-
-If the computer was never linked, you can instead delete `%LOCALAPPDATA%\Nerva\Connector` and start again.
+Share the storage check and the relevant permissions with support or your Windows administrator. Keep the
+existing Connector folder intact so that any saved pairing and credentials are preserved.
 
 **Nexa can't see the screen on a Mac.** Allow **Screen Recording** and **Accessibility** for Terminal (see
 [macOS](#macos)), then restart the connector.

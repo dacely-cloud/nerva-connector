@@ -13,6 +13,9 @@ import {
     WindowsStateOperation,
     WindowsStateFailure,
     WindowsStateError,
+    WindowsStateScope,
+    WindowsStateCheck,
+    type WindowsStateDiagnostic,
     type WindowsStateParameters,
     type WindowsStateRequest,
     type WindowsStateResponse,
@@ -212,7 +215,10 @@ export class WindowsStateOwner {
         this.#child.stdin.write(encoded + '\n');
         const response: WindowsStateResponse = await ready.promise;
         if (!response.ok) {
-            throw new WindowsStateError(response.error ?? WindowsStateFailure.Invalid);
+            throw new WindowsStateError(
+                response.error ?? WindowsStateFailure.Invalid,
+                response.diagnostic,
+            );
         }
         return response;
     }
@@ -265,6 +271,7 @@ export class WindowsStateOwner {
             'names',
             'dataBase64',
             'error',
+            'diagnostic',
             'sizeBytes',
             'sha256',
         ]);
@@ -298,6 +305,10 @@ export class WindowsStateOwner {
         if (error === undefined || value['ok'] !== (error === null)) {
             throw new WindowsStateError(WindowsStateFailure.Invalid);
         }
+        const diagnostic: WindowsStateDiagnostic | undefined = WindowsStateOwner.#diagnostic(
+            value['diagnostic'],
+            error,
+        );
         const rawSize: unknown = value['sizeBytes'];
         const rawHash: unknown = value['sha256'];
         if (
@@ -333,9 +344,33 @@ export class WindowsStateOwner {
                 Math.ceil(ProtectedFileLimits.hostRecordBytes / 3) * 4,
             ),
             error,
+            ...(diagnostic === undefined ? {} : { diagnostic }),
             sizeBytes: typeof rawSize === 'string' ? BigInt(rawSize) : null,
             sha256: typeof rawHash === 'string' ? rawHash : null,
         };
+    }
+
+    static #diagnostic(
+        raw: unknown,
+        error: WindowsStateFailure | null,
+    ): WindowsStateDiagnostic | undefined {
+        if (raw === undefined) {
+            return undefined;
+        }
+        if (error !== WindowsStateFailure.Untrusted || typeof raw !== 'string' || raw.length > 64) {
+            throw new WindowsStateError(WindowsStateFailure.Invalid);
+        }
+        const [scope, check, extra]: string[] = raw.split('/');
+        const matchedScope: WindowsStateScope | undefined = Object.values(WindowsStateScope).find(
+            (value: WindowsStateScope): boolean => value === scope,
+        );
+        const matchedCheck: WindowsStateCheck | undefined = Object.values(WindowsStateCheck).find(
+            (value: WindowsStateCheck): boolean => value === check,
+        );
+        if (matchedScope === undefined || matchedCheck === undefined || extra !== undefined) {
+            throw new WindowsStateError(WindowsStateFailure.Invalid);
+        }
+        return `${matchedScope}/${matchedCheck}`;
     }
 
     #reject(failure: WindowsStateFailure): void {

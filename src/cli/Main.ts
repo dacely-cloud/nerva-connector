@@ -570,6 +570,9 @@ try {
         log.record('startup-failed', {
             error: message,
             code: caught instanceof WindowsStateError ? caught.failure : null,
+            ...(caught instanceof WindowsStateError && caught.diagnostic !== undefined
+                ? { storageCheck: caught.diagnostic }
+                : {}),
         });
         await log.flush();
     }

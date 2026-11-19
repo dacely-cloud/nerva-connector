@@ -65,10 +65,13 @@ public static partial class NexaConnectorStateOwner
     private sealed class Failure : Exception
     {
         internal readonly string Code;
+        internal readonly string Check;
+        internal string Scope;
 
-        internal Failure(string code)
+        internal Failure(string code, string check = null)
         {
             Code = code;
+            Check = check;
         }
     }
 
@@ -116,6 +119,7 @@ public static partial class NexaConnectorStateOwner
         internal readonly string Sid;
         internal readonly string Base;
         internal readonly string Root;
+        internal readonly string ProfileRoot;
         internal readonly Dictionary<string, Lease> Leases = new Dictionary<string, Lease>(
             StringComparer.Ordinal
         );
@@ -124,6 +128,22 @@ public static partial class NexaConnectorStateOwner
         );
 
         internal Owner()
+            : this(
+                CurrentSid(),
+                KnownFolder("F1B32785-6FBA-4FCF-9D55-7B8E7F157091"),
+                KnownFolder("5E6C858F-0E22-4760-9AFE-EA3317B67173")
+            ) { }
+
+        internal Owner(string sid, string localAppData, string profile)
+        {
+            Sid = sid;
+            Base = localAppData;
+            Root = Base + "\\Nerva\\Connector";
+            ProfileRoot = profile + "\\.nerva-connector-state";
+            NativeRoot(Base);
+        }
+
+        private static string CurrentSid()
         {
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
             {
@@ -131,9 +151,13 @@ public static partial class NexaConnectorStateOwner
                 {
                     throw new Failure("untrusted");
                 }
-                Sid = identity.User.Value;
+                return identity.User.Value;
             }
-            Guid id = new Guid("F1B32785-6FBA-4FCF-9D55-7B8E7F157091");
+        }
+
+        private static string KnownFolder(string folder)
+        {
+            Guid id = new Guid(folder);
             IntPtr value;
             if (Native.SHGetKnownFolderPath(ref id, 0, IntPtr.Zero, out value) != 0)
             {
@@ -141,14 +165,17 @@ public static partial class NexaConnectorStateOwner
             }
             try
             {
-                Base = Canonical(Marshal.PtrToStringUni(value));
+                return Canonical(Marshal.PtrToStringUni(value));
             }
             finally
             {
                 Marshal.FreeCoTaskMem(value);
             }
-            Root = Base + "\\Nerva\\Connector";
-            NativeRoot(Base);
+        }
+
+        internal bool Managed(string path)
+        {
+            return Inside(path, Root) || Inside(path, ProfileRoot);
         }
 
         internal string NativeRoot(string path)
@@ -217,7 +244,11 @@ public static partial class NexaConnectorStateOwner
                 }
                 catch (Failure error)
                 {
-                    WriteReply(id, false, null, error.Code);
+                    string diagnostic =
+                        error.Check == null
+                            ? null
+                            : (error.Scope ?? "state-object") + "/" + error.Check;
+                    WriteReply(id, false, null, error.Code, diagnostic);
                 }
                 catch
                 {
@@ -251,14 +282,13 @@ public static partial class NexaConnectorStateOwner
                 return result;
             case "root":
                 Fields(request);
-                using (PinnedPath basePath = OpenPath(owner, owner.Base, false, false)) { }
-                result["path"] = owner.Root;
+                result["path"] = DefaultStateRoot(owner);
                 return result;
             case "directory":
                 Fields(request, "path", "initialize");
                 string directory = Canonical(Text(request, "path"));
                 bool create = Flag(request, "initialize");
-                if (create && !Inside(directory, owner.Root))
+                if (create && !owner.Managed(directory))
                 {
                     throw new Failure("untrusted");
                 }
@@ -424,26 +454,33 @@ public static partial class NexaConnectorStateOwner
     private static Failure LastError()
     {
         int code = Marshal.GetLastWin32Error();
+        if (code == 5)
+        {
+            return new Failure("untrusted", "access-denied");
+        }
         return new Failure(
             code == 2 || code == 3 ? "not-found"
             : code == 32 || code == 33 ? "busy"
             : code == 80 || code == 183 ? "exists"
-            : code == 5 ? "untrusted"
             : "io"
         );
     }
 
     private static Failure Status(int status)
     {
+        if (status == unchecked((int)0xC0000022))
+        {
+            return new Failure("untrusted", "access-denied");
+        }
+        if (status == unchecked((int)0xC000050B) || status == unchecked((int)0xC0000279))
+        {
+            return new Failure("untrusted", "reparse-point");
+        }
         return new Failure(
             status == unchecked((int)0xC0000034) || status == unchecked((int)0xC000003A)
                 ? "not-found"
             : status == unchecked((int)0xC0000035) ? "exists"
             : status == unchecked((int)0xC0000043) || status == unchecked((int)0xC0000054) ? "busy"
-            : status == unchecked((int)0xC0000022)
-            || status == unchecked((int)0xC000050B)
-            || status == unchecked((int)0xC0000279)
-                ? "untrusted"
             : "io"
         );
     }
