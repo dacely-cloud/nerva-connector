@@ -50,7 +50,7 @@ internal static class NexaConnectorApplicationCatalogFixture
         List<NexaConnectorApplicationEntry> catalog = new List<NexaConnectorApplicationEntry>();
         foreach (string version in new[] { "1.8.1.0", "2.1.1.2", "2.2.5.2", "1.9.7.0" })
         {
-            catalog.Add(Entry("grandMA3 onPC " + version, version));
+            catalog.Add(Entry("grandMA3 onPC " + version + "\t", version));
             catalog.Add(Entry("grandMA3 onPC " + version + " Clean Start", version + "-clean"));
             catalog.Add(Entry("grandMA3 " + version + " Terminal", version + "-terminal"));
         }

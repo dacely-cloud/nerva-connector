@@ -7,6 +7,9 @@ using System.Collections.Generic;
 /// <summary>Resolves a family name only when all matches describe versions of the same desktop app.</summary>
 internal static class NexaConnectorHostApplicationVersionFamily
 {
+    // An empty array trims whitespace and selects the overload available on .NET Framework.
+    private static readonly char[] Whitespace = new char[0];
+
     internal static List<NexaConnectorApplicationEntry> Choose(
         string query,
         List<NexaConnectorApplicationEntry> matches
@@ -18,7 +21,7 @@ internal static class NexaConnectorHostApplicationVersionFamily
         bool tied = false;
         foreach (NexaConnectorApplicationEntry entry in matches)
         {
-            string name = entry.Name.TrimEnd();
+            string name = entry.Name.TrimEnd(Whitespace);
             bool accessory =
                 StripSuffix(ref name, " Clean Start") || StripSuffix(ref name, " Terminal");
             int separator = name.LastIndexOf(' ');
@@ -30,7 +33,7 @@ internal static class NexaConnectorHostApplicationVersionFamily
             if (!NumericVersion(number) || !Version.TryParse(number, out version))
                 return null;
 
-            string family = name.Substring(0, separator).TrimEnd();
+            string family = name.Substring(0, separator).TrimEnd(Whitespace);
             string fullFamily = NexaConnectorHostApplicationCatalog.Compact(family);
             if (
                 !Equal(query, fullFamily)
@@ -70,7 +73,7 @@ internal static class NexaConnectorHostApplicationVersionFamily
     {
         if (!name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
             return false;
-        name = name.Substring(0, name.Length - suffix.Length).TrimEnd();
+        name = name.Substring(0, name.Length - suffix.Length).TrimEnd(Whitespace);
         return true;
     }
 
