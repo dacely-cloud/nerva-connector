@@ -78,7 +78,11 @@ export class HostDesktop implements AsyncDisposable {
     }
 
     /** Launch exactly one installed Windows application without shell scripts, then capture the screen once. */
-    public async openApplication(name: string, url?: string): Promise<HostApplicationResult> {
+    public async openApplication(
+        name: string,
+        url?: string,
+        workspaceFile?: string,
+    ): Promise<HostApplicationResult> {
         return await this.#operate(async (): Promise<HostApplicationResult> => {
             this.#active();
             if (!(this.#driver instanceof HostDesktopWindows)) {
@@ -88,7 +92,7 @@ export class HostDesktop implements AsyncDisposable {
                     true,
                 );
             }
-            return await this.#driver.openApplication(name, url);
+            return await this.#driver.openApplication(name, url, workspaceFile);
         });
     }
 

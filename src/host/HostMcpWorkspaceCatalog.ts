@@ -169,10 +169,11 @@ export class HostMcpWorkspaceCatalog {
             ),
             this.#tool(
                 'application_open',
-                'Windows: open an installed application and return its launch receipt and screen. For registered Chrome, Firefox or Edge, an optional HTTP(S) URL opens directly in that browser without global keyboard input. Ambiguous or missing names never launch. A visible browser window does not prove the web page loaded.',
+                'Windows: open an installed application and return its launch receipt and screen. For registered Chrome, Firefox or Edge, pass an HTTP(S) url or a workspaceFile pointing to an HTML file inside the selected workspace. Ambiguous or missing names never launch. A visible browser window does not prove the page loaded.',
                 {
                     name: { type: 'string', minLength: 1, maxLength: 4096 },
                     url: { type: 'string', minLength: 8, maxLength: 4096 },
+                    workspaceFile: { type: 'string', minLength: 1, maxLength: 2048 },
                 },
                 ['name'],
             ),

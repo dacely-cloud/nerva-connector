@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { expect, it, vi, type MockInstance } from 'vitest';
+import { mkdir, symlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import {
     HostApplication,
     HostApplicationStatus,
@@ -9,6 +11,40 @@ import {
 } from '../src/host/HostApplication.js';
 import { HostDesktopWindows } from '../src/host/HostDesktopWindows.js';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
+import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
+
+it('admits regular workspace HTML and rejects symlinks to documents outside the workspace', async (): Promise<void> => {
+    await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
+    const parent: string = fixture.host.directory;
+    const workspace: string = join(parent, 'workspace');
+    const page: string = join(workspace, 'color #2.html');
+    const outside: string = join(parent, 'outside.html');
+    await mkdir(workspace);
+    await Promise.all([
+        writeFile(page, '<title>workspace</title>'),
+        writeFile(outside, '<title>outside</title>'),
+    ]);
+    expect(await HostApplication.workspaceDocument(page, workspace)).toBe(page);
+    await expect(HostApplication.workspaceDocument(outside, workspace)).rejects.toMatchObject({
+        code: 'invalid-request',
+        definitive: true,
+    });
+    await expect(
+        HostApplication.workspaceDocument(join(workspace, 'missing.html'), workspace),
+    ).rejects.toMatchObject({
+        code: 'not-found',
+        definitive: true,
+    });
+    // Windows file symlinks require a developer-mode or privileged test account.
+    if (process.platform !== 'win32') {
+        const link: string = join(workspace, 'linked.html');
+        await symlink(outside, link);
+        await expect(HostApplication.workspaceDocument(link, workspace)).rejects.toMatchObject({
+            code: 'invalid-request',
+            definitive: true,
+        });
+    }
+});
 
 it('retains missing and ambiguous names as non-launching outcomes', (): void => {
     expect(

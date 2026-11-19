@@ -12,7 +12,11 @@ using System.Threading;
 /// <summary>Resolve only installed Start menu applications and delegate one launch to the user's shell.</summary>
 internal static class NexaConnectorHostApplication
 {
-    internal static Dictionary<string, object> Open(string name, string url = null)
+    internal static Dictionary<string, object> Open(
+        string name,
+        string url = null,
+        string workspaceFile = null
+    )
     {
         if (
             String.IsNullOrWhiteSpace(name)
@@ -22,7 +26,10 @@ internal static class NexaConnectorHostApplication
         {
             throw new InvalidOperationException("application-name");
         }
-        string address = url == null ? null : BrowserAddress(url);
+        string address =
+            workspaceFile == null
+                ? (url == null ? null : BrowserAddress(url))
+                : WorkspaceDocumentAddress(workspaceFile);
         List<NexaConnectorApplicationEntry> matches =
             address == null
                 ? NexaConnectorHostApplicationCatalog.Find(name.Trim())
@@ -62,7 +69,7 @@ internal static class NexaConnectorHostApplication
                 ? selected.Id
                 : "shell:AppsFolder\\" + selected.Id,
             address == null ? null : "\"" + address + "\"",
-            null,
+            workspaceFile == null ? null : Path.GetDirectoryName(selected.Id),
             1
         );
         if (accepted.ToInt64() <= 32)
@@ -70,6 +77,8 @@ internal static class NexaConnectorHostApplication
             throw new InvalidOperationException("application-launch-rejected");
         }
         Stopwatch elapsed = Stopwatch.StartNew();
+        // A cold browser must get time to present the workspace document within the desktop command deadline.
+        int observationMs = workspaceFile == null ? 2500 : 6000;
         do
         {
             IntPtr window =
@@ -96,9 +105,40 @@ internal static class NexaConnectorHostApplication
                 break;
             }
             Thread.Sleep(50);
-        } while (elapsed.ElapsedMilliseconds < 2500);
+        } while (elapsed.ElapsedMilliseconds < observationMs);
         result["elapsedMs"] = elapsed.ElapsedMilliseconds;
         return result;
+    }
+
+    /// <summary>The workspace layer supplies a resolved regular document. The desktop helper accepts only an ordinary local drive path.</summary>
+    private static string WorkspaceDocumentAddress(string path)
+    {
+        if (
+            path.Length < 4
+            || path.Length > 4096
+            || !((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z'))
+            || path[1] != ':'
+            || path[2] != '\\'
+            || path.IndexOfAny(new char[] { '\0', '\r', '\n', '"', '/' }) >= 0
+            || path.IndexOf(':', 2) >= 0
+            || !(
+                path.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase)
+            )
+        )
+        {
+            throw new InvalidOperationException("application-browser-url");
+        }
+        string escaped = String.Join(
+            "/",
+            Array.ConvertAll(path.Substring(3).Split(new char[] { '\\' }), Uri.EscapeDataString)
+        );
+        string address = "file:///" + path.Substring(0, 2) + "/" + escaped;
+        if (address.Length > 4096)
+        {
+            throw new InvalidOperationException("application-browser-url");
+        }
+        return address;
     }
 
     /// <summary>One web address becomes one literal browser argument; local files, arguments and custom schemes cannot cross.</summary>

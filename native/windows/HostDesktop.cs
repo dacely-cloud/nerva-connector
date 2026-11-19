@@ -93,16 +93,18 @@ internal static partial class NexaConnectorHostDesktop
             }
             if (operation == "application-open")
             {
+                bool workspaceFile = request.ContainsKey("workspaceFile");
                 bool navigate = request.ContainsKey("url");
                 Fields(
                     request,
-                    navigate
-                        ? new string[] { "operation", "name", "url" }
+                    workspaceFile ? new string[] { "operation", "name", "workspaceFile" }
+                        : navigate ? new string[] { "operation", "name", "url" }
                         : new string[] { "operation", "name" }
                 );
                 Dictionary<string, object> result = NexaConnectorHostApplication.Open(
                     Text(request, "name"),
-                    navigate ? Text(request, "url") : null
+                    navigate ? Text(request, "url") : null,
+                    workspaceFile ? Text(request, "workspaceFile") : null
                 );
                 if ((string)result["status"] == "launched")
                 {
@@ -301,7 +303,8 @@ internal static partial class NexaConnectorHostDesktop
                     + " native="
                     + (
                         fieldFailure != null ? fieldFailure.NativeCode
-                        : native == null ? 0u
+                        : native == null
+                            ? (reason == "operation-failed" ? unchecked((uint)failure.HResult) : 0u)
                         : unchecked((uint)native.NativeErrorCode)
                     ).ToString()
             );

@@ -98,7 +98,11 @@ export class HostDesktopWindows implements HostDesktopDriver {
     }
 
     /** Native Start menu resolution and one screen capture share the same bounded callback. */
-    public async openApplication(name: string, url?: string): Promise<HostApplicationResult> {
+    public async openApplication(
+        name: string,
+        url?: string,
+        workspaceFile?: string,
+    ): Promise<HostApplicationResult> {
         let address: string | undefined;
         if (url !== undefined) {
             try {
@@ -114,6 +118,7 @@ export class HostDesktopWindows implements HostDesktopDriver {
                         operation: 'application-open',
                         name,
                         ...(address === undefined ? {} : { url: address }),
+                        ...(workspaceFile === undefined ? {} : { workspaceFile }),
                     },
                     HostDesktopLimits.resultBytes,
                 )

@@ -160,6 +160,9 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     await this.workspace.openApplication(
                         this.#text(args['name']),
                         args['url'] === undefined ? undefined : this.#text(args['url']),
+                        args['workspaceFile'] === undefined
+                            ? undefined
+                            : this.#text(args['workspaceFile']),
                     ),
                 );
             case 'desktop_snapshot':

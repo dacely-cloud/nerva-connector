@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { realpath, stat } from 'node:fs/promises';
+import { isAbsolute, relative, sep } from 'node:path';
 import { HostDesktopWindowTarget } from './HostDesktopWindowTarget.js';
 import { HostDesktopLimits, type HostDesktopViewport } from './HostDesktopTypes.js';
+import { HostOperationError } from './HostOperationError.js';
 
 /** Resolution never launches an ambiguous or missing application. */
 export const HostApplicationStatus = {
@@ -62,6 +66,51 @@ export class HostApplication {
             throw new Error('Invalid browser address');
         }
         return address.href;
+    }
+
+    /** Resolve a browser document through native links and keep the opened file inside this workspace. */
+    public static async workspaceDocument(path: string, directory: string): Promise<string> {
+        this.#containedDocument(path, directory);
+        try {
+            const document: string = await realpath(path);
+            this.#containedDocument(document, directory);
+            if (!(await stat(document)).isFile()) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.InvalidRequest,
+                    'A regular HTML file is required for browser navigation',
+                    true,
+                );
+            }
+            return document;
+        } catch (error: unknown) {
+            if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.NotFound,
+                    'The browser workspace file does not exist',
+                    true,
+                    { cause: error },
+                );
+            }
+            throw error;
+        }
+    }
+
+    static #containedDocument(path: string, directory: string): void {
+        const child: string = relative(directory, path);
+        if (
+            child === '' ||
+            child === '..' ||
+            child.startsWith('..' + sep) ||
+            isAbsolute(child) ||
+            /[:\p{Cc}]/u.test(child) ||
+            !/\.html?$/iu.test(child)
+        ) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'The browser document must be an HTML file inside the selected workspace',
+                true,
+            );
+        }
     }
 
     /** A missing image stays explicit; launch acceptance alone never proves visual readiness. */

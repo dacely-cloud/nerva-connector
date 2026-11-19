@@ -7,7 +7,11 @@ import { stat, realpath } from 'node:fs/promises';
 import { HostDesktop } from './HostDesktop.js';
 import { HostOperationError } from './HostOperationError.js';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
-import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
+import {
+    HostApplication,
+    type HostApplicationResult,
+    type HostDesktopFrame,
+} from './HostApplication.js';
 import { HostEnvironmentInspection } from './HostEnvironmentInspection.js';
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostEnvironmentReport, HostEnvironmentRequest } from './HostEnvironmentTypes.js';
@@ -343,7 +347,11 @@ export class HostWorkspace implements AsyncDisposable {
     }
 
     /** The current full-computer authority covers one installed application launch and its screen observation. */
-    public async openApplication(name: string, url?: string): Promise<HostApplicationResult> {
+    public async openApplication(
+        name: string,
+        url?: string,
+        workspaceFile?: string,
+    ): Promise<HostApplicationResult> {
         if (
             typeof name !== 'string' ||
             name.trim().length === 0 ||
@@ -356,14 +364,32 @@ export class HostWorkspace implements AsyncDisposable {
                 true,
             );
         }
+        if (url !== undefined && workspaceFile !== undefined) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Choose a browser URL or a workspace file',
+                true,
+            );
+        }
+        const path: string | null =
+            workspaceFile === undefined
+                ? null
+                : HostWorkspaceValidation.path(workspaceFile, this.directory);
         return await this.#run(
             {
                 operation: HostOperation.ApplicationOpen,
-                path: null,
+                path,
                 destinationPath: null,
                 processId: null,
             },
-            (): Promise<HostApplicationResult> => this.#desktopOwner().openApplication(name, url),
+            async (): Promise<HostApplicationResult> =>
+                this.#desktopOwner().openApplication(
+                    name,
+                    url,
+                    path === null
+                        ? undefined
+                        : await HostApplication.workspaceDocument(path, this.directory),
+                ),
         );
     }
 
