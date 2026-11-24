@@ -5,7 +5,7 @@ import { ConnectorWindowsSources } from '../script/ConnectorWindowsSources.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -37,7 +37,7 @@ it('state bootstrap uses a compiled helper without runtime compilation or embedd
 });
 
 it.skipIf(process.platform !== 'win32')(
-    'qualifies protected profile storage when shared LocalAppData already contains Connector state',
+    'qualifies protected storage and legacy identity detection beneath shared Windows folders',
     async (): Promise<void> => {
         const directory: string = await mkdtemp(join(homedir(), '.nerva-windows-storage-'));
         try {
@@ -54,6 +54,21 @@ it.skipIf(process.platform !== 'win32')(
                 execFile,
             )(executable, [], { timeout: 30000, maxBuffer: 16384, windowsHide: true });
             expect(output.stdout.toString().trim()).toBe('windows-state-profile-qualified');
+            const target: string = join(directory, 'junction-target');
+            const junction: string = join(directory, '.local');
+            await mkdir(target);
+            await symlink(target, junction, 'junction');
+            try {
+                const rejected: Awaited<ReturnType<typeof execFile.__promisify__>> =
+                    await promisify(execFile)(executable, [directory], {
+                        timeout: 30000,
+                        maxBuffer: 16384,
+                        windowsHide: true,
+                    });
+                expect(rejected.stdout.toString().trim()).toBe('windows-state-junction-rejected');
+            } finally {
+                await rm(junction);
+            }
         } finally {
             await rm(directory, { recursive: true, force: true });
         }

@@ -13,6 +13,132 @@ public static partial class NexaConnectorStateOwner
     {
         QualifySharedLocalAppData(false);
         QualifySharedLocalAppData(true);
+        QualifyLegacyStorage();
+    }
+
+    /// <summary>Shared unrelated folders cannot block absent legacy state or hide retained identities.</summary>
+    private static void QualifyLegacyStorage()
+    {
+        string profile = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "nerva-storage-qualification-" + Guid.NewGuid().ToString("N")
+        );
+        string sid = WindowsIdentity.GetCurrent().User.Value;
+        Directory.CreateDirectory(profile, FixtureAcl(sid, false));
+        try
+        {
+            string localAppData = Path.Combine(profile, "AppData", "Local");
+            Directory.CreateDirectory(localAppData);
+            Directory.SetAccessControl(localAppData, FixtureAcl(sid, true));
+            using (Owner owner = new Owner(sid, localAppData, profile))
+            {
+                string legacy = profile;
+                RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
+                foreach (string name in new string[] { ".local", "share", "nerva-connector" })
+                {
+                    legacy = Path.Combine(legacy, name);
+                    Directory.CreateDirectory(legacy, FixtureAcl(sid, true));
+                    string acl = Directory
+                        .GetAccessControl(legacy)
+                        .GetSecurityDescriptorSddlForm(
+                            AccessControlSections.Owner
+                                | AccessControlSections.Group
+                                | AccessControlSections.Access
+                        );
+                    RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
+                    RequireStorageQualification(
+                        Directory
+                            .GetAccessControl(legacy)
+                            .GetSecurityDescriptorSddlForm(
+                                AccessControlSections.Owner
+                                    | AccessControlSections.Group
+                                    | AccessControlSections.Access
+                            ) == acl
+                    );
+                }
+                string state = Path.Combine(legacy, "state");
+                Directory.CreateDirectory(state, FixtureAcl(sid, true));
+                foreach (
+                    string relative in new string[]
+                    {
+                        "device-key.json",
+                        "pairing-state",
+                        "device.json",
+                        "state\\device-key.json",
+                        "state\\device-key.pem",
+                        "state\\pairing-state",
+                        "state\\device.json",
+                    }
+                )
+                {
+                    string marker = Path.Combine(legacy, relative);
+                    File.WriteAllText(marker, "preserve existing identity");
+                    RequireLegacyRejection(owner, "migration-required");
+                    RequireStorageQualification(
+                        File.ReadAllText(marker) == "preserve existing identity"
+                    );
+                    File.Delete(marker);
+                }
+                RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
+                DirectorySecurity denied = FixtureAcl(sid, true);
+                denied.AddAccessRule(
+                    new FileSystemAccessRule(
+                        new SecurityIdentifier(sid),
+                        FileSystemRights.ReadData,
+                        AccessControlType.Deny
+                    )
+                );
+                Directory.SetAccessControl(state, denied);
+                try
+                {
+                    RequireLegacyRejection(owner, "untrusted");
+                }
+                finally
+                {
+                    Directory.SetAccessControl(state, FixtureAcl(sid, true));
+                }
+                using (OpenPath(owner, owner.ProfileRoot, true, true)) { }
+                File.WriteAllText(Path.Combine(state, "device.json"), "retained identity");
+                RequireLegacyRejection(owner, "migration-required");
+                File.Delete(Path.Combine(state, "device.json"));
+                RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
+                Directory.SetAccessControl(owner.ProfileRoot, FixtureAcl(sid, true));
+                RequireStorageRejection(owner, "untrusted", "connector-state");
+            }
+        }
+        finally
+        {
+            Directory.Delete(profile, true);
+        }
+    }
+
+    private static void RequireLegacyRejection(Owner owner, string code)
+    {
+        try
+        {
+            DefaultStateRoot(owner);
+        }
+        catch (Failure error)
+        {
+            RequireStorageQualification(error.Code == code);
+            return;
+        }
+        throw new InvalidOperationException("Legacy state was incorrectly treated as absent");
+    }
+
+    /// <summary>The caller supplies an isolated profile whose .local entry is a junction.</summary>
+    public static void QualifyLegacyJunction(string profile)
+    {
+        using (
+            Owner owner = new Owner(
+                WindowsIdentity.GetCurrent().User.Value,
+                Path.Combine(profile, "AppData", "Local"),
+                profile
+            )
+        )
+        {
+            RequireLegacyRejection(owner, "untrusted");
+        }
     }
 
     private static void QualifySharedLocalAppData(bool shareParent)
@@ -56,7 +182,9 @@ public static partial class NexaConnectorStateOwner
                         .GetAccessControl(local)
                         .GetSecurityDescriptorSddlForm(AccessControlSections.Access) == localAcl
                 );
-                RequireStorageQualification(File.ReadAllText(oldPairing) == "existing legacy state");
+                RequireStorageQualification(
+                    File.ReadAllText(oldPairing) == "existing legacy state"
+                );
                 RequireStorageQualification(
                     Directory
                         .GetAccessControl(appData)
@@ -79,7 +207,9 @@ public static partial class NexaConnectorStateOwner
                 Directory.SetAccessControl(Path.Combine(local, "Nerva"), FixtureAcl(sid, true));
                 RequireStorageQualification(DefaultStateRoot(owner) == owner.ProfileRoot);
                 RequireStorageQualification(!Directory.Exists(owner.ProfileRoot));
-                RequireStorageQualification(File.ReadAllText(oldPairing) == "existing legacy state");
+                RequireStorageQualification(
+                    File.ReadAllText(oldPairing) == "existing legacy state"
+                );
             }
         }
         catch (Failure error)
@@ -98,7 +228,10 @@ public static partial class NexaConnectorStateOwner
     private static DirectorySecurity FixtureAcl(string sid, bool shared)
     {
         DirectorySecurity acl = new DirectorySecurity();
-        acl.SetSecurityDescriptorBinaryForm(Descriptor(sid));
+        acl.SetSecurityDescriptorBinaryForm(
+            Descriptor(sid),
+            AccessControlSections.Owner | AccessControlSections.Group | AccessControlSections.Access
+        );
         if (shared)
         {
             foreach (
@@ -153,8 +286,14 @@ public static partial class NexaConnectorStateOwner
 /// <summary>Entry point only compiled into the Windows qualification executable.</summary>
 public static class WindowsStateProfileFixture
 {
-    public static void Main()
+    public static void Main(string[] arguments)
     {
+        if (arguments.Length == 1)
+        {
+            NexaConnectorStateOwner.QualifyLegacyJunction(arguments[0]);
+            Console.WriteLine("windows-state-junction-rejected");
+            return;
+        }
         NexaConnectorStateOwner.QualifySharedLocalAppData();
         Console.WriteLine("windows-state-profile-qualified");
     }

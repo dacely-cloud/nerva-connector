@@ -187,6 +187,11 @@ When another account has write access along the Connector's `AppData\Local` stor
 a protected `%USERPROFILE%\.nerva-connector-state` directory and keeps using it on later starts.
 It leaves the old directory and its files in place. If your pairing was saved there, pair once in the protected directory.
 
+Startup also checks the former `%USERPROFILE%\\.local\\share\\nerva-connector` location for an existing
+identity. Shared permissions on unrelated `.local` or `share` folders do not block startup when that
+identity is absent. This check never reads or imports legacy credentials. An existing identity requires
+explicit migration; inaccessible paths and junctions remain errors, and existing permissions are never rewritten.
+
 Look for the `storageCheck` field in
 `%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which part of the path was
 rejected and which check failed. These Command Prompt commands show the permissions for the default storage:

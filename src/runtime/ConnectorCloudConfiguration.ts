@@ -44,20 +44,6 @@ export class ConnectorCloudConfiguration {
         if (result.path === null) {
             throw new WindowsStateError(WindowsStateFailure.Invalid);
         }
-        const previous: string = join(homedir(), '.local/share/nerva-connector');
-        for (const leaf of [
-            'state/device-key.json',
-            'state/device-key.pem',
-            'state/pairing-state',
-            'state/device.json',
-            'device-key.json',
-            'pairing-state',
-            'device.json',
-        ]) {
-            if (await ProtectedFiles.exists(join(previous, leaf))) {
-                throw new WindowsStateError(WindowsStateFailure.Migration);
-            }
-        }
         return result.path;
     }
     /** Existing signed installations retain their exact trust; incomplete or changed state is rejected rather than reset. */

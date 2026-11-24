@@ -10,6 +10,7 @@ export class ConnectorWindowsSources {
         'StateOwner.cs',
         'StateFiles.cs',
         'StatePath.cs',
+        'StateLegacy.cs',
         'StateSecurity.cs',
         'StateDirectory.cs',
         'StateProtocol.cs',

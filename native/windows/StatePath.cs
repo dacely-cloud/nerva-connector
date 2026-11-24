@@ -11,12 +11,7 @@ using Microsoft.Win32.SafeHandles;
 /// <summary>Canonical paths and volume anchors are resolved through pinned directory handles.</summary>
 public static partial class NexaConnectorStateOwner
 {
-    private static PinnedPath OpenPath(
-        Owner owner,
-        string path,
-        bool privateTarget,
-        bool create
-    )
+    private static PinnedPath OpenPath(Owner owner, string path, bool privateTarget, bool create)
     {
         path = Canonical(path);
         PinnedPath held = new PinnedPath();
@@ -108,6 +103,7 @@ public static partial class NexaConnectorStateOwner
     /// </summary>
     private static string DefaultStateRoot(Owner owner)
     {
+        RejectLegacyState(owner);
         if (StateDirectoryExists(owner, owner.ProfileRoot))
         {
             return owner.ProfileRoot;

@@ -42,6 +42,8 @@ jobs:
             - run: npm run typecheck
             - run: npm run lint
             - run: npm run build
+            - name: Exercise Windows state discovery and legacy storage
+              run: npx vitest run test/WindowsStateExecutable.test.ts
             - name: Exercise native custom installation directory policy
               run: npx vitest run test/WindowsInstaller.test.ts -t "custom installation directories"
             - name: Qualify native screen encoding, physical input and manual updates
