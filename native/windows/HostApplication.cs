@@ -61,28 +61,47 @@ internal static class NexaConnectorHostApplication
             return result;
         }
         NexaConnectorApplicationEntry selected = matches[0];
-        IntPtr accepted = ShellExecuteW(
-            IntPtr.Zero,
-            "open",
-            Path.IsPathRooted(selected.Id)
-            || selected.Id.StartsWith("shell:", StringComparison.OrdinalIgnoreCase)
-                ? selected.Id
-                : "shell:AppsFolder\\" + selected.Id,
-            address == null ? null : "\"" + address + "\"",
-            workspaceFile == null ? null : Path.GetDirectoryName(selected.Id),
-            1
-        );
-        if (accepted.ToInt64() <= 32)
+        bool packaged =
+            address == null
+            && !Path.IsPathRooted(selected.Id)
+            && NexaConnectorPackagedApplication.IsPackagedId(selected.Id);
+        if (packaged)
+        {
+            NexaConnectorPackagedApplication.Launch(selected.Id);
+        }
+        else if (
+            ShellExecuteW(
+                    IntPtr.Zero,
+                    "open",
+                    Path.IsPathRooted(selected.Id)
+                    || selected.Id.StartsWith("shell:", StringComparison.OrdinalIgnoreCase)
+                        ? selected.Id
+                        : "shell:AppsFolder\\" + selected.Id,
+                    address == null ? null : "\"" + address + "\"",
+                    workspaceFile == null ? null : Path.GetDirectoryName(selected.Id),
+                    1
+                )
+                .ToInt64() <= 32
+        )
         {
             throw new InvalidOperationException("application-launch-rejected");
         }
         Stopwatch elapsed = Stopwatch.StartNew();
         // A cold browser must get time to present the workspace document within the desktop command deadline.
-        int observationMs = workspaceFile == null ? 2500 : 6000;
+        int observationMs = workspaceFile == null && !packaged ? 2500 : 6000;
         do
         {
             IntPtr window =
-                address == null ? ActivateWindow(selected.Name) : BrowserWindow(selected.Id);
+                packaged ? NexaConnectorPackagedApplication.FindWindow(selected.Id)
+                : address == null ? ActivateWindow(selected.Name)
+                : BrowserWindow(selected.Id);
+            if (packaged && window != IntPtr.Zero)
+            {
+                ShowWindow(window, 9);
+                SetForegroundWindow(window);
+                if (GetForegroundWindow() != window)
+                    window = IntPtr.Zero;
+            }
             if (window != IntPtr.Zero)
             {
                 result["windowObserved"] = true;
@@ -227,7 +246,7 @@ internal static class NexaConnectorHostApplication
         return found;
     }
 
-    private static bool Visible(IntPtr window)
+    internal static bool Visible(IntPtr window)
     {
         int cloaked;
         return IsWindowVisible(window)

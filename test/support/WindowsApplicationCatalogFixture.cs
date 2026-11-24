@@ -39,8 +39,18 @@ internal static class NexaConnectorApplicationCatalogFixture
             return 7;
         if (!VersionFamilies())
             return 8;
+        string calculator = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App";
+        catalog.Add(Entry("Calculator", "third-party-calculator"));
+        catalog.Add(Entry("Calculatrice", calculator));
+        if (
+            !Selects(catalog, "Calculator", calculator)
+            || !Selects(catalog, "Windows Calculator", calculator)
+            || !Selects(catalog, "Calculatrice", calculator)
+            || !Selects(catalog, "third-party-calculator", "third-party-calculator")
+        )
+            return 9;
         Console.WriteLine(
-            "NERVA_APPLICATION_CATALOG exact_names=true whitespace=true browsers=true ambiguity_preserved=true newest_regular_version=true"
+            "NERVA_APPLICATION_CATALOG exact_names=true whitespace=true browsers=true ambiguity_preserved=true newest_regular_version=true localized_calculator=true"
         );
         return 0;
     }

@@ -22,6 +22,7 @@ internal sealed class NexaConnectorApplicationEntry
 internal static class NexaConnectorHostApplicationCatalog
 {
     private const int CatalogLimit = 8192;
+    private const string WindowsCalculator = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App";
 
     internal static List<NexaConnectorApplicationEntry> Find(string query)
     {
@@ -144,6 +145,18 @@ internal static class NexaConnectorHostApplicationCatalog
         {
             if (!seen.Add(entry.Id))
                 continue;
+            if (
+                (
+                    String.Equals(normalized, "calculator", StringComparison.OrdinalIgnoreCase)
+                    || String.Equals(
+                        normalized,
+                        "windowscalculator",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    || String.Equals(normalized, "calculatrice", StringComparison.OrdinalIgnoreCase)
+                ) && String.Equals(entry.Id, WindowsCalculator, StringComparison.OrdinalIgnoreCase)
+            )
+                return new List<NexaConnectorApplicationEntry> { entry };
             List<NexaConnectorApplicationEntry> matches = null;
             if (
                 String.Equals(query, entry.Name, StringComparison.OrdinalIgnoreCase)

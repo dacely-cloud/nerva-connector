@@ -63,6 +63,7 @@ export class ConnectorWindowsSources {
         'HostDesktopTextFieldEdit.cs',
         'HostApplication.cs',
         'HostApplicationCatalog.cs',
+        'HostPackagedApplication.cs',
         'HostApplicationVersionFamily.cs',
         'HostDesktopFrame.cs',
     ].map((name: string): string => resolve('native/windows', name));

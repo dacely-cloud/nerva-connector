@@ -68,6 +68,7 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs'))(
             )('/usr/bin/mono', [executable], { timeout: 10000, maxBuffer: 4096 });
             expect(result.stdout.toString()).toContain('ambiguity_preserved=true');
             expect(result.stdout.toString()).toContain('newest_regular_version=true');
+            expect(result.stdout.toString()).toContain('localized_calculator=true');
         } finally {
             await rm(directory, { recursive: true, force: true });
         }
