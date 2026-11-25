@@ -71,6 +71,16 @@ it('classifies from typed evidence: pairing events, local error classes, system 
             ConnectorFailureRecovery.Manual,
         ],
         [
+            context({ error: new WindowsStateError(WindowsStateFailure.Stopped) }),
+            ConnectorFailureKind.StorageHelperStopped,
+            ConnectorFailureRecovery.Automatic,
+        ],
+        [
+            context({ error: new WindowsStateError(WindowsStateFailure.Unavailable) }),
+            ConnectorFailureKind.LocalState,
+            ConnectorFailureRecovery.Manual,
+        ],
+        [
             context({
                 error: new ConnectorRuntimeUnsupported('22.20.0', '6.21.3'),
                 stage: ConnectorStartupStage.PairingState,

@@ -327,7 +327,7 @@ public static class WindowsStatePolicyFixture
                     );
                 }
             );
-            Reject(
+            Accept(
                 delegate
                 {
                     NexaConnectorStateOwner.ValidateDirectoryDescriptor(
@@ -340,8 +340,122 @@ public static class WindowsStatePolicyFixture
             Reject(
                 delegate
                 {
+                    NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                        Descriptor(PrivateAcl + "(A;OICI;FA;;;" + sandbox + ")"),
+                        true,
+                        User
+                    );
+                }
+            );
+            Reject(
+                delegate
+                {
                     NexaConnectorStateOwner.ValidateDescriptor(
                         Descriptor(PrivateAcl + "(A;;FR;;;" + sandbox + ")"),
+                        true,
+                        User
+                    );
+                }
+            );
+        }
+        foreach (string mask in new string[] { "0x1200a9", "FR", "FX", "GRGX", "0x1", "0x20" })
+        {
+            foreach (string flags in new string[] { "", "OICI", "OICIIO" })
+            {
+                string grant = "(A;" + flags + ";" + mask + ";;;" + Foreign + ")";
+                Accept(
+                    delegate
+                    {
+                        NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                            Descriptor(PrivateAcl + grant),
+                            true,
+                            User
+                        );
+                    }
+                );
+                Reject(
+                    delegate
+                    {
+                        NexaConnectorStateOwner.ValidateDescriptor(
+                            Descriptor(PrivateAcl + grant),
+                            true,
+                            User
+                        );
+                    }
+                );
+            }
+        }
+        foreach (
+            string mask in new string[]
+            {
+                "0x2",
+                "0x4",
+                "0x10",
+                "0x40",
+                "0x100",
+                "0x10000",
+                "0x40000",
+                "0x80000",
+                "0x1000000",
+                "0x2000000",
+                "0x1200ab",
+                "FW",
+                "GW",
+                "GA",
+                "FA",
+            }
+        )
+        {
+            foreach (string flags in new string[] { "", "OICI", "OICIIO" })
+            {
+                string grant = "(A;" + flags + ";" + mask + ";;;" + Foreign + ")";
+                Reject(
+                    delegate
+                    {
+                        NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                            Descriptor(PrivateAcl + grant),
+                            true,
+                            User
+                        );
+                    }
+                );
+            }
+        }
+        foreach (
+            string entry in new string[]
+            {
+                "(A;ID;FR;;;" + Foreign + ")",
+                "(A;OICIID;FR;;;" + Foreign + ")",
+                "(D;;FR;;;" + Foreign + ")",
+                "(A;IO;FA;;;" + User + ")",
+            }
+        )
+        {
+            Reject(
+                delegate
+                {
+                    NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                        Descriptor(PrivateAcl + entry),
+                        true,
+                        User
+                    );
+                }
+            );
+        }
+        foreach (
+            string acl in new string[]
+            {
+                PrivateAcl.Replace("D:P", "D:"),
+                PrivateAcl.Replace("(A;OICI;FA;;;SY)", ""),
+                PrivateAcl.Replace("O:" + User, "O:" + Foreign),
+            }
+        )
+        {
+            Reject(
+                delegate
+                {
+                    NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                        Descriptor(acl + "(A;OICI;FR;;;" + Foreign + ")"),
                         true,
                         User
                     );

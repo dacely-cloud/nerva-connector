@@ -329,9 +329,7 @@ export class ConnectorPrivateDirectory implements AsyncDisposable {
         if (!this.#closed) {
             this.#closed = true;
             if (this.#owner.platform === DirectoryPlatform.Windows) {
-                await WindowsStateOwner.request(WindowsStateOperation.Close, {
-                    lease: this.#owner.lease,
-                });
+                await WindowsStateOwner.release(this.#owner.lease);
                 return;
             }
             try {

@@ -10,6 +10,14 @@ using Microsoft.Win32.SafeHandles;
 /// <summary>Every opened state object is checked against the owner SID and the required DACL.</summary>
 public static partial class NexaConnectorStateOwner
 {
+    /// <summary>
+    /// List, read-EA, traverse, read-attributes, read-control, synchronize, generic read and generic execute on a directory.
+    /// </summary>
+    /// <remarks>
+    /// None of these rights opens, adds, renames, removes or re-permits a child, or changes the directory itself.
+    /// </remarks>
+    private const int DirectoryReadRights = unchecked((int)0xA01200A9);
+
     private static byte[] Descriptor(string sid)
     {
         RawSecurityDescriptor descriptor = new RawSecurityDescriptor(
@@ -20,31 +28,39 @@ public static partial class NexaConnectorStateOwner
         return bytes;
     }
 
-    /// <summary>Pure validation permits only the current owner and SYSTEM on private state; never repairs an existing ACL.</summary>
+    /// <summary>Pure validation of a file permits only the current owner and SYSTEM on private state; never repairs an existing ACL.</summary>
     public static void ValidateDescriptor(
         RawSecurityDescriptor descriptor,
         bool secret,
         string expectedSid
     )
     {
-        ValidateDescriptorCore(descriptor, secret, expectedSid, false);
+        ValidateDescriptorCore(descriptor, secret, expectedSid, false, false);
     }
 
     /// <summary>Pinned ancestors may grant child creation, but never foreign replacement or ACL authority.</summary>
+    /// <remarks>
+    /// A private directory may also carry explicit grants limited to <see cref="DirectoryReadRights"/>. Codex's
+    /// Windows sandbox repeatedly added an entry for its CodexSandboxUsers group to the user's
+    /// %USERPROFILE%\.nerva-connector-state folder, which made the connector refuse its own storage. Such a grant
+    /// reveals file names and attributes only: every file is still created with a protected owner-and-SYSTEM
+    /// descriptor and is checked on each open, so an inheritable grant can never reach one unnoticed.
+    /// </remarks>
     public static void ValidateDirectoryDescriptor(
         RawSecurityDescriptor descriptor,
         bool secret,
         string expectedSid
     )
     {
-        ValidateDescriptorCore(descriptor, secret, expectedSid, true);
+        ValidateDescriptorCore(descriptor, secret, expectedSid, true, true);
     }
 
     private static void ValidateDescriptorCore(
         RawSecurityDescriptor descriptor,
         bool secret,
         string expectedSid,
-        bool ancestor
+        bool ancestor,
+        bool directory
     )
     {
         if (descriptor == null || descriptor.Owner == null || descriptor.DiscretionaryAcl == null)
@@ -67,7 +83,7 @@ public static partial class NexaConnectorStateOwner
             CommonAce ace = entry as CommonAce;
             if ((entry.AceFlags & AceFlags.InheritOnly) != 0)
             {
-                if (secret)
+                if (secret && !(directory && ReadGrant(ace)))
                 {
                     throw new Failure("untrusted", "inherited-permissions");
                 }
@@ -93,6 +109,10 @@ public static partial class NexaConnectorStateOwner
                     || (sid != expectedSid && sid != "S-1-5-18")
                 )
                 {
+                    if (directory && ReadGrant(ace))
+                    {
+                        continue;
+                    }
                     throw new Failure("untrusted", "unexpected-permission");
                 }
                 if (sid == expectedSid)
@@ -117,6 +137,16 @@ public static partial class NexaConnectorStateOwner
         {
             throw new Failure("untrusted", "missing-permission");
         }
+    }
+
+    /// <summary>An explicit allow entry whose rights stay within <see cref="DirectoryReadRights"/>.</summary>
+    private static bool ReadGrant(CommonAce ace)
+    {
+        return ace != null
+            && !ace.IsCallback
+            && ace.AceQualifier == AceQualifier.AccessAllowed
+            && (ace.AceFlags & AceFlags.Inherited) == 0
+            && (ace.AccessMask & ~DirectoryReadRights) == 0;
     }
 
     /// <summary>
@@ -150,6 +180,7 @@ public static partial class NexaConnectorStateOwner
         bool ancestor = false
     )
     {
+        bool directory = (BitConverter.ToUInt32(Information(handle, 9, 8), 0) & 0x10) != 0;
         IntPtr owner;
         IntPtr group;
         IntPtr dacl;
@@ -178,7 +209,13 @@ public static partial class NexaConnectorStateOwner
             }
             byte[] bytes = new byte[length];
             Marshal.Copy(descriptor, bytes, 0, checked((int)length));
-            ValidateDescriptorCore(new RawSecurityDescriptor(bytes, 0), secret, sid, ancestor);
+            ValidateDescriptorCore(
+                new RawSecurityDescriptor(bytes, 0),
+                secret,
+                sid,
+                ancestor,
+                directory
+            );
         }
         finally
         {

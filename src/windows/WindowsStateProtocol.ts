@@ -46,6 +46,7 @@ export const WindowsStateFailure = {
     Limit: 'limit',
     Io: 'io',
     Unavailable: 'unavailable',
+    Stopped: 'helper-stopped',
     Unsupported: 'unsupported',
     Migration: 'migration-required',
     HelperMissing: 'helper-missing',
@@ -158,11 +159,13 @@ export class WindowsStateError extends Error {
                         ? 'The Windows helper does not match this connector release. Restore the verified Windows connector release before starting it.'
                         : failure === WindowsStateFailure.Unavailable
                           ? 'The compiled Windows helper could not start. .NET Framework 4.x is required.'
-                          : failure === WindowsStateFailure.Unsupported
-                            ? 'This Windows version or filesystem lacks a required secure file operation. Existing connector files were preserved.'
-                            : 'Secure Windows connector storage could not complete (' +
-                              failure +
-                              ').',
+                          : failure === WindowsStateFailure.Stopped
+                            ? 'The Windows storage helper stopped. The connector starts a new one on its next connection attempt. Existing keys were preserved.'
+                            : failure === WindowsStateFailure.Unsupported
+                              ? 'This Windows version or filesystem lacks a required secure file operation. Existing connector files were preserved.'
+                              : 'Secure Windows connector storage could not complete (' +
+                                failure +
+                                ').',
         );
         this.name = 'WindowsStateError';
         this.code =

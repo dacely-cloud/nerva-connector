@@ -187,6 +187,12 @@ When another account has write access along the Connector's `AppData\Local` stor
 a protected `%USERPROFILE%\.nerva-connector-state` directory and keeps using it on later starts.
 It leaves the old directory and its files in place. If your pairing was saved there, pair once in the protected directory.
 
+Other accounts may be allowed to list the connector's private folders, as Codex's Windows sandbox does for its
+`CodexSandboxUsers` group on `%USERPROFILE%\.nerva-connector-state`. Every file inside must still allow only your
+account and `SYSTEM`. The connector still refuses any other account that can open, add, remove or re-permit
+anything in those folders: in `icacls` output, `(RX)` or `(R)` for such an account is accepted, while `(W)`, `(M)` or
+`(F)` is not.
+
 Startup also checks the former `%USERPROFILE%\\.local\\share\\nerva-connector` location for an existing
 identity. Shared permissions on unrelated `.local` or `share` folders do not block startup when that
 identity is absent. This check never reads or imports legacy credentials. An existing identity requires
@@ -206,6 +212,13 @@ icacls "%LOCALAPPDATA%\Nerva\Connector"
 
 Share the storage check and the relevant permissions with support or your Windows administrator. Keep the
 existing Connector folder intact so that any saved pairing and credentials are preserved.
+
+**"The connector's Windows storage helper stopped".** The helper that guards the connector's private files exited
+or stopped answering for 30 seconds. The connector starts a new one and reconnects by itself, and your saved pairing
+and keys stay as they were. Time the connector's own event loop spent blocked (a `stall` line in `connection.log`)
+does not count toward those 30 seconds. **"The compiled Windows helper could not start"** means the helper exited
+before it answered at all. Check that .NET Framework 4.x is installed and that security software allows
+`nerva-connector-state.exe`.
 
 **Nexa can't see the screen on a Mac.** Allow **Screen Recording** and **Accessibility** for Terminal (see
 [macOS](#macos)), then restart the connector.

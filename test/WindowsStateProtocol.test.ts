@@ -190,6 +190,16 @@ it('native envelopes cannot supply extra fields, ambiguous IDs, arbitrary errors
     expect(
         WindowsStateOwner.decode({ ...empty, ok: false, error: WindowsStateFailure.Untrusted }),
     ).toMatchObject({ ok: false, error: WindowsStateFailure.Untrusted });
+    for (const local of [
+        WindowsStateFailure.Unavailable,
+        WindowsStateFailure.Stopped,
+        WindowsStateFailure.HelperMissing,
+        WindowsStateFailure.HelperUntrusted,
+    ]) {
+        expect((): WindowsStateResponse =>
+            WindowsStateOwner.decode({ ...empty, ok: false, error: local }),
+        ).toThrow();
+    }
 });
 
 it('finite storage failures retain explicit missing-file semantics and safe actionable diagnostics', (): void => {
@@ -199,4 +209,7 @@ it('finite storage failures retain explicit missing-file semantics and safe acti
     expect(new WindowsStateError(WindowsStateFailure.Migration).message).toContain('migration');
     expect(new WindowsStateError(WindowsStateFailure.Unsupported).code).toBe('ENOTSUP');
     expect(new WindowsStateError(WindowsStateFailure.Unsupported).message).toContain('filesystem');
+    expect(new WindowsStateError(WindowsStateFailure.Stopped).message).not.toContain('.NET');
+    expect(new WindowsStateError(WindowsStateFailure.Stopped).message).toContain('preserved');
+    expect(new WindowsStateError(WindowsStateFailure.Unavailable).message).toContain('.NET');
 });

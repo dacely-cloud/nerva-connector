@@ -237,7 +237,7 @@ export class ProtectedFiles {
             }
             return result.names;
         } finally {
-            await WindowsStateOwner.request(WindowsStateOperation.Close, { lease });
+            await WindowsStateOwner.release(lease);
         }
     }
 }

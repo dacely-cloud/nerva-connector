@@ -28,6 +28,7 @@ export const ConnectorFailureKind = {
     AlreadyRunning: 'already-running',
     StoragePermission: 'storage-permission',
     FolderPermissions: 'folder-permissions',
+    StorageHelperStopped: 'storage-helper-stopped',
     DiskFull: 'disk-full',
     RuntimeUnsupported: 'runtime-unsupported',
     LocalState: 'local-state',
@@ -134,7 +135,9 @@ export class ConnectorFailure {
                 ? this.#reason(ConnectorFailureKind.AlreadyRunning)
                 : error.failure === WindowsStateFailure.Untrusted
                   ? this.#reason(ConnectorFailureKind.FolderPermissions)
-                  : this.#local(error.message);
+                  : error.failure === WindowsStateFailure.Stopped
+                    ? this.#reason(ConnectorFailureKind.StorageHelperStopped)
+                    : this.#local(error.message);
         }
         if (
             error instanceof ConnectorPermissionError ||
@@ -384,6 +387,13 @@ export class ConnectorFailure {
                     title: 'Windows folder permissions block the connector',
                     detail: 'Windows rejected a storage folder or permission. See the storage check below and the README.',
                     recovery: ConnectorFailureRecovery.Manual,
+                };
+            case ConnectorFailureKind.StorageHelperStopped:
+                return {
+                    kind,
+                    title: "The connector's Windows storage helper stopped",
+                    detail: 'The connector starts a new one and reconnects. Saved pairing and keys are unchanged.',
+                    recovery: ConnectorFailureRecovery.Automatic,
                 };
             case ConnectorFailureKind.DiskFull:
                 return {
