@@ -313,11 +313,7 @@ public static partial class NexaConnectorStateOwner
         {
             throw new Failure("invalid");
         }
-        CheckAcl(lease.Path.Last, true, owner.Sid);
-        if (FileIdentity(lease.Path.Last) != lease.Identity)
-        {
-            throw new Failure("untrusted");
-        }
+        CheckLease(owner, lease);
         string full = Canonical(source);
         using (PinnedPath parent = OpenPath(owner, Path.GetDirectoryName(full), false, false))
         using (

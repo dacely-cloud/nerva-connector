@@ -76,7 +76,8 @@ public static partial class NexaConnectorStateOwner
                     next,
                     managed || (privateTarget && i == parts.Length - 1),
                     owner.Sid,
-                    !localAppData
+                    !localAppData,
+                    owner.Container(current)
                 );
             }
             return held;

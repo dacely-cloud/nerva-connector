@@ -33,11 +33,7 @@ public static partial class NexaConnectorStateOwner
             Fields(request, "lease", "name", "maximumBytes");
         }
         Lease lease = GetLease(owner, Text(request, "lease"));
-        CheckAcl(lease.Path.Last, true, owner.Sid);
-        if (lease.Identity != FileIdentity(lease.Path.Last))
-        {
-            throw new Failure("untrusted");
-        }
+        CheckLease(owner, lease);
         Dictionary<string, object> result = new Dictionary<string, object>();
         if (operation == "list")
         {

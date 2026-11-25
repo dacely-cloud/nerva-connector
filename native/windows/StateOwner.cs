@@ -180,6 +180,13 @@ public static partial class NexaConnectorStateOwner
             return Inside(path, Root) || Inside(path, ProfileRoot);
         }
 
+        /// <summary>Only installation containers may expose directory names; their children remain private.</summary>
+        internal bool Container(string path)
+        {
+            return String.Equals(path, Root, StringComparison.OrdinalIgnoreCase)
+                || String.Equals(path, ProfileRoot, StringComparison.OrdinalIgnoreCase);
+        }
+
         internal string NativeRoot(string path)
         {
             string drive = path.Substring(0, 2).ToUpperInvariant();

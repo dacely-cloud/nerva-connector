@@ -187,16 +187,17 @@ When another account has write access along the Connector's `AppData\Local` stor
 a protected `%USERPROFILE%\.nerva-connector-state` directory and keeps using it on later starts.
 It leaves the old directory and its files in place. If your pairing was saved there, pair once in the protected directory.
 
-Other accounts may be allowed to list the connector's private folders, as Codex's Windows sandbox does for its
-`CodexSandboxUsers` group on `%USERPROFILE%\.nerva-connector-state`. Every file inside must still allow only your
-account and `SYSTEM`. The connector still refuses any other account that can open, add, remove or re-permit
-anything in those folders: in `icacls` output, `(RX)` or `(R)` for such an account is accepted, while `(W)`, `(M)` or
-`(F)` is not.
-
 Startup also checks the former `%USERPROFILE%\\.local\\share\\nerva-connector` location for an existing
 identity. Shared permissions on unrelated `.local` or `share` folders do not block startup when that
 identity is absent. This check never reads or imports legacy credentials. An existing identity requires
 explicit migration; inaccessible paths and junctions remain errors, and existing permissions are never rewritten.
+
+The outer installation folder (`Nerva\Connector` or `.nerva-connector-state`) may have additional
+read-only directory permissions, such as those reapplied by Codex's Windows sandbox. These permissions
+can expose entry names and folder metadata, but do not grant access to file contents. Every state file
+and child directory still requires protected user/SYSTEM-only permissions and is created without
+inheriting the outer folder's grants. Extra create, write, delete, ownership or permission-changing
+rights on the outer folder remain errors, as does extra read access on private files or child directories.
 
 Look for the `storageCheck` field in
 `%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which part of the path was
@@ -208,6 +209,7 @@ icacls "%USERPROFILE%\AppData"
 icacls "%USERPROFILE%"
 icacls "%LOCALAPPDATA%\Nerva"
 icacls "%LOCALAPPDATA%\Nerva\Connector"
+icacls "%USERPROFILE%\.nerva-connector-state"
 ```
 
 Share the storage check and the relevant permissions with support or your Windows administrator. Keep the

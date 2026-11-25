@@ -76,10 +76,43 @@ it.skipIf(process.platform !== 'win32')(
     60000,
 );
 
-it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs')).each([
-    ['WindowsStatePolicyFixture', /windows-state-policy-checks=\d+/u],
-    ['WindowsStateProtocolFixture', /windows-state-protocol-checks=\d+/u],
-] as const)(
+it.skipIf(process.platform !== 'win32')(
+    'container read grants survive startup and live leases without exposing private state',
+    async (): Promise<void> => {
+        const directory: string = await mkdtemp(join(homedir(), '.nerva-container-test-'));
+        try {
+            const executable: string = join(directory, 'container.exe');
+            await ConnectorWindowsCompiler.compile({
+                sources: [
+                    ...ConnectorWindowsSources.state,
+                    resolve('test/support/WindowsStateContainerFixture.cs'),
+                ],
+                entrypoint: 'WindowsStateContainerFixture',
+                destination: executable,
+            });
+            const output: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
+                execFile,
+            )(executable, [directory], { timeout: 30000, maxBuffer: 16384, windowsHide: true });
+            expect(output.stdout.toString().trim()).toBe('windows-state-containers-qualified');
+            expect(output.stderr.toString()).toBe('');
+        } finally {
+            await rm(directory, { recursive: true, force: true });
+        }
+    },
+    60000,
+);
+
+it
+    .skipIf(
+        process.platform !== 'win32' &&
+            (process.platform !== 'linux' || !existsSync('/usr/bin/mcs')),
+    )
+    .each([
+        ['WindowsStatePolicyFixture', /windows-state-policy-checks=\d+/u],
+        ...(process.platform === 'win32'
+            ? []
+            : [['WindowsStateProtocolFixture', /windows-state-protocol-checks=\d+/u] as const]),
+    ] as const)(
     'actual C#5 %s rejects unsafe input without invoking Windows APIs',
     async (entrypoint: string, expected: RegExp): Promise<void> => {
         const directory: string = await mkdtemp(join(homedir(), '.nerva-windows-policy-'));
@@ -90,24 +123,21 @@ it.skipIf(process.platform !== 'linux' || !existsSync('/usr/bin/mcs')).each([
                 maxBuffer: 16384,
                 env: { PATH: process.env['PATH'] },
             };
-            await promisify(execFile)(
-                '/usr/bin/mcs',
-                [
-                    '-target:exe',
-                    '-langversion:5',
-                    '-warnaserror',
-                    '-main:' + entrypoint,
-                    '-r:System.Security',
-                    '-r:System.Web.Extensions',
-                    '-out:' + executable,
+            await ConnectorWindowsCompiler.compile({
+                sources: [
                     ...ConnectorWindowsSources.state,
                     resolve('test/support', entrypoint + '.cs'),
                 ],
-                options,
-            );
+                entrypoint,
+                destination: executable,
+            });
             const output: Awaited<ReturnType<typeof execFile.__promisify__>> = await promisify(
                 execFile,
-            )('/usr/bin/mono', [executable], options);
+            )(
+                process.platform === 'win32' ? executable : '/usr/bin/mono',
+                process.platform === 'win32' ? [] : [executable],
+                { ...options, windowsHide: true },
+            );
             expect(output.stdout.toString()).toMatch(expected);
             expect(output.stderr.toString()).toBe('');
         } finally {

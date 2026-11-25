@@ -10,14 +10,6 @@ using Microsoft.Win32.SafeHandles;
 /// <summary>Every opened state object is checked against the owner SID and the required DACL.</summary>
 public static partial class NexaConnectorStateOwner
 {
-    /// <summary>
-    /// List, read-EA, traverse, read-attributes, read-control, synchronize, generic read and generic execute on a directory.
-    /// </summary>
-    /// <remarks>
-    /// None of these rights opens, adds, renames, removes or re-permits a child, or changes the directory itself.
-    /// </remarks>
-    private const int DirectoryReadRights = unchecked((int)0xA01200A9);
-
     private static byte[] Descriptor(string sid)
     {
         RawSecurityDescriptor descriptor = new RawSecurityDescriptor(
@@ -28,31 +20,24 @@ public static partial class NexaConnectorStateOwner
         return bytes;
     }
 
-    /// <summary>Pure validation of a file permits only the current owner and SYSTEM on private state; never repairs an existing ACL.</summary>
+    /// <summary>Pure validation permits only the current owner and SYSTEM on private state; never repairs an existing ACL.</summary>
     public static void ValidateDescriptor(
         RawSecurityDescriptor descriptor,
         bool secret,
         string expectedSid
     )
     {
-        ValidateDescriptorCore(descriptor, secret, expectedSid, false, false);
+        ValidateDescriptorCore(descriptor, secret, expectedSid, false);
     }
 
     /// <summary>Pinned ancestors may grant child creation, but never foreign replacement or ACL authority.</summary>
-    /// <remarks>
-    /// A private directory may also carry explicit grants limited to <see cref="DirectoryReadRights"/>. Codex's
-    /// Windows sandbox repeatedly added an entry for its CodexSandboxUsers group to the user's
-    /// %USERPROFILE%\.nerva-connector-state folder, which made the connector refuse its own storage. Such a grant
-    /// reveals file names and attributes only: every file is still created with a protected owner-and-SYSTEM
-    /// descriptor and is checked on each open, so an inheritable grant can never reach one unnoticed.
-    /// </remarks>
     public static void ValidateDirectoryDescriptor(
         RawSecurityDescriptor descriptor,
         bool secret,
         string expectedSid
     )
     {
-        ValidateDescriptorCore(descriptor, secret, expectedSid, true, true);
+        ValidateDescriptorCore(descriptor, secret, expectedSid, true);
     }
 
     private static void ValidateDescriptorCore(
@@ -60,7 +45,7 @@ public static partial class NexaConnectorStateOwner
         bool secret,
         string expectedSid,
         bool ancestor,
-        bool directory
+        bool container = false
     )
     {
         if (descriptor == null || descriptor.Owner == null || descriptor.DiscretionaryAcl == null)
@@ -83,7 +68,7 @@ public static partial class NexaConnectorStateOwner
             CommonAce ace = entry as CommonAce;
             if ((entry.AceFlags & AceFlags.InheritOnly) != 0)
             {
-                if (secret && !(directory && ReadGrant(ace)))
+                if (secret)
                 {
                     throw new Failure("untrusted", "inherited-permissions");
                 }
@@ -106,13 +91,13 @@ public static partial class NexaConnectorStateOwner
             {
                 if (
                     (ace.AceFlags & AceFlags.Inherited) != 0
-                    || (sid != expectedSid && sid != "S-1-5-18")
+                    || (
+                        sid != expectedSid
+                        && sid != "S-1-5-18"
+                        && (!container || (ace.AccessMask & ~ContainerReadAccess) != 0)
+                    )
                 )
                 {
-                    if (directory && ReadGrant(ace))
-                    {
-                        continue;
-                    }
                     throw new Failure("untrusted", "unexpected-permission");
                 }
                 if (sid == expectedSid)
@@ -139,15 +124,14 @@ public static partial class NexaConnectorStateOwner
         }
     }
 
-    /// <summary>An explicit allow entry whose rights stay within <see cref="DirectoryReadRights"/>.</summary>
-    private static bool ReadGrant(CommonAce ace)
-    {
-        return ace != null
-            && !ace.IsCallback
-            && ace.AceQualifier == AceQualifier.AccessAllowed
-            && (ace.AceFlags & AceFlags.Inherited) == 0
-            && (ace.AccessMask & ~DirectoryReadRights) == 0;
-    }
+    /// <summary>
+    /// Directory listing, traversal, read attributes/EA/security and synchronization only.
+    /// This exception applies solely to the two installation containers, never to files or
+    /// nested directories. All children are created with protected user/SYSTEM-only ACLs,
+    /// so even inheritable container read grants cannot expose their contents. Generic,
+    /// unknown, create, write, delete, ownership and DACL-change rights remain rejected.
+    /// </summary>
+    private const int ContainerReadAccess = 0x001200A9;
 
     /// <summary>
     /// AppContainer (S-1-15-2-*) and capability (S-1-15-3-*) SIDs on a folder that holds no secret never name another account.
@@ -156,8 +140,8 @@ public static partial class NexaConnectorStateOwner
     /// Windows evaluates them only for this user's own sandboxed apps, and grants such an app access only when the user's
     /// own entry allows it too, so they give no process more than this user's ordinary programs already have. Some PCs
     /// grant ALL APPLICATION PACKAGES or one app's package change rights on AppData\Local or AppData\Local\Nerva, which made
-    /// the connector refuse to start there. The private Nerva\Connector folder and its files still allow only this user and
-    /// SYSTEM.
+    /// the connector refuse to start there. Files and child directories inside Nerva\Connector still allow only this user
+    /// and SYSTEM; its outer container permits only the bounded read rights described above for other principals.
     /// </remarks>
     private static bool Sandboxed(string sid)
     {
@@ -177,10 +161,10 @@ public static partial class NexaConnectorStateOwner
         SafeFileHandle handle,
         bool secret,
         string sid,
-        bool ancestor = false
+        bool ancestor = false,
+        bool container = false
     )
     {
-        bool directory = (BitConverter.ToUInt32(Information(handle, 9, 8), 0) & 0x10) != 0;
         IntPtr owner;
         IntPtr group;
         IntPtr dacl;
@@ -214,12 +198,22 @@ public static partial class NexaConnectorStateOwner
                 secret,
                 sid,
                 ancestor,
-                directory
+                container
             );
         }
         finally
         {
             Native.LocalFree(descriptor);
+        }
+    }
+
+    /// <summary>Revalidates the pinned directory before state writes, reads or artifact publication.</summary>
+    private static void CheckLease(Owner owner, Lease lease)
+    {
+        CheckAcl(lease.Path.Last, true, owner.Sid, false, owner.Container(lease.Directory));
+        if (FileIdentity(lease.Path.Last) != lease.Identity)
+        {
+            throw new Failure("untrusted");
         }
     }
 

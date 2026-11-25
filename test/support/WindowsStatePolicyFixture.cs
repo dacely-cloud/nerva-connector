@@ -327,21 +327,11 @@ public static class WindowsStatePolicyFixture
                     );
                 }
             );
-            Accept(
-                delegate
-                {
-                    NexaConnectorStateOwner.ValidateDirectoryDescriptor(
-                        Descriptor(PrivateAcl + "(A;OICI;FR;;;" + sandbox + ")"),
-                        true,
-                        User
-                    );
-                }
-            );
             Reject(
                 delegate
                 {
                     NexaConnectorStateOwner.ValidateDirectoryDescriptor(
-                        Descriptor(PrivateAcl + "(A;OICI;FA;;;" + sandbox + ")"),
+                        Descriptor(PrivateAcl + "(A;OICI;FR;;;" + sandbox + ")"),
                         true,
                         User
                     );
@@ -358,36 +348,15 @@ public static class WindowsStatePolicyFixture
                 }
             );
         }
-        foreach (string mask in new string[] { "0x1200a9", "FR", "FX", "GRGX", "0x1", "0x20" })
-        {
-            foreach (string flags in new string[] { "", "OICI", "OICIIO" })
-            {
-                string grant = "(A;" + flags + ";" + mask + ";;;" + Foreign + ")";
-                Accept(
-                    delegate
-                    {
-                        NexaConnectorStateOwner.ValidateDirectoryDescriptor(
-                            Descriptor(PrivateAcl + grant),
-                            true,
-                            User
-                        );
-                    }
-                );
-                Reject(
-                    delegate
-                    {
-                        NexaConnectorStateOwner.ValidateDescriptor(
-                            Descriptor(PrivateAcl + grant),
-                            true,
-                            User
-                        );
-                    }
-                );
-            }
-        }
         foreach (
             string mask in new string[]
             {
+                "0x1200a9",
+                "FR",
+                "FX",
+                "GRGX",
+                "0x1",
+                "0x20",
                 "0x2",
                 "0x4",
                 "0x10",
@@ -413,6 +382,16 @@ public static class WindowsStatePolicyFixture
                     delegate
                     {
                         NexaConnectorStateOwner.ValidateDirectoryDescriptor(
+                            Descriptor(PrivateAcl + grant),
+                            true,
+                            User
+                        );
+                    }
+                );
+                Reject(
+                    delegate
+                    {
+                        NexaConnectorStateOwner.ValidateDescriptor(
                             Descriptor(PrivateAcl + grant),
                             true,
                             User
