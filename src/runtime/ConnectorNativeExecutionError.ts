@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 /** A fixed local diagnostic exposes no private executable path, mount inventory or underlying OS error. */

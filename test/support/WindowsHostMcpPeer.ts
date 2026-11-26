@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 /** The fixed peer exercises ordinary MCP framing without Roblox, external services or a desktop. */

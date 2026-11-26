@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 //! Confined execution retains its namespace checks; the separately selected host PTY uses ordinary OS-user authority.

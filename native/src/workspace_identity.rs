@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 //! Strict raw identity codec is private local bootstrap data, never a permission or public grant.

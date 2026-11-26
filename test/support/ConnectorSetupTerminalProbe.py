@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Nerva contributors
+# SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
 """Drive the current built connector in owned PTYs without permitting network startup."""

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Nerva contributors
+# SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
 """Qualify the current TypeScript pinned-file preflight in private owned exec/noexec mounts."""

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Nerva contributors
+# SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
 """Run the private descriptor test ELF in owned disposable filesystem mounts.

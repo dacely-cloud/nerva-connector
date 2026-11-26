@@ -1,4 +1,4 @@
-; SPDX-FileCopyrightText: 2026 Nerva contributors
+; SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 ; SPDX-License-Identifier: LicenseRef-Proprietary
 
 Unicode true
@@ -13,7 +13,7 @@ VIProductVersion "${VERSION}.0"
 VIAddVersionKey /LANG=1033 "ProductName" "Nerva Connector"
 VIAddVersionKey /LANG=1033 "FileDescription" "Nerva Connector Uninstaller"
 VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
-VIAddVersionKey /LANG=1033 "LegalCopyright" "Nerva contributors"
+VIAddVersionKey /LANG=1033 "LegalCopyright" "Dacely"
 
 !include "LogicLib.nsh"
 !uninstfinalize "${FINALIZE}" = 0

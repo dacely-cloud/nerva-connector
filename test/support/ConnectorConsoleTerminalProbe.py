@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Nerva contributors
+# SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
 """Drive the built connector console in an owned PTY: resizes, slash actions, completion, views and quit."""

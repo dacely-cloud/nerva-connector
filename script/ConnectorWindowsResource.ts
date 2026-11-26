@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Nerva contributors
+// SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 /** What a compiled Windows program says about itself in Explorer, Task Manager and its Properties window. */
@@ -184,7 +184,7 @@ export class ConnectorWindowsResource {
             ['FileDescription', identity.description],
             ['FileVersion', dotted],
             ['InternalName', identity.fileName.replace(/\.exe$/u, '')],
-            ['LegalCopyright', 'Copyright Nerva contributors'],
+            ['LegalCopyright', 'Copyright Dacely'],
             ['OriginalFilename', identity.fileName],
             ['ProductName', 'Nerva Connector'],
             ['ProductVersion', dotted],

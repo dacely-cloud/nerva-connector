@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Nerva contributors
+# SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
 """A small terminal screen that applies the escape sequences the connector writes, for real-PTY probes."""
