@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { expect, it, vi, type MockInstance } from 'vitest';
-import { ConnectorHostObservationFixture as Fixture } from './support/ConnectorHostObservationFixture.js';
+import {
+    ConnectorHostObservationFixture as Fixture,
+    type ConnectorHostObservationSource as Source,
+} from './support/ConnectorHostObservationFixture.js';
+import { ConnectorHostObservationLimits as Limits } from 'nerva-connector-protocol/protocol/ConnectorHostObservation.js';
 import {
     ConnectorHostObservationDelivery as Delivery,
     type ConnectorHostObservationSink,
@@ -45,10 +49,14 @@ function wire<T>(value: T): unknown {
     return raw;
 }
 /** The fixture feeds one admitted stdin chunk; signed hint waiting never enters that native effect lane. */
-async function write(fixture: Fixture, text: string): Promise<void> {
+async function write(
+    fixture: Fixture,
+    text: string,
+    processId: string = fixture.processId,
+): Promise<void> {
     await fixture.call(
         Tool.ProcessWrite,
-        JSON.stringify({ processId: fixture.processId, encoding: 'utf8', data: text, end: false }),
+        JSON.stringify({ processId, encoding: 'utf8', data: text, end: false }),
     );
 }
 
@@ -229,4 +237,52 @@ it.skipIf(process.platform !== 'linux')(
             held.resolve(owned);
         }
     },
+);
+
+it.skipIf(process.platform !== 'linux')(
+    'observes more sources than one batch holds and delivers them across bounded signed batches',
+    async (): Promise<void> => {
+        await using fixture: Fixture = await Fixture.create(undefined, Limits.PermitMs);
+        const sink: Sink = new Sink();
+        await using delivery: Delivery = new Delivery(fixture.host, fixture.connection, sink);
+        const sources: Source[] = [fixture];
+        while (sources.length < Limits.ChangesPerBatch + 8) {
+            sources.push(await fixture.start());
+        }
+        for (const source of sources) {
+            delivery.permit(wire(fixture.permit({}, source)));
+        }
+        await vi.waitFor((): void => expect(sink.readiness).toHaveLength(sources.length), {
+            timeout: 15000,
+            interval: 20,
+        });
+        for (const source of sources) {
+            await write(fixture, 'x', source.processId);
+        }
+        const delivered: Set<string> = new Set<string>();
+        let acknowledged: bigint = 0n;
+        while (delivered.size < sources.length) {
+            await vi.waitFor(
+                (): void =>
+                    expect(sink.batches.at(-1)?.batchRevision ?? 0n).toBeGreaterThan(acknowledged),
+                { timeout: 10000, interval: 20 },
+            );
+            const batch: Changed | undefined = sink.batches.at(-1);
+            if (batch === undefined) {
+                throw new Error('Signed batch required');
+            }
+            expect(batch.changes.length).toBeGreaterThan(0);
+            expect(batch.changes.length).toBeLessThanOrEqual(Limits.ChangesPerBatch);
+            for (const change of batch.changes) {
+                delivered.add(change.observationId);
+            }
+            acknowledged = batch.batchRevision;
+            delivery.acknowledge(wire(fixture.acknowledgment(batch)));
+        }
+        expect(delivered).toEqual(
+            new Set(sources.map((source: Source): string => source.capture.observationId)),
+        );
+        expect(sink.failures).toBe(0);
+    },
+    60000,
 );

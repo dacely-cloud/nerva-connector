@@ -31,18 +31,17 @@ it('wakes on actual changes and remembers changes between revision capture and w
     expect(revision.current).toBe(2n);
 });
 
-it('bounds and reclaims listeners on cancellation, timeout and exact owner disposal', async (): Promise<void> => {
+it('admits any number of waiters and reclaims listeners on cancellation, timeout and exact owner disposal', async (): Promise<void> => {
     vi.useFakeTimers();
     using revision: HostReadRevision = new HostReadRevision();
     const controllers: readonly AbortController[] = Array.from(
-        { length: HostReadRevision.maximumWaiters },
+        { length: 48 },
         (): AbortController => new AbortController(),
     );
     const pending: readonly Promise<bigint>[] = controllers.map(
         (controller: AbortController): Promise<bigint> => revision.wait(0n, controller.signal),
     );
     const joined: Promise<readonly PromiseSettledResult<bigint>[]> = Promise.allSettled(pending);
-    await expect(revision.wait(0n, new AbortController().signal)).rejects.toThrow('waiter limit');
     const first: AbortController | undefined = controllers[0];
     if (first === undefined) {
         throw new Error('Expected waiter');
@@ -172,11 +171,11 @@ it('returns an unchanged idle heartbeat with one native deadline and detaches it
     expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0);
 });
 
-it('caps all workspace waiters together and joins cancellation before shutdown returns', async (): Promise<void> => {
+it('admits any number of workspace waiters and joins their cancellation before shutdown returns', async (): Promise<void> => {
     vi.useFakeTimers();
     await using observations: HostReadObservation = new HostReadObservation();
     const revisions: readonly HostReadRevision[] = Array.from(
-        { length: HostReadRevision.maximumWaiters + 1 },
+        { length: 48 },
         (): HostReadRevision => new HostReadRevision(),
     );
     const controllers: readonly AbortController[] = revisions.map(
@@ -184,11 +183,11 @@ it('caps all workspace waiters together and joins cancellation before shutdown r
     );
     const pending: Promise<HostReadObservationState>[] = [];
     try {
-        for (let index: number = 0; index < HostReadRevision.maximumWaiters; index++) {
+        for (let index: number = 0; index < revisions.length; index++) {
             const revision: HostReadRevision | undefined = revisions[index];
             const controller: AbortController | undefined = controllers[index];
             if (revision === undefined || controller === undefined) {
-                throw new Error('Missing bounded waiter');
+                throw new Error('Missing waiter');
             }
             pending.push(
                 observations
@@ -198,15 +197,6 @@ it('caps all workspace waiters together and joins cancellation before shutdown r
         }
         const joined: Promise<readonly PromiseSettledResult<Awaited<(typeof pending)[number]>>[]> =
             Promise.allSettled(pending);
-        const last: HostReadRevision | undefined = revisions.at(-1);
-        if (last === undefined) {
-            throw new Error('Missing spare native owner');
-        }
-        await expect(
-            observations
-                .capture('spare', Kind.Process, last)
-                .wait(0n, new AbortController().signal),
-        ).rejects.toThrow('workspace observation waiter limit');
         await observations[Symbol.asyncDispose]();
         expect((await joined).every((result): boolean => result.status === 'rejected')).toBe(true);
         expect(

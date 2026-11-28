@@ -58,7 +58,7 @@
     },
     "dependencies": {
         "@dacely/noble-post-quantum": "0.6.1",
-        "nerva-connector-protocol": "https://codeload.github.com/dacely-cloud/nerva-connector-protocol/tar.gz/7d092724f1a7a46e1fe8438c9070b81ff61b39ba"
+        "nerva-connector-protocol": "https://codeload.github.com/dacely-cloud/nerva-connector-protocol/tar.gz/b4f15ef4fae4e036ed00662580857861183f0319"
     },
     "devDependencies": {
         "@types/node": "26.6.11",

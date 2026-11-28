@@ -66,17 +66,16 @@ export class ConnectorHostObservationDelivery implements AsyncDisposable {
         this.#expiry = setTimeout((): void => this.#fail(), Number(remaining));
     }
 
-    /** Only closed wire permits enter the bounded metadata queue; input or process effects never wait on it. */
+    /** Only closed wire permits enter the metadata queue; input or process effects never wait on it. */
     public permit(raw: unknown): void {
         try {
             this.#admit();
             const permit: Permit = Codec.permit(raw);
             if (
                 permit.leaseId !== this.connection.leaseId ||
-                permit.companionNonce !== this.connection.companionNonce ||
-                this.#permits.length >= Limits.Entries
+                permit.companionNonce !== this.connection.companionNonce
             ) {
-                throw new Error('Host observation permit queue denied');
+                throw new Error('Host observation permit belongs to another companion');
             }
             this.#permits.push(
                 Object.freeze({ ...permit, origin: Object.freeze({ ...permit.origin }) }),
@@ -218,9 +217,6 @@ export class ConnectorHostObservationDelivery implements AsyncDisposable {
             }
             return;
         }
-        if (previous === undefined && this.#slots.size >= Limits.Entries) {
-            throw new Error('Host observation source capacity exceeded');
-        }
         const owned: Owned = await this.#until(
             this.host.observe(Codec.json(encoded), this.#connection()),
         );
@@ -315,7 +311,8 @@ export class ConnectorHostObservationDelivery implements AsyncDisposable {
                 .filter((slot: ObservationSlot): boolean => slot.revision > slot.acknowledged)
                 .toSorted((left: ObservationSlot, right: ObservationSlot): number =>
                     left.owned.permit.observationId < right.owned.permit.observationId ? -1 : 1,
-                );
+                )
+                .slice(0, Limits.ChangesPerBatch);
             if (slots.length === 0 || this.#runtimeId === null) {
                 return;
             }

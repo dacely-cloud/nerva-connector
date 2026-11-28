@@ -23,7 +23,6 @@ import type {
 import { ConnectorHostObservationCodec as Codec } from 'nerva-connector-protocol/protocol/ConnectorHostObservationCodec.js';
 import { ConnectorHostObservationTranscript as Transcript } from 'nerva-connector-protocol/protocol/ConnectorHostObservationTranscript.js';
 import {
-    ConnectorHostObservationLimits as Limits,
     ConnectorHostObservationKind as Kind,
     type ConnectorHostObservationPermit as Permit,
     type ConnectorHostObservationOrigin as Origin,
@@ -91,13 +90,6 @@ export class ConnectorHostObservationOwners implements Disposable {
             throw new HostOperationError(
                 ConnectorHostErrorCode.AlreadyExists,
                 'Native observation reservation already exists',
-                true,
-            );
-        }
-        if (this.#entries.size >= Limits.Entries) {
-            throw new HostOperationError(
-                ConnectorHostErrorCode.ResourceLimit,
-                'Native observation capacity is exhausted',
                 true,
             );
         }

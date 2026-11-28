@@ -10,7 +10,6 @@ import {
     type ConnectorHostResponse,
     type ConnectorHostPublication,
 } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
-import { ConnectorHostObservationLimits } from 'nerva-connector-protocol/protocol/ConnectorHostObservation.js';
 import type {
     ConnectorHostObservationCapability as Capability,
     ConnectorHostObservationActivation as Activation,
@@ -157,7 +156,7 @@ export class ConnectorHostObservationAccess implements Disposable {
         this.#attempt = null;
         this.#activation = null;
     }
-    /** The enclosing host joins these bounded consent reads alongside its native effects, not before stopping those effects. */
+    /** The enclosing host joins these consent reads alongside its native effects, not before stopping those effects. */
     public async join(): Promise<void> {
         await Promise.all(this.#checks);
     }
@@ -169,9 +168,6 @@ export class ConnectorHostObservationAccess implements Disposable {
 
     async #consent(connection: Connection): Promise<void> {
         this.#connection(connection);
-        if (this.#checks.size >= ConnectorHostObservationLimits.Entries) {
-            throw new Error('Host observation consent capacity reached');
-        }
         const finished: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
         this.#checks.add(finished.promise);
         try {

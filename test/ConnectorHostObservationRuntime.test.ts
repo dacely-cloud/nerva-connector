@@ -342,13 +342,13 @@ it.skipIf(process.platform !== 'linux')(
 );
 
 it.skipIf(process.platform !== 'linux')(
-    'bounds unresolved reservations before factories and frees only definite pre-effect failed metadata',
+    'retains any number of unresolved reservations and frees only definite pre-effect failed metadata',
     async (): Promise<void> => {
         await using fixture: Fixture = await Fixture.create();
         const grant: Grant = await fixture.grant();
         using owners: Owners = new Owners(fixture.identity, grant);
         const originals: Effect[] = [];
-        for (let index: number = 0; index < 32; index++) {
+        for (let index: number = 0; index < 48; index++) {
             const effect: Effect = fixture.permit(
                 grant,
                 BigInt(index + 1),
@@ -363,17 +363,18 @@ it.skipIf(process.platform !== 'linux')(
             });
             originals.push(effect);
         }
-        const excess: Effect = fixture.permit(grant, 33n, Tool.ProcessStart, args(capture()));
-        expect((): ReturnType<Owners['prepare']> => owners.prepare(excess)).toThrow('capacity');
-        const first: Effect | undefined = originals[0];
-        if (first === undefined) {
-            throw new Error('Expected retained reservation');
+        const [first, retained] = originals;
+        if (first === undefined || retained === undefined) {
+            throw new Error('Expected retained reservations');
         }
+        expect((): ReturnType<Owners['prepare']> => owners.prepare(retained)).toThrow(
+            'already exists',
+        );
         owners.complete(first, {
             outcome: Outcome.Failed,
             errorCode: ConnectorHostErrorCode.InvalidRequest,
             resultJson: null,
         });
-        expect(owners.prepare(excess).capture.protocol).toBe(Start.Protocol);
+        expect(owners.prepare(first).capture.protocol).toBe(Start.Protocol);
     },
 );

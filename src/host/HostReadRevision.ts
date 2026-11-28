@@ -3,8 +3,6 @@
 
 /** Local read hints are finite metadata; they neither consume byte cursors nor prove EOF or process-tree state. */
 export class HostReadRevision implements Disposable {
-    /** The subscription budget is independent from process input, effect admission and output ring capacity. */
-    public static readonly maximumWaiters: number = 32;
     /** A native waiter cannot retain a caller or listener indefinitely without a fresh observation. */
     public static readonly maximumWaitMs: number = 25000;
     readonly #waiters: Set<PromiseWithResolvers<bigint>> = new Set();
@@ -80,9 +78,6 @@ export class HostReadRevision implements Disposable {
         }
         if (afterRevision < this.#revision) {
             return this.#revision;
-        }
-        if (this.#waiters.size >= HostReadRevision.maximumWaiters) {
-            throw new Error('Native read observation waiter limit reached');
         }
         const result: PromiseWithResolvers<bigint> = Promise.withResolvers<bigint>();
         const abort: () => void = (): void => result.reject(signal.reason);

@@ -29,6 +29,17 @@ import type { ConnectorHostLocalGrant } from '../../src/runtime/ConnectorHostGra
 import { SignaturePurpose } from 'nerva-connector-protocol/identity/IdentityFormat.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 
+/** One observed native start: the capture, its exact original and completion, and the process it owns. */
+export interface ConnectorHostObservationSource {
+    readonly capture: ConnectorHostObservationCapture;
+    readonly original: ConnectorHostPermit;
+    readonly completion: ConnectorHostCompletion;
+    readonly processId: string;
+}
+
+/** The default observed program echoes stdin, so each write changes its retained output. */
+const ECHO_PROGRAM: string = "process.stdin.on('data', b => process.stdout.write(b));";
+
 /** A real local process and hybrid proofs exercise metadata ownership without account APIs, sockets, production grants or live user devices. */
 export class ConnectorHostObservationFixture implements AsyncDisposable {
     #sequence: bigint = 1n;
@@ -44,7 +55,8 @@ export class ConnectorHostObservationFixture implements AsyncDisposable {
     ) {}
     /** The fixture explicitly installs only an isolated local grant and signs the private activation before its single native start. */
     public static async create(
-        program: string = "process.stdin.on('data', b => process.stdout.write(b));",
+        program: string = ECHO_PROGRAM,
+        lifetimeMs: bigint = 20000n,
     ): Promise<ConnectorHostObservationFixture> {
         const base: ConnectorHostFixture = await ConnectorHostFixture.create();
         let host: ConnectorClientHost | null = null;
@@ -58,51 +70,27 @@ export class ConnectorHostObservationFixture implements AsyncDisposable {
                 leaseId: randomBytes(32).toString('base64url'),
                 companionNonce: randomBytes(32).toString('base64url'),
                 nowMs: BigInt(Date.now()),
-                expiresAtMs: BigInt(Date.now()) + 20000n,
+                expiresAtMs: BigInt(Date.now()) + lifetimeMs,
             };
             this.#activate(base, host, grant, connection);
-            const capture: ConnectorHostObservationCapture = {
-                protocol: Start.Protocol,
-                observationId: randomBytes(32).toString('base64url'),
-                ownerSha256: '1'.repeat(64),
-                providerSha256: '2'.repeat(64),
-                originalId: '3'.repeat(64),
-            };
-            const original: ConnectorHostPermit = base.permit(
-                grant,
-                1n,
-                ConnectorHostTool.ProcessStart,
-                JSON.stringify({
-                    executable: process.execPath,
-                    arguments: ['-e', program],
-                    timeoutMs: 20000,
-                    [Start.Field]: capture,
-                }),
-                connection.leaseId,
-            );
-            const completion: ConnectorHostCompletion = await host.execute(
-                original,
-                connection.leaseId,
-                connection.expiresAtMs,
-            );
-            if (completion.response.outcome !== ConnectorHostOutcome.Succeeded) {
-                throw new Error('Observed fixture start failed');
-            }
-            await host.acknowledge(base.acknowledgment(completion), connection.leaseId);
-            const raw: unknown = JSON.parse(completion.response.resultJson ?? 'null');
-            if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-                throw new Error('Fixture native snapshot required');
-            }
-            const processId: unknown = Reflect.get(raw, 'processId');
+            const source: ConnectorHostObservationSource =
+                await ConnectorHostObservationFixture.#start(
+                    base,
+                    host,
+                    grant,
+                    connection,
+                    1n,
+                    program,
+                );
             return new ConnectorHostObservationFixture(
                 base,
                 host,
                 grant,
-                capture,
+                source.capture,
                 connection,
-                original,
-                completion,
-                Boundary.id(processId),
+                source.original,
+                source.completion,
+                source.processId,
             );
         } catch (error: unknown) {
             try {
@@ -112,6 +100,64 @@ export class ConnectorHostObservationFixture implements AsyncDisposable {
             }
             throw error;
         }
+    }
+    /** Starts one more observed process on the same grant and companion connection. */
+    public async start(program: string = ECHO_PROGRAM): Promise<ConnectorHostObservationSource> {
+        return await ConnectorHostObservationFixture.#start(
+            this.base,
+            this.host,
+            this.grant,
+            this.connection,
+            ++this.#sequence,
+            program,
+        );
+    }
+    static async #start(
+        base: ConnectorHostFixture,
+        host: ConnectorClientHost,
+        grant: ConnectorHostLocalGrant,
+        connection: ConnectorHostObservationConnection,
+        sequence: bigint,
+        program: string,
+    ): Promise<ConnectorHostObservationSource> {
+        const capture: ConnectorHostObservationCapture = {
+            protocol: Start.Protocol,
+            observationId: randomBytes(32).toString('base64url'),
+            ownerSha256: '1'.repeat(64),
+            providerSha256: '2'.repeat(64),
+            originalId: sequence === 1n ? '3'.repeat(64) : randomBytes(32).toString('hex'),
+        };
+        const original: ConnectorHostPermit = base.permit(
+            grant,
+            sequence,
+            ConnectorHostTool.ProcessStart,
+            JSON.stringify({
+                executable: process.execPath,
+                arguments: ['-e', program],
+                timeoutMs: 20000,
+                [Start.Field]: capture,
+            }),
+            connection.leaseId,
+        );
+        const completion: ConnectorHostCompletion = await host.execute(
+            original,
+            connection.leaseId,
+            connection.expiresAtMs,
+        );
+        if (completion.response.outcome !== ConnectorHostOutcome.Succeeded) {
+            throw new Error('Observed fixture start failed');
+        }
+        await host.acknowledge(base.acknowledgment(completion), connection.leaseId);
+        const raw: unknown = JSON.parse(completion.response.resultJson ?? 'null');
+        if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+            throw new Error('Fixture native snapshot required');
+        }
+        return {
+            capture,
+            original,
+            completion,
+            processId: Boundary.id(Reflect.get(raw, 'processId')),
+        };
     }
     /** A replacement metadata attempt authenticates the same native owner without launching or reattaching a process. */
     public activate(connection: ConnectorHostObservationConnection): void {
@@ -152,29 +198,32 @@ export class ConnectorHostObservationFixture implements AsyncDisposable {
         );
     }
     /** A current private permit can renew only the same origin and optional already pinned native instance. */
-    public permit(changes: Partial<Omit<Permit, 'signature'>> = {}): Permit {
+    public permit(
+        changes: Partial<Omit<Permit, 'signature'>> = {},
+        source: ConnectorHostObservationSource = this,
+    ): Permit {
         const origin: ConnectorHostObservationOrigin = {
             accountSha256: '4'.repeat(64),
-            ownerSha256: this.capture.ownerSha256,
-            providerSha256: this.capture.providerSha256,
+            ownerSha256: source.capture.ownerSha256,
+            providerSha256: source.capture.providerSha256,
             environmentId: this.grant.environmentId,
             enrollmentId: this.grant.enrollmentId,
             journalId: this.grant.journalId,
             grantId: this.grant.profile.grantId,
             grantRevision: this.grant.profile.grantRevision,
-            startJobId: this.original.jobId,
-            startSequence: this.original.sequence,
-            startDispatchId: this.original.dispatchId,
-            startRequestHash: this.original.requestHash,
-            startResponseHash: this.completion.responseHash,
-            processId: this.processId,
+            startJobId: source.original.jobId,
+            startSequence: source.original.sequence,
+            startDispatchId: source.original.dispatchId,
+            startRequestHash: source.original.requestHash,
+            startResponseHash: source.completion.responseHash,
+            processId: source.processId,
             kind: ConnectorHostObservationKind.Process,
         };
         const body: Omit<Permit, 'signature'> = {
             authorityId: this.grant.authorityId,
             leaseId: this.connection.leaseId,
             companionNonce: this.connection.companionNonce,
-            observationId: this.capture.observationId,
+            observationId: source.capture.observationId,
             generation: 1n,
             origin,
             originSha256: Proof.digest(Transcript.origin(origin)),

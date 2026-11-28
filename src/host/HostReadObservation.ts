@@ -30,7 +30,7 @@ export interface HostReadObservationSource {
     ): Promise<HostReadObservationState>;
 }
 
-/** One workspace bounds all read-side waiters and pins the actual native runtime independently from connection renewals. */
+/** One workspace joins all read-side waiters and pins the actual native runtime independently from connection renewals. */
 export class HostReadObservation implements AsyncDisposable {
     readonly #runtimeId: string = randomBytes(32).toString('base64url');
     readonly #stop: AbortController = new AbortController();
@@ -97,9 +97,6 @@ export class HostReadObservation implements AsyncDisposable {
             maximumMs > HostReadRevision.maximumWaitMs
         ) {
             throw new Error('Invalid native read observation deadline');
-        }
-        if (this.#pending.size >= HostReadRevision.maximumWaiters) {
-            throw new Error('Native workspace observation waiter limit reached');
         }
         const finished: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
         this.#pending.add(finished.promise);
