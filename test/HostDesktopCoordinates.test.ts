@@ -79,6 +79,6 @@ it('rejects stale geometry, out-of-image coordinates and malformed metadata befo
             { x: 1000, y: 500, action: ConnectorHostPointerAction.Click, image: raw },
             ConnectorHostArgumentContracts.paired,
         );
-        expect(check.valid ? null : check.field).toMatch(/^image\./u);
+        expect(check.valid ? null : check.message).toMatch(/^image\b/u);
     }
 });

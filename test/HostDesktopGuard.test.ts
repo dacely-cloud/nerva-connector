@@ -207,5 +207,5 @@ it('safe failure reasons preserve definitive rejection separately from partial i
         ).errorCode,
     ).toBe(ConnectorHostErrorCode.PermissionDenied);
     expect(HostDesktopWindowTarget.read(target)).toBe(target);
-    expect(ConnectorHostKeyChord.read('Control+l', ConnectorHostKeyAction.Press)).toBe('Control+l');
+    expect(ConnectorHostKeyChord.accepts('Control+l', ConnectorHostKeyAction.Press)).toBe(true);
 });

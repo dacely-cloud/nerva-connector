@@ -198,17 +198,10 @@ export class HostDesktop implements AsyncDisposable {
                     true,
                 );
             }
-            let key: string;
-            try {
-                key = windows
-                    ? ConnectorHostKeyChord.read(request.key, request.action)
-                    : this.#key(request.key);
-            } catch (error: unknown) {
-                if (windows) {
-                    throw new HostDesktopError('key', 'key-chord', 0);
-                }
-                throw error;
+            if (windows && !ConnectorHostKeyChord.accepts(request.key, request.action)) {
+                throw new HostDesktopError('key', 'key-chord', 0);
             }
+            const key: string = windows ? request.key : this.#key(request.key);
             if (!Object.values(ConnectorHostKeyAction).includes(request.action)) {
                 throw new Error('Invalid desktop key action');
             }

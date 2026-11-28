@@ -16,7 +16,6 @@ export class HostDesktopError extends Error {
     ]);
     static readonly #reasons: ReadonlySet<string> = new Set([
         'screenshot-geometry-changed',
-        'screenshot-geometry-invalid',
         'pointer-outside-image',
         'input-not-delivered',
         'pointer-move-rejected',
@@ -76,33 +75,37 @@ export class HostDesktopError extends Error {
         super(HostDesktopError.message(reason));
         this.name = 'HostDesktopError';
         this.code =
-            nativeCode === 5 || nativeCode === 2147942405 || reason === 'keyboard-focus-denied' || reason === 'keyboard-field-read-only'
+            nativeCode === 5 ||
+            nativeCode === 2147942405 ||
+            reason === 'keyboard-focus-denied' ||
+            reason === 'keyboard-field-read-only'
                 ? 'EACCES'
-                : reason === 'keyboard-field-unsupported' ? 'ENOTSUP'
-                : reason === 'keyboard-field-not-found' ? 'ENOENT'
-                : reason === 'keyboard-field-search-limit' ? 'E2BIG'
-                : [
-                        'screenshot-geometry-changed',
-                        'screenshot-geometry-invalid',
-                        'pointer-outside-image',
-                        'keyboard-target-required',
-                        'keyboard-target-invalid',
-                        'keyboard-owned-input-changed',
-                        'keyboard-text-invalid',
-                        'key-chord',
-                        'key',
-                        'key-action',
-                        'application-name',
-                        'application-browser-url',
-                        'application-browser-name',
-                        'keyboard-field-invalid',
-                        'keyboard-field-ambiguous',
-                    ].includes(reason)
-                  ? 'EINVAL'
-                  : 'EIO';
+                : reason === 'keyboard-field-unsupported'
+                  ? 'ENOTSUP'
+                  : reason === 'keyboard-field-not-found'
+                    ? 'ENOENT'
+                    : reason === 'keyboard-field-search-limit'
+                      ? 'E2BIG'
+                      : [
+                              'screenshot-geometry-changed',
+                              'pointer-outside-image',
+                              'keyboard-target-required',
+                              'keyboard-target-invalid',
+                              'keyboard-owned-input-changed',
+                              'keyboard-text-invalid',
+                              'key-chord',
+                              'key',
+                              'key-action',
+                              'application-name',
+                              'application-browser-url',
+                              'application-browser-name',
+                              'keyboard-field-invalid',
+                              'keyboard-field-ambiguous',
+                          ].includes(reason)
+                        ? 'EINVAL'
+                        : 'EIO';
         this.definitive = [
             'screenshot-geometry-changed',
-            'screenshot-geometry-invalid',
             'pointer-outside-image',
             'keyboard-target-required',
             'keyboard-target-invalid',
@@ -154,8 +157,6 @@ export class HostDesktopError extends Error {
         switch (reason) {
             case 'screenshot-geometry-changed':
                 return 'Screenshot geometry changed; take a fresh screenshot before clicking.';
-            case 'screenshot-geometry-invalid':
-                return 'Screenshot geometry must include valid image dimensions and physical source coordinates.';
             case 'pointer-outside-image':
                 return 'The requested mouse position is outside the screenshot image.';
             case 'input-not-delivered':

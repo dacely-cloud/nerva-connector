@@ -149,7 +149,7 @@ it('empty-file hashing is complete and snapshot JSON quantities preserve precisi
             { path, snapshot: value },
             ConnectorHostArgumentContracts.paired,
         );
-        expect(check.valid ? null : check.field).toMatch(/^snapshot\./u);
+        expect(check.valid ? null : check.message).toMatch(/^snapshot\./u);
     }
 });
 

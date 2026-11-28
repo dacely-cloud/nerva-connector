@@ -151,12 +151,10 @@ export class HostDesktopWindows implements HostDesktopDriver {
 
     /** Named keys are translated to native virtual keys by the fixed helper. */
     public async key(request: HostDesktopKeyRequest): Promise<void> {
-        let key: string;
-        try {
-            key = ConnectorHostKeyChord.read(request.key, request.action);
-        } catch {
+        if (!ConnectorHostKeyChord.accepts(request.key, request.action)) {
             throw new HostDesktopError('key', 'key-chord', 0);
         }
+        const key: string = request.key;
         const owned: string | undefined = this.#keys.get(key);
         if (request.action === ConnectorHostKeyAction.Up && request.target === undefined) {
             if (owned === undefined) {
