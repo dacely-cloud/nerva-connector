@@ -122,6 +122,7 @@ try {
         codeSplitting: false,
         sourcemap: false,
         minify: true,
+        comments: { legal: true, annotation: false, jsdoc: false },
         banner: shebang,
     });
     if (result.output.length !== 1) {

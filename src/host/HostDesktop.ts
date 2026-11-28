@@ -102,14 +102,17 @@ export class HostDesktop implements AsyncDisposable {
     public async snapshot(): Promise<HostDesktopFrame> {
         return await this.#operate(async (): Promise<HostDesktopFrame> => {
             this.#active();
-            if (!(this.#driver instanceof HostDesktopWindows)) {
-                throw new HostOperationError(
-                    ConnectorHostErrorCode.Unsupported,
-                    'Inline desktop capture requires Windows',
-                    true,
-                );
+            if (this.#driver instanceof HostDesktopWindows) {
+                return await this.#driver.snapshot();
             }
-            return await this.#driver.snapshot();
+            if (this.#driver instanceof HostDesktopX11) {
+                return await this.#driver.snapshot(await this.#available());
+            }
+            throw new HostOperationError(
+                ConnectorHostErrorCode.Unsupported,
+                'Inline desktop capture requires Windows or an X11 desktop',
+                true,
+            );
         });
     }
 

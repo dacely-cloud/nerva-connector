@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { HostDesktopCommand } from './HostDesktopCommand.js';
+import type { HostDesktopFrame } from './HostApplication.js';
+import { HostDesktopX11Frame } from './HostDesktopX11Frame.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import {
     HostDesktopBackend,
@@ -70,6 +72,11 @@ export class HostDesktopX11 implements HostDesktopDriver {
         } catch {
             return this.#unavailable(HostDesktopUnavailable.Unavailable);
         }
+    }
+
+    /** One inline JPEG of the whole desktop, encoded the same way as the Windows helper's snapshot. */
+    public async snapshot(desktop: HostDesktopInfo): Promise<HostDesktopFrame> {
+        return await HostDesktopX11Frame.capture(desktop, this.environment);
     }
 
     /** Disable ImageMagick disk/map caches; PNG bytes remain bounded in the caller's pipe. */

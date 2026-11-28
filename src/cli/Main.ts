@@ -18,6 +18,7 @@ import {
     ConnectorPermissionFailure,
 } from '../permissions/ConnectorPermissionError.js';
 import { ConnectorPermissionPrompt } from './ConnectorPermissionPrompt.js';
+import { ConnectorSetupCommand } from './ConnectorSetupCommand.js';
 import {
     ConnectorPermissionWizard,
     ConnectorPermissionOutcome,
@@ -114,6 +115,7 @@ enum ConnectorLocalCommand {
     SystemInfo = 'system-info',
     Help = '--help',
     Status = 'status',
+    Setup = 'setup',
     Permissions = 'permissions',
     InitializeIdentity = 'initialize-identity',
     Files = 'files',
@@ -208,6 +210,7 @@ try {
                 '  nexa connector                Open the connector',
                 '  nexa connector status         Check connection status',
                 '  nexa connector logout         Unpair this machine and pair again',
+                '  nexa connector setup [--name N] [--folder DIR] [--access pairing-only|full-computer]',
                 '  nexa connector permissions    Approve local Linux file access',
                 '  nexa connector host-mcp --full-computer-access --directory <absolute directory>',
                 '  nexa connector host-access --config <runtimeFile> --directory <existing tasks> --full-computer-access',
@@ -372,6 +375,17 @@ try {
                 stop.signal,
             ),
         );
+    } else if (
+        invocation[0] === ConnectorLocalCommand.Connector.valueOf() &&
+        args[0] === ConnectorLocalCommand.Setup.valueOf()
+    ) {
+        const identity: PublicIdentityRecord = await ConnectorSetupCommand.run(
+            await ConnectorCloudConfiguration.defaultDirectory(),
+            ConnectorSetupCommand.parse(args),
+            stop.signal,
+        );
+        process.stdout.write(JSON.stringify(identity) + '\n');
+        process.stderr.write('Setup saved. Run nexa connector to link this computer.\n');
     } else if (args[0] === ConnectorLocalCommand.Service.valueOf()) {
         process.stdout.write(
             JSON.stringify(
@@ -557,7 +571,8 @@ try {
         caught instanceof ConnectorNativeExecutionError
             ? caught.message
             : (args[0] === ConnectorLocalCommand.HostMcp.valueOf() ||
-                    args[0] === ConnectorLocalCommand.HostAccess.valueOf()) &&
+                    args[0] === ConnectorLocalCommand.HostAccess.valueOf() ||
+                    args[0] === ConnectorLocalCommand.Setup.valueOf()) &&
                 caught instanceof Error
               ? caught.message
               : args[0] === ConnectorLocalCommand.Logout.valueOf()

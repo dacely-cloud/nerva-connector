@@ -92,6 +92,20 @@ The connector asks a few questions. Use the arrow keys and Enter; Esc goes back.
 The screen then shows **Connected**. Nexa can use the computer while the connector runs: on Windows, while its icon
 is next to the clock; on macOS and Linux, while the window is open.
 
+### Setup without a terminal
+
+For an unattended install, answer the setup questions with options instead:
+
+```sh
+nerva-connector setup --name "Build VM" --folder /srv/tasks --access pairing-only
+```
+
+Every option is optional and keeps the saved or default answer (`--access` is `pairing-only` or `full-computer`). The
+command saves the choices, prepares the link configuration and creates this computer's device key, then prints only
+its public key as JSON. It does not link the computer, connect to the network or turn on full computer access:
+run `nerva-connector` to link it, and approve full computer access separately once it is linked. Running it again
+with the same answers changes nothing and prints the same key.
+
 ## Everyday use
 
 Open the connector:
@@ -235,6 +249,9 @@ does not count toward those 30 seconds. A `stall` line's `cpuMs` tells the two k
 slept, Windows suspended it, or its console window was waiting, as while text is selected in it. **"The compiled Windows helper could not start"** means the helper exited
 before it answered at all. Check that .NET Framework 4.x is installed and that security software allows
 `nerva-connector-state.exe`.
+
+**Linux: Nexa can't see the screen.** Inline screenshots need an X11 session with `xdotool` and ImageMagick's
+`import`; a Wayland desktop supports screenshots saved to files only.
 
 **Nexa can't see the screen on a Mac.** Allow **Screen Recording** and **Accessibility** for Terminal (see
 [macOS](#macos)), then restart the connector.

@@ -62,7 +62,7 @@ export class HostMcpWorkspaceCatalog {
         ],
         [
             ConnectorHostTool.DesktopSnapshot,
-            'Windows: capture the current desktop once and return its bounded image inline, without creating a file or selecting a workspace.',
+            'Windows and Linux X11: capture the current desktop once and return its bounded image inline, without creating a file or selecting a workspace.',
         ],
         [
             ConnectorHostTool.DesktopPointer,
