@@ -1,52 +1,62 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import type { HostMcpWorkspaceBounds } from './HostMcpWorkspaceBounds.js';
-
-import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostTool,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import type { ConnectorHostArgumentBounds } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentContract.js';
+import {
+    ConnectorHostByteEncoding,
+    ConnectorHostHttpMethod,
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+    ConnectorHostShell,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
+import type { ConnectorHostArguments } from 'nerva-connector-protocol/protocol/ConnectorHostArguments.js';
+import {
+    ConnectorHostArgumentValidation,
+    type ConnectorHostArgumentCheck,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentValidation.js';
 import { SystemInfo } from '../system/SystemInfo.js';
 import { HostFileSnapshotCodec } from './HostFileSnapshotCodec.js';
 import { HostWorkspace } from './HostWorkspace.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostMcpWorkspaceCatalog } from './HostMcpWorkspaceCatalog.js';
 import { HostDesktopCoordinates } from './HostDesktopCoordinates.js';
-import { HostHttpMethod, type HostHttpRequest, type HostHttpRead } from './HostHttpTypes.js';
-import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
+import type { HostHttpRead } from './HostHttpTypes.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from './HostTerminalTypes.js';
 import { HostOperationError } from './HostOperationError.js';
-import { HostMcpArgumentShape } from './HostMcpArgumentShape.js';
-import { HostDesktopTextFieldOptions } from './HostDesktopTextFieldOptions.js';
-import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
-    HostDesktopPointerAction,
-    HostDesktopButton,
-    HostDesktopKeyAction,
     HostDesktopLimits,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
     type HostDesktopTextField,
 } from './HostDesktopTypes.js';
-import {
-    HostShell,
-    HostWorkspaceLimits,
-    HostWriteMode,
-    type HostProcessRequest,
-    type HostProcessSnapshot,
-    type HostProcessOutput,
-} from './HostWorkspaceTypes.js';
 import type {
-    HostJsonObject,
-    HostJsonValue,
-    HostMcpTool,
-    HostMcpTools,
-} from './HostMcpProtocol.js';
+    HostProcessRequest,
+    HostProcessSnapshot,
+    HostProcessOutput,
+} from './HostWorkspaceTypes.js';
+import type { HostJsonObject, HostMcpTool, HostMcpTools } from './HostMcpProtocol.js';
+import type { HostMcpWorkspaceBounds } from './HostMcpWorkspaceBounds.js';
 import type { HostReadObservationStart } from './HostReadObservationStart.js';
 
-/** Full-computer tools exposed to an explicitly authorized MCP stdio session. */
+/**
+ * Full-computer tools exposed to an explicitly authorized MCP stdio session.
+ *
+ * @remarks
+ * Every call's arguments are checked against the tool's argument contract from nerva-connector-protocol before any
+ * host operation is invoked, and a violation is a definitive invalid request naming the field. Remote clients check
+ * the same contracts before submitting, but this check never relies on that.
+ */
 export class HostMcpWorkspaceTools implements HostMcpTools {
     /** Metadata is stable for the entire session; runtime authorization is checked on every operation. */
     public readonly tools: readonly HostMcpTool[];
     readonly #bounds: HostMcpWorkspaceBounds;
+    readonly #argumentBounds: ConnectorHostArgumentBounds;
 
     /** The caller retains ownership of the host runtime and abort authority. */
     public constructor(
@@ -73,6 +83,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             throw new Error('Invalid host tool transport bounds');
         }
         this.#bounds = Object.freeze({ ...bounds });
+        this.#argumentBounds = Object.freeze(HostMcpWorkspaceCatalog.argumentBounds(bounds));
         this.tools = HostMcpWorkspaceCatalog.tools(bounds).filter(
             (tool: HostMcpTool): boolean => terminalSupported || !tool.name.startsWith('terminal_'),
         );
@@ -85,61 +96,81 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
         observation?: HostReadObservationStart,
     ): Promise<string> {
         this.signal.throwIfAborted();
-        if (observation !== undefined && name !== 'process_start' && name !== 'terminal_start') {
-            throw this.#invalid('Native observation reservation requires an exact start');
+        if (
+            observation !== undefined &&
+            name !== ConnectorHostTool.ProcessStart &&
+            name !== ConnectorHostTool.TerminalStart
+        ) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Native observation reservation requires an exact start',
+                true,
+            );
         }
-        const definition: HostMcpTool | undefined = this.tools.find(
-            (entry: HostMcpTool): boolean => entry.name === name,
+        const known: ConnectorHostTool | undefined = Object.values(ConnectorHostTool).find(
+            (tool: ConnectorHostTool): boolean => tool === name,
         );
-        if (definition === undefined) {
-            if (
-                name.startsWith('terminal_') &&
-                HostMcpWorkspaceCatalog.tools(this.#bounds).some(
-                    (tool: HostMcpTool): boolean => tool.name === name,
-                )
-            ) {
+        if (
+            known === undefined ||
+            !this.tools.some((tool: HostMcpTool): boolean => tool.name === known)
+        ) {
+            if (known !== undefined && known.startsWith('terminal_')) {
                 throw new HostOperationError(
                     ConnectorHostErrorCode.Unsupported,
                     'Native host terminal support is unavailable',
                     true,
                 );
             }
-            throw new HostOperationError(
-                ConnectorHostErrorCode.Unsupported,
-                'This Connector does not offer the requested computer tool',
-                true,
-            );
+            throw this.#unsupported();
         }
-        const properties: HostJsonValue | undefined = definition.inputSchema['properties'];
-        if (!HostMcpArgumentShape.object(properties)) {
-            throw new HostOperationError(
-                ConnectorHostErrorCode.OperationFailed,
-                'Invalid computer tool schema',
-                true,
-            );
-        }
-        const args: Readonly<Record<string, unknown>> = this.#arguments(
+        const check: ConnectorHostArgumentCheck = ConnectorHostArgumentValidation.check(
+            known,
             argumentsValue,
-            properties,
-            definition.inputSchema['required'],
+            this.#argumentBounds,
         );
-        switch (name) {
-            case 'network_resolve':
+        if (!check.valid) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                check.message,
+                true,
+            );
+        }
+        return await this.#dispatch(known, check.arguments, observation);
+    }
+
+    async #dispatch(
+        tool: ConnectorHostTool,
+        args: ConnectorHostArguments,
+        observation: HostReadObservationStart | undefined,
+    ): Promise<string> {
+        switch (tool) {
+            case ConnectorHostTool.NetworkResolve:
                 return this.#serialize({
                     addresses: await this.workspace.resolveNetwork(
-                        this.#text(args['hostname']),
+                        args.text('hostname'),
                         this.signal,
                     ),
                 });
-            case 'http_open':
+            case ConnectorHostTool.HttpOpen:
                 return this.#serialize(
-                    await this.workspace.openHttp(this.#httpRequest(args), this.signal),
+                    await this.workspace.openHttp(
+                        {
+                            url: args.text('url'),
+                            address: args.text('address'),
+                            method: args.choice('method', Object.values(ConnectorHostHttpMethod)),
+                            headers: args.map('headers'),
+                            maximumBytes: args.decimal('maximumBytes'),
+                            timeoutMs: args.integer('timeoutMs'),
+                            idleTimeoutMs: args.integer('idleTimeoutMs'),
+                        },
+                        this.signal,
+                    ),
                 );
-            case 'http_read': {
+            case ConnectorHostTool.HttpRead: {
                 const read: HostHttpRead = await this.workspace.readHttp(
-                    this.#text(args['transferId']),
-                    this.#offset(args['offset']),
-                    this.#maximum(args['maximumBytes']),
+                    args.text('transferId'),
+                    args.decimal('offset'),
+                    args.integer('maximumBytes'),
                 );
                 return this.#serialize({
                     transferId: read.transferId,
@@ -151,103 +182,100 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     failure: read.failure,
                 });
             }
-            case 'http_close': {
-                const transferId: string = this.#text(args['transferId']);
+            case ConnectorHostTool.HttpClose: {
+                const transferId: string = args.text('transferId');
                 await this.workspace.closeHttp(transferId);
                 return this.#serialize({ transferId, closed: true });
             }
-            case 'environment_inspect':
+            case ConnectorHostTool.EnvironmentInspect:
                 return this.#serialize(
                     await this.workspace.inspectEnvironment(
-                        HostEnvironmentValidation.request(args['programs'], args['variables']),
+                        { programs: args.list('programs'), variables: args.list('variables') },
                         this.signal,
                     ),
                 );
-            case 'desktop_info':
+            case ConnectorHostTool.DesktopInfo:
                 return this.#serialize(await this.workspace.desktopInfo());
-            case 'application_open':
+            case ConnectorHostTool.ApplicationOpen:
                 return this.#serialize(
                     await this.workspace.openApplication(
-                        this.#text(args['name']),
-                        args['url'] === undefined ? undefined : this.#text(args['url']),
-                        args['workspaceFile'] === undefined
-                            ? undefined
-                            : this.#text(args['workspaceFile']),
+                        args.text('name'),
+                        args.optionalText('url', undefined),
+                        args.optionalText('workspaceFile', undefined),
                     ),
                 );
-            case 'desktop_snapshot':
+            case ConnectorHostTool.DesktopSnapshot:
                 return this.#serialize(await this.workspace.desktopSnapshot());
-            case 'desktop_screenshot': {
-                const mode: HostWriteMode = this.#writeMode(args['mode']);
-                if (mode !== HostWriteMode.Create && mode !== HostWriteMode.Replace) {
-                    throw this.#invalid('Desktop screenshots require mode create or replace');
-                }
+            case ConnectorHostTool.DesktopScreenshot:
                 return this.#serialize(
                     await this.workspace.desktopScreenshot(
-                        this.#text(args['path']),
-                        mode,
-                        args['maximumWidth'] === undefined
-                            ? HostDesktopLimits.dimension
-                            : Boundary.count(args['maximumWidth'], HostDesktopLimits.dimension),
-                        args['maximumHeight'] === undefined
-                            ? HostDesktopLimits.dimension
-                            : Boundary.count(args['maximumHeight'], HostDesktopLimits.dimension),
+                        args.text('path'),
+                        args.choice('mode', [
+                            ConnectorHostWriteMode.Create,
+                            ConnectorHostWriteMode.Replace,
+                        ]),
+                        args.optionalInteger('maximumWidth', HostDesktopLimits.dimension),
+                        args.optionalInteger('maximumHeight', HostDesktopLimits.dimension),
                     ),
                 );
-            }
-            case 'desktop_pointer': {
+            case ConnectorHostTool.DesktopPointer: {
+                const action: ConnectorHostPointerAction = args.choice(
+                    'action',
+                    Object.values(ConnectorHostPointerAction),
+                );
                 const request: HostDesktopPointerRequest = {
-                    x: this.#coordinate(args['x']),
-                    y: this.#coordinate(args['y']),
-                    action: this.#choice(args['action'], Object.values(HostDesktopPointerAction)),
+                    x: args.integer('x'),
+                    y: args.integer('y'),
+                    action,
                     button:
-                        args['button'] === undefined &&
-                        args['action'] !== HostDesktopPointerAction.Move
-                            ? HostDesktopButton.Left
-                            : args['button'] == null
-                              ? null
-                              : this.#choice(args['button'], Object.values(HostDesktopButton)),
+                        !args.present('button') && action !== ConnectorHostPointerAction.Move
+                            ? ConnectorHostPointerButton.Left
+                            : args.optionalChoice(
+                                  'button',
+                                  Object.values(ConnectorHostPointerButton),
+                                  null,
+                              ),
                 };
+                const image: ConnectorHostArguments | null = args.optionalRecord('image');
                 await this.workspace.desktopPointer(
                     request,
-                    args['image'] === undefined ? null : HostDesktopCoordinates.read(args['image']),
+                    image === null ? null : HostDesktopCoordinates.read(image),
                 );
                 return '{"sent":true}';
             }
-            case 'desktop_key': {
+            case ConnectorHostTool.DesktopKey: {
+                const target: string | undefined = args.optionalText('target', undefined);
                 const request: HostDesktopKeyRequest = {
-                    key: this.#text(args['key']),
-                    action: this.#choice(args['action'], Object.values(HostDesktopKeyAction)),
-                    ...(args['target'] === undefined ? {} : { target: this.#text(args['target']) }),
+                    key: args.text('key'),
+                    action: args.choice('action', Object.values(ConnectorHostKeyAction)),
+                    ...(target === undefined ? {} : { target }),
                 };
                 await this.workspace.desktopKey(request);
                 return '{"sent":true}';
             }
-            case 'desktop_text': {
-                const field: HostDesktopTextField | undefined = HostDesktopTextFieldOptions.read(
-                    args['field'],
-                    args['replace'],
-                );
+            case ConnectorHostTool.DesktopText: {
+                const field: HostDesktopTextField | undefined = args.has('field')
+                    ? { field: args.text('field'), replace: true }
+                    : undefined;
                 await this.workspace.desktopText(
-                    this.#text(args['text'], true),
-                    args['target'] === undefined ? undefined : this.#text(args['target']),
+                    args.text('text'),
+                    args.optionalText('target', undefined),
                     field,
                 );
                 return field === undefined
                     ? '{"sent":true}'
                     : '{"sent":true,"replaced":true,"verified":true}';
             }
-            case 'computer_info':
+            case ConnectorHostTool.ComputerInfo:
                 return this.#serialize(await SystemInfo.read(this.signal));
-            case 'file_read': {
+            case ConnectorHostTool.FileRead: {
+                const snapshot: ConnectorHostArguments | null = args.optionalRecord('snapshot');
                 const result: Awaited<ReturnType<HostWorkspace['read']>> =
                     await this.workspace.read(
-                        this.#text(args['path']),
-                        this.#offset(args['offset']),
-                        this.#maximum(args['maximumBytes']),
-                        args['snapshot'] === undefined
-                            ? undefined
-                            : HostFileSnapshotCodec.decode(args['snapshot']),
+                        args.text('path'),
+                        args.optionalDecimal('offset', 0n),
+                        args.optionalInteger('maximumBytes', this.#bounds.defaultChunkBytes),
+                        snapshot === null ? undefined : HostFileSnapshotCodec.decode(snapshot),
                         this.signal,
                     );
                 return this.#serialize({
@@ -256,74 +284,57 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     ...this.#bytes(result.bytes),
                 });
             }
-            case 'file_digest':
+            case ConnectorHostTool.FileDigest:
                 return this.#serialize(
                     await this.workspace.digest(
-                        this.#text(args['path']),
-                        HostFileSnapshotCodec.decode(args['snapshot']),
+                        args.text('path'),
+                        HostFileSnapshotCodec.decode(args.record('snapshot')),
                         this.signal,
                     ),
                 );
-            case 'file_write':
+            case ConnectorHostTool.FileWrite:
                 return this.#serialize({
                     writtenBytes: await this.workspace.write(
-                        this.#text(args['path']),
+                        args.text('path'),
                         this.#input(args),
-                        this.#writeMode(args['mode']),
-                        this.#offset(args['offset']),
+                        args.choice('mode', Object.values(ConnectorHostWriteMode)),
+                        args.optionalDecimal('offset', 0n),
                     ),
                 });
-            case 'file_stat':
+            case ConnectorHostTool.FileStat:
                 return this.#serialize(
                     await this.workspace.stat(
-                        this.#text(args['path']),
-                        args['follow'] === undefined ? false : Boundary.boolean(args['follow']),
+                        args.text('path'),
+                        args.optionalBoolean('follow', false),
                     ),
                 );
-            case 'file_publish':
-                await this.workspace.publish(
-                    this.#text(args['source']),
-                    this.#text(args['destination']),
-                );
+            case ConnectorHostTool.FilePublish:
+                await this.workspace.publish(args.text('source'), args.text('destination'));
                 return '{"published":true}';
-            case 'file_rename':
-                await this.workspace.rename(
-                    this.#text(args['source']),
-                    this.#text(args['destination']),
-                );
+            case ConnectorHostTool.FileRename:
+                await this.workspace.rename(args.text('source'), args.text('destination'));
                 return '{"renamed":true}';
-            case 'file_chmod':
-                await this.workspace.chmod(
-                    this.#text(args['path']),
-                    Boundary.count(args['mode'], 0o7777),
-                );
+            case ConnectorHostTool.FileChmod:
+                await this.workspace.chmod(args.text('path'), args.integer('mode'));
                 return '{"changed":true}';
-            case 'directory_list':
+            case ConnectorHostTool.DirectoryList:
                 return this.#serialize(
                     await this.workspace.list(
-                        this.#text(args['path']),
-                        args['offset'] === undefined ? 0 : Boundary.count(args['offset'], 1000000),
-                        args['maximumEntries'] === undefined
-                            ? Math.min(100, this.#bounds.maximumDirectoryEntries)
-                            : Boundary.count(
-                                  args['maximumEntries'],
-                                  this.#bounds.maximumDirectoryEntries,
-                              ),
+                        args.text('path'),
+                        args.optionalInteger('offset', 0),
+                        args.optionalInteger(
+                            'maximumEntries',
+                            Math.min(100, this.#bounds.maximumDirectoryEntries),
+                        ),
                     ),
                 );
-            case 'directory_create':
-                await this.workspace.mkdir(
-                    this.#text(args['path']),
-                    Boundary.boolean(args['recursive']),
-                );
+            case ConnectorHostTool.DirectoryCreate:
+                await this.workspace.mkdir(args.text('path'), args.boolean('recursive'));
                 return '{"created":true}';
-            case 'file_remove':
-                await this.workspace.remove(
-                    this.#text(args['path']),
-                    Boundary.boolean(args['recursive']),
-                );
+            case ConnectorHostTool.FileRemove:
+                await this.workspace.remove(args.text('path'), args.boolean('recursive'));
                 return '{"removed":true}';
-            case 'process_start':
+            case ConnectorHostTool.ProcessStart:
                 return this.#snapshot(
                     await this.workspace.start(
                         this.#process(args),
@@ -331,33 +342,33 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                         observation,
                     ),
                 );
-            case 'process_read':
+            case ConnectorHostTool.ProcessRead:
                 return this.#snapshot(
                     await this.workspace.output(
-                        this.#text(args['processId']),
-                        this.#offset(args['stdoutOffset']),
-                        this.#offset(args['stderrOffset']),
-                        this.#maximum(args['maximumBytes']),
+                        args.text('processId'),
+                        args.optionalDecimal('stdoutOffset', 0n),
+                        args.optionalDecimal('stderrOffset', 0n),
+                        args.optionalInteger('maximumBytes', this.#bounds.defaultChunkBytes),
                     ),
                 );
-            case 'process_write':
+            case ConnectorHostTool.ProcessWrite:
                 await this.workspace.input(
-                    this.#text(args['processId']),
+                    args.text('processId'),
                     this.#input(args),
-                    Boundary.boolean(args['end']),
+                    args.boolean('end'),
                 );
                 return '{"accepted":true}';
-            case 'process_stop':
-                await this.workspace.stop(this.#text(args['processId']));
+            case ConnectorHostTool.ProcessStop:
+                await this.workspace.stop(args.text('processId'));
                 return '{"stopped":true}';
-            case 'process_release':
-                await this.workspace.release(this.#text(args['processId']));
+            case ConnectorHostTool.ProcessRelease:
+                await this.workspace.release(args.text('processId'));
                 return '{"released":true}';
-            case 'terminal_start': {
+            case ConnectorHostTool.TerminalStart: {
                 const request: HostTerminalRequest = {
                     ...this.#process(args),
-                    cols: Boundary.count(args['cols'], 500),
-                    rows: Boundary.count(args['rows'], 200),
+                    cols: args.integer('cols'),
+                    rows: args.integer('rows'),
                 };
                 return this.#terminal(
                     await this.workspace.terminals.start(
@@ -367,82 +378,65 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     ),
                 );
             }
-            case 'terminal_read':
+            case ConnectorHostTool.TerminalRead:
                 return this.#terminal(
                     await this.workspace.terminals.output(
-                        this.#text(args['processId']),
-                        this.#offset(args['offset']),
-                        this.#maximum(args['maximumBytes']),
+                        args.text('processId'),
+                        args.optionalDecimal('offset', 0n),
+                        args.optionalInteger('maximumBytes', this.#bounds.defaultChunkBytes),
                     ),
                 );
-            case 'terminal_write':
-                await this.workspace.terminals.input(
-                    this.#text(args['processId']),
-                    this.#input(args),
-                );
+            case ConnectorHostTool.TerminalWrite:
+                await this.workspace.terminals.input(args.text('processId'), this.#input(args));
                 return '{"accepted":true}';
-            case 'terminal_resize':
+            case ConnectorHostTool.TerminalResize:
                 await this.workspace.terminals.resize(
-                    this.#text(args['processId']),
-                    Boundary.count(args['cols'], 500),
-                    Boundary.count(args['rows'], 200),
+                    args.text('processId'),
+                    args.integer('cols'),
+                    args.integer('rows'),
                 );
                 return '{"resized":true}';
-            case 'terminal_stop':
-                await this.workspace.terminals.stop(this.#text(args['processId']));
+            case ConnectorHostTool.TerminalStop:
+                await this.workspace.terminals.stop(args.text('processId'));
                 return '{"stopped":true}';
-            case 'terminal_release':
-                await this.workspace.terminals.release(this.#text(args['processId']));
+            case ConnectorHostTool.TerminalRelease:
+                await this.workspace.terminals.release(args.text('processId'));
                 return '{"released":true}';
             default:
-                throw new HostOperationError(
-                    ConnectorHostErrorCode.Unsupported,
-                    'This Connector does not offer the requested computer tool',
-                    true,
-                );
+                throw this.#unsupported();
         }
     }
 
-    #arguments(
-        value: HostJsonObject,
-        properties: HostJsonObject,
-        required: HostJsonValue | undefined,
-    ): Readonly<Record<string, unknown>> {
-        try {
-            const args: Readonly<Record<string, unknown>> = Boundary.record(
-                value,
-                Object.keys(properties),
-            );
-            for (const field of Boundary.array(required, 32)) {
-                if (typeof field !== 'string') {
-                    throw new Error('Invalid host operation schema');
-                }
-                if (!Object.hasOwn(args, field)) {
-                    throw new HostOperationError(
-                        ConnectorHostErrorCode.InvalidRequest,
-                        `Host operation requires the ${field} field`,
-                        true,
-                    );
-                }
-            }
-            HostMcpArgumentShape.check(properties, args);
-            return args;
-        } catch (cause: unknown) {
-            if (cause instanceof HostOperationError) {
-                throw cause;
-            }
-            throw new HostOperationError(
-                ConnectorHostErrorCode.InvalidRequest,
-                'Host operation arguments were rejected before execution',
-                true,
-                { cause },
-            );
-        }
+    #unsupported(): HostOperationError {
+        return new HostOperationError(
+            ConnectorHostErrorCode.Unsupported,
+            'This Connector does not offer the requested computer tool',
+            true,
+        );
     }
 
-    #process(args: Readonly<Record<string, unknown>>): HostProcessRequest {
+    /**
+     * Launch fields already satisfy the contract; the typed request check also bounds their combined size.
+     *
+     * @remarks
+     * `null` and absence mean the same for every launch field, and an absent argument list or environment is empty.
+     */
+    #process(args: ConnectorHostArguments): HostProcessRequest {
+        const retention: number | undefined = args.optionalInteger(
+            'retentionAfterTimeoutMs',
+            undefined,
+        );
+        const request: HostProcessRequest = {
+            executable: args.optionalText('executable', null),
+            arguments: args.list('arguments'),
+            shell: args.optionalChoice('shell', Object.values(ConnectorHostShell), null),
+            command: args.optionalText('command', null),
+            directory: args.optionalText('directory', null),
+            environment: args.map('environment'),
+            timeoutMs: args.integer('timeoutMs'),
+            ...(retention === undefined ? {} : { retentionAfterTimeoutMs: retention }),
+        };
         try {
-            const request: HostProcessRequest = this.#processRequest(args);
             HostWorkspaceValidation.process(request);
             return request;
         } catch (cause: unknown) {
@@ -458,186 +452,11 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
         }
     }
 
-    #httpRequest(args: Readonly<Record<string, unknown>>): HostHttpRequest {
-        const headers: Readonly<Record<string, unknown>> = this.#environment(args['headers']);
-        return {
-            url: this.#text(args['url']),
-            address: this.#text(args['address']),
-            method: this.#choice(args['method'], Object.values(HostHttpMethod)),
-            headers: Object.fromEntries(
-                Object.entries(headers).map(([key, value]: [string, unknown]): [string, string] => [
-                    key,
-                    this.#text(value, true),
-                ]),
-            ),
-            maximumBytes: this.#offset(args['maximumBytes']),
-            timeoutMs: Boundary.count(args['timeoutMs'], 900000),
-            idleTimeoutMs: Boundary.count(args['idleTimeoutMs'], 30000),
-        };
-    }
-
-    #processRequest(args: Readonly<Record<string, unknown>>): HostProcessRequest {
-        const timeoutMs: unknown = args['timeoutMs'];
-        if (
-            typeof timeoutMs !== 'number' ||
-            !Number.isSafeInteger(timeoutMs) ||
-            timeoutMs < 1 ||
-            timeoutMs > HostWorkspaceLimits.timeoutMs
-        ) {
-            throw new HostOperationError(
-                ConnectorHostErrorCode.InvalidRequest,
-                `Program launch requires timeoutMs to be an integer from 1 to ${HostWorkspaceLimits.timeoutMs}`,
-                true,
-            );
-        }
-        const environment: Readonly<Record<string, unknown>> = this.#environment(
-            args['environment'] ?? {},
-        );
-        const entries: [string, string][] = Object.entries(environment).map(
-            ([key, value]: [string, unknown]): [string, string] => [key, this.#text(value, true)],
-        );
-        const shell: unknown = args['shell'] ?? null;
-        if (
-            shell !== null &&
-            !Object.values(HostShell).some((value: HostShell): boolean => value === shell)
-        ) {
-            throw new HostOperationError(
-                ConnectorHostErrorCode.InvalidRequest,
-                'Program launch has an unsupported shell value',
-                true,
-            );
-        }
-        return {
-            executable: args['executable'] == null ? null : this.#text(args['executable']),
-            arguments: Boundary.array(args['arguments'] ?? [], 256).map((value: unknown): string =>
-                this.#text(value, true),
-            ),
-            shell: shell as HostShell | null,
-            command: args['command'] == null ? null : this.#text(args['command']),
-            directory: args['directory'] == null ? null : this.#text(args['directory']),
-            environment: Object.fromEntries(entries),
-            timeoutMs,
-            ...(args['retentionAfterTimeoutMs'] === undefined
-                ? {}
-                : {
-                      retentionAfterTimeoutMs: Boundary.count(
-                          args['retentionAfterTimeoutMs'],
-                          86400000,
-                      ),
-                  }),
-        };
-    }
-
-    #environment(raw: unknown): Readonly<Record<string, unknown>> {
-        if (
-            raw === null ||
-            typeof raw !== 'object' ||
-            Array.isArray(raw) ||
-            Object.keys(raw).length > 256
-        ) {
-            throw this.#invalid('Invalid process environment');
-        }
-        return Boundary.record(raw, Object.keys(raw));
-    }
-
-    #input(args: Readonly<Record<string, unknown>>): Buffer {
-        const raw: unknown = args['data'];
-        if (typeof raw !== 'string' || raw.length > 196608) {
-            throw this.#invalid(
-                'Host operation data must be a string of at most 196608 characters',
-            );
-        }
-        const data: string = raw;
-        if (args['encoding'] === 'utf8') {
-            const bytes: Buffer = Buffer.from(data, 'utf8');
-            if (bytes.byteLength > this.#bounds.maximumChunkBytes) {
-                throw this.#invalid('Host input exceeds the transport chunk bound');
-            }
-            return bytes;
-        }
-        if (args['encoding'] !== 'base64') {
-            throw this.#invalid('Host operation encoding must be utf8 or base64');
-        }
-        const bytes: Buffer = Buffer.from(data, 'base64');
-        if (
-            bytes.toString('base64') !== data ||
-            bytes.byteLength > this.#bounds.maximumChunkBytes
-        ) {
-            throw this.#invalid(
-                'Host operation data must be canonical base64 within the transport chunk bound',
-            );
-        }
-        return bytes;
-    }
-
-    #text(raw: unknown, empty: boolean = false): string {
-        if (
-            typeof raw !== 'string' ||
-            (!empty && raw.length === 0) ||
-            raw.length > 196608 ||
-            raw.includes('\0')
-        ) {
-            throw this.#invalid(
-                'Host operation text must be a string without NUL characters' +
-                    (empty ? '' : ' and not empty'),
-            );
-        }
-        return raw;
-    }
-
-    #offset(raw: unknown): bigint {
-        try {
-            return raw === undefined ? 0n : Boundary.integer(raw);
-        } catch (cause: unknown) {
-            throw this.#invalid(
-                'Host operation offsets must be decimal strings within the signed 64-bit range',
-                cause,
-            );
-        }
-    }
-    #choice<T extends string>(raw: unknown, choices: readonly T[]): T {
-        for (const choice of choices) {
-            if (choice === raw) {
-                return choice;
-            }
-        }
-        throw this.#invalid('Host operation choice must be one of ' + choices.join(', '));
-    }
-    #coordinate(raw: unknown): number {
-        if (typeof raw !== 'number' || !Number.isSafeInteger(raw) || Math.abs(raw) > 1000000) {
-            throw this.#invalid('Desktop coordinates must be integers within 1000000 pixels');
-        }
-        return raw;
-    }
-    #maximum(raw: unknown): number {
-        try {
-            return raw === undefined
-                ? this.#bounds.defaultChunkBytes
-                : Boundary.count(raw, this.#bounds.maximumChunkBytes);
-        } catch (cause: unknown) {
-            throw this.#invalid(
-                `Host operation maximumBytes must be an integer up to ${this.#bounds.maximumChunkBytes}`,
-                cause,
-            );
-        }
-    }
-    #writeMode(raw: unknown): HostWriteMode {
-        for (const mode of Object.values(HostWriteMode)) {
-            if (raw === mode) {
-                return mode;
-            }
-        }
-        throw this.#invalid(
-            'Host file mode must be one of ' + Object.values(HostWriteMode).join(', '),
-        );
-    }
-
-    #invalid(message: string, cause?: unknown): HostOperationError {
-        return new HostOperationError(
-            ConnectorHostErrorCode.InvalidRequest,
-            message,
-            true,
-            cause === undefined ? undefined : { cause },
+    /** The contract has already checked the encoding and the decoded size against the transport chunk. */
+    #input(args: ConnectorHostArguments): Buffer {
+        return Buffer.from(
+            args.text('data'),
+            args.choice('encoding', Object.values(ConnectorHostByteEncoding)),
         );
     }
 

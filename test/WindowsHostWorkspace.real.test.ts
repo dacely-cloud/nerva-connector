@@ -14,8 +14,6 @@ import type { HostEnvironmentReport } from '../src/host/HostEnvironmentTypes.js'
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
     HostFileKind,
-    HostShell,
-    HostWriteMode,
     type HostWorkspaceAuthorization,
     type HostWorkspaceAccess,
     type HostProcessRequest,
@@ -26,6 +24,10 @@ import {
     type HostFileRead,
     type HostDirectoryPage,
 } from '../src/host/HostWorkspaceTypes.js';
+import {
+    ConnectorHostShell,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Completed native output keeps exact binary data independent from the final lifecycle snapshot. */
 interface WindowsWorkspaceCommand {
@@ -169,7 +171,7 @@ function snapshot(metadata: HostFileMetadata): HostFileSnapshot {
 function command(
     executable: string | null,
     arguments_: readonly string[],
-    shell: HostShell | null,
+    shell: ConnectorHostShell | null,
     text: string | null,
 ): HostProcessRequest {
     return {
@@ -196,17 +198,17 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
         for (let index: number = 0; index < body.length; index++) {
             body[index] = index % 256;
         }
-        expect(await host.write(stage, body.subarray(0, 32768), HostWriteMode.Create, 0n)).toBe(
-            32768n,
-        );
-        expect(await host.write(stage, body.subarray(32768), HostWriteMode.Update, 32768n)).toBe(
-            BigInt(body.length - 32768),
-        );
+        expect(
+            await host.write(stage, body.subarray(0, 32768), ConnectorHostWriteMode.Create, 0n),
+        ).toBe(32768n);
+        expect(
+            await host.write(stage, body.subarray(32768), ConnectorHostWriteMode.Update, 32768n),
+        ).toBe(BigInt(body.length - 32768));
         const patch: Buffer = Buffer.from([255, 0, 42]);
-        expect(await host.write(stage, patch, HostWriteMode.Update, 123n)).toBe(3n);
+        expect(await host.write(stage, patch, ConnectorHostWriteMode.Update, 123n)).toBe(3n);
         patch.copy(body, 123);
         const tail: Buffer = Buffer.from([0, 26, 255, 10]);
-        expect(await host.write(stage, tail, HostWriteMode.Append, 0n)).toBe(4n);
+        expect(await host.write(stage, tail, ConnectorHostWriteMode.Append, 0n)).toBe(4n);
         const expected: Buffer = Buffer.concat([body, tail]);
         const metadata: HostFileMetadata = await host.stat(stage);
         expect(metadata.kind).toBe(HostFileKind.File);
@@ -232,7 +234,7 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
             digest: createHash('sha256').update(expected).digest('hex'),
             size: BigInt(expected.length),
         });
-        await host.write(occupied, Buffer.from('preserved'), HostWriteMode.Create, 0n);
+        await host.write(occupied, Buffer.from('preserved'), ConnectorHostWriteMode.Create, 0n);
         await expect(host.publish(stage, occupied)).rejects.toMatchObject({
             code: ConnectorHostErrorCode.AlreadyExists,
             definitive: true,
@@ -265,7 +267,7 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
         await delay(25);
         const changed: Buffer = Buffer.from(expected);
         changed[0] = expected[0] === 255 ? 0 : 255;
-        await host.write(destination, changed.subarray(0, 1), HostWriteMode.Update, 0n);
+        await host.write(destination, changed.subarray(0, 1), ConnectorHostWriteMode.Update, 0n);
         await expect(host.read(destination, 0n, 32, snapshot(installed))).rejects.toMatchObject({
             code: 'snapshot-changed',
         });
@@ -276,7 +278,12 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
         try {
             await expect(host.read(destination, 0n, 32)).rejects.toThrow('revoked');
             await expect(
-                host.write(destination, Buffer.from('must not replace'), HostWriteMode.Replace, 0n),
+                host.write(
+                    destination,
+                    Buffer.from('must not replace'),
+                    ConnectorHostWriteMode.Replace,
+                    0n,
+                ),
             ).rejects.toThrow('revoked');
         } finally {
             fixture.allowed = true;
@@ -293,12 +300,12 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
     async (): Promise<void> => {
         await using fixture: WindowsWorkspaceFixture = await WindowsWorkspaceFixture.create();
         const text: Buffer = Buffer.from('first\r\nneedle alpha\r\nlast\r\n');
-        await fixture.host.write('input.txt', text, HostWriteMode.Create, 0n);
+        await fixture.host.write('input.txt', text, ConnectorHostWriteMode.Create, 0n);
         const searched: WindowsWorkspaceCommand = await fixture.execute(
             command(
                 null,
                 [],
-                HostShell.Cmd,
+                ConnectorHostShell.Cmd,
                 'type input.txt && findstr /n /l /c:"needle" input.txt',
             ),
         );
@@ -316,11 +323,11 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
         for (let index: number = 0; index < binary.length; index++) {
             binary[index] = index % 256;
         }
-        await fixture.host.write('binary.bin', binary, HostWriteMode.Create, 0n);
+        await fixture.host.write('binary.bin', binary, ConnectorHostWriteMode.Create, 0n);
         await fixture.host.write(
             'unicode.txt',
             Buffer.from('first\r\nneedle é\r\nlast 𝄞\r\n'),
-            HostWriteMode.Create,
+            ConnectorHostWriteMode.Create,
             0n,
         );
         const source: string =
@@ -347,8 +354,18 @@ it.skipIf(process.platform !== 'win32' || process.env['NERVA_WINDOWS_WORKSPACE_S
     async (): Promise<void> => {
         await using fixture: WindowsWorkspaceFixture = await WindowsWorkspaceFixture.create();
         const decoy: string = 'nerva-workspace-only-' + process.pid.toString();
-        await fixture.host.write(decoy + '.exe', Buffer.alloc(0), HostWriteMode.Create, 0n);
-        await fixture.host.write(decoy + '.cmd', Buffer.alloc(0), HostWriteMode.Create, 0n);
+        await fixture.host.write(
+            decoy + '.exe',
+            Buffer.alloc(0),
+            ConnectorHostWriteMode.Create,
+            0n,
+        );
+        await fixture.host.write(
+            decoy + '.cmd',
+            Buffer.alloc(0),
+            ConnectorHostWriteMode.Create,
+            0n,
+        );
         const report: HostEnvironmentReport = await fixture.host.inspectEnvironment({
             programs: [
                 'cmd',

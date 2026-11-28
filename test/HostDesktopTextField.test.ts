@@ -5,7 +5,6 @@ import { expect, it, vi, type MockInstance } from 'vitest';
 import { HostDesktopWindows } from '../src/host/HostDesktopWindows.js';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
 import { HostDesktopTextFieldOptions } from '../src/host/HostDesktopTextFieldOptions.js';
-import { HostDesktopKeyAction } from '../src/host/HostDesktopTypes.js';
 import { HostDesktopError } from '../src/host/HostDesktopError.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import {
@@ -13,6 +12,7 @@ import {
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
 } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostKeyAction } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 const target: string = 'win32:v1:00000000000000ff:0000002a:01dc000000000001:00000037';
 
@@ -38,7 +38,7 @@ it('the app-scoped path pipes only text/target/exactfield/replace and is indepen
         .mockResolvedValue(Buffer.from('{"ok":true}'));
     try {
         const driver: HostDesktopWindows = new HostDesktopWindows('verified.exe', {});
-        await driver.key({ key: 'Control', action: HostDesktopKeyAction.Down, target });
+        await driver.key({ key: 'Control', action: ConnectorHostKeyAction.Down, target });
         const other: string = target.replace('00000000ff', '00000000fe');
         await driver.text('private replacement', other, { field: 'exact-name', replace: true });
         expect(run).toHaveBeenCalledTimes(2);
@@ -55,7 +55,7 @@ it('the app-scoped path pipes only text/target/exactfield/replace and is indepen
                 replace: true,
             }),
         ]);
-        await driver.key({ key: 'Control', action: HostDesktopKeyAction.Up });
+        await driver.key({ key: 'Control', action: ConnectorHostKeyAction.Up });
         expect(run.mock.calls[2]?.[4]).toBe(
             JSON.stringify({ operation: 'key-release', key: 'Control' }),
         );

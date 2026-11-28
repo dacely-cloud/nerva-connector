@@ -7,15 +7,17 @@ import {
     HostDesktopBackend,
     HostDesktopScope,
     HostDesktopUnavailable,
-    HostDesktopPointerAction,
-    HostDesktopButton,
-    HostDesktopKeyAction,
     HostDesktopLimits,
     type HostDesktopDriver,
     type HostDesktopInfo,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
 } from './HostDesktopTypes.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Installed X11 utilities provide ordinary desktop interaction without accessing another display session. */
 export class HostDesktopX11 implements HostDesktopDriver {
@@ -103,11 +105,11 @@ export class HostDesktopX11 implements HostDesktopDriver {
             request.x.toString(),
             request.y.toString(),
         ];
-        if (request.action !== HostDesktopPointerAction.Move) {
+        if (request.action !== ConnectorHostPointerAction.Move) {
             arguments_.push(
-                request.action === HostDesktopPointerAction.Click
+                request.action === ConnectorHostPointerAction.Click
                     ? 'click'
-                    : request.action === HostDesktopPointerAction.Down
+                    : request.action === ConnectorHostPointerAction.Down
                       ? 'mousedown'
                       : 'mouseup',
                 this.#button(request.button),
@@ -117,7 +119,7 @@ export class HostDesktopX11 implements HostDesktopDriver {
     }
 
     /** Cleanup releases a button at the actual pointer position. */
-    public async releaseButton(button: HostDesktopButton): Promise<void> {
+    public async releaseButton(button: ConnectorHostPointerButton): Promise<void> {
         await HostDesktopCommand.run(
             'xdotool',
             ['mouseup', this.#button(button)],
@@ -143,9 +145,9 @@ export class HostDesktopX11 implements HostDesktopDriver {
         await HostDesktopCommand.run(
             'xdotool',
             [
-                request.action === HostDesktopKeyAction.Press
+                request.action === ConnectorHostKeyAction.Press
                     ? 'key'
-                    : request.action === HostDesktopKeyAction.Down
+                    : request.action === ConnectorHostKeyAction.Down
                       ? 'keydown'
                       : 'keyup',
                 keys[request.key] ?? request.key,
@@ -166,10 +168,10 @@ export class HostDesktopX11 implements HostDesktopDriver {
         );
     }
 
-    #button(button: HostDesktopButton | null): string {
-        return button === HostDesktopButton.Left
+    #button(button: ConnectorHostPointerButton | null): string {
+        return button === ConnectorHostPointerButton.Left
             ? '1'
-            : button === HostDesktopButton.Middle
+            : button === ConnectorHostPointerButton.Middle
               ? '2'
               : '3';
     }

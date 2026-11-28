@@ -5,7 +5,6 @@ import { HostByteRing } from './HostByteRing.js';
 import { HostReadRevision } from './HostReadRevision.js';
 import { HostProcessLaunch, type HostProcessLaunchOptions } from './HostProcessLaunch.js';
 import {
-    HostShell,
     HostProcessFailure,
     HostWorkspaceLimits,
     type HostProcessOutput,
@@ -25,6 +24,7 @@ import {
     type HostTerminalRequest,
     type HostTerminalSnapshot,
 } from './HostTerminalTypes.js';
+import { ConnectorHostShell } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** A finite native-input waiter never substitutes Node pipe buffering for actual PTY delivery. */
 interface HostTerminalInputWaiter {
@@ -126,7 +126,10 @@ export class HostTerminal implements AsyncDisposable {
         HostWorkspaceValidation.count(request.rows, 1, 200);
         HostWorkspaceValidation.directory(directory);
         let launch: HostProcessLaunchOptions = HostProcessLaunch.prepare(request);
-        if (request.shell === HostShell.PowerShell || request.shell === HostShell.Pwsh) {
+        if (
+            request.shell === ConnectorHostShell.PowerShell ||
+            request.shell === ConnectorHostShell.Pwsh
+        ) {
             launch = {
                 ...launch,
                 arguments: launch.arguments.filter(

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { isIP } from 'node:net';
-import { HostHttpMethod, type HostHttpRequest } from './HostHttpTypes.js';
+import { type HostHttpRequest } from './HostHttpTypes.js';
+import { ConnectorHostHttpMethod } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** The socket capability cannot acquire proxy, redirect or credential authority from user headers. */
 export class HostHttpValidation {
@@ -33,7 +34,7 @@ export class HostHttpValidation {
             isIP(request.address) === 0 ||
             request.address.includes('%') ||
             (isIP(hostname) !== 0 && this.#address(hostname) !== this.#address(request.address)) ||
-            !Object.values(HostHttpMethod).includes(request.method) ||
+            !Object.values(ConnectorHostHttpMethod).includes(request.method) ||
             request.maximumBytes < 1n ||
             request.maximumBytes > 104857600n ||
             !Number.isSafeInteger(request.timeoutMs) ||

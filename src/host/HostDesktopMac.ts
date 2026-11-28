@@ -11,15 +11,17 @@ import {
     HostDesktopBackend,
     HostDesktopScope,
     HostDesktopUnavailable,
-    HostDesktopPointerAction,
-    HostDesktopButton,
-    HostDesktopKeyAction,
     HostDesktopLimits,
     type HostDesktopDriver,
     type HostDesktopInfo,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
 } from './HostDesktopTypes.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** One display probe: geometry in points plus the two macOS privacy permissions desktop control needs. */
 interface HostDesktopMacProbe {
@@ -131,14 +133,16 @@ export class HostDesktopMac implements HostDesktopDriver {
         Down: 125,
         Up: 126,
     };
-    static readonly #buttons: Readonly<Record<HostDesktopButton, HostDesktopMacButtonEvents>> = {
-        [HostDesktopButton.Left]: { down: 1, up: 2, dragged: 6, button: 0 },
-        [HostDesktopButton.Right]: { down: 3, up: 4, dragged: 7, button: 1 },
-        [HostDesktopButton.Middle]: { down: 25, up: 26, dragged: 27, button: 2 },
+    static readonly #buttons: Readonly<
+        Record<ConnectorHostPointerButton, HostDesktopMacButtonEvents>
+    > = {
+        [ConnectorHostPointerButton.Left]: { down: 1, up: 2, dragged: 6, button: 0 },
+        [ConnectorHostPointerButton.Right]: { down: 3, up: 4, dragged: 7, button: 1 },
+        [ConnectorHostPointerButton.Middle]: { down: 25, up: 26, dragged: 27, button: 2 },
     };
     /** `kCGEventMouseMoved`. */
     static readonly #moved: number = 5;
-    readonly #held: Set<HostDesktopButton> = new Set();
+    readonly #held: Set<ConnectorHostPointerButton> = new Set();
     readonly #modifiers: Set<string> = new Set();
     #prompted: boolean = false;
 
@@ -229,8 +233,8 @@ export class HostDesktopMac implements HostDesktopDriver {
     /** Moves become drags while a button is held, as macOS applications expect. */
     public async pointer(request: HostDesktopPointerRequest): Promise<void> {
         const events: number[] = [];
-        if (request.action === HostDesktopPointerAction.Move || request.button === null) {
-            const held: HostDesktopButton | undefined = this.#held.values().next().value;
+        if (request.action === ConnectorHostPointerAction.Move || request.button === null) {
+            const held: ConnectorHostPointerButton | undefined = this.#held.values().next().value;
             events.push(
                 ...(held === undefined
                     ? [HostDesktopMac.#moved, 0]
@@ -241,13 +245,13 @@ export class HostDesktopMac implements HostDesktopDriver {
             );
         } else {
             const button: HostDesktopMacButtonEvents = HostDesktopMac.#buttons[request.button];
-            if (request.action !== HostDesktopPointerAction.Up) {
+            if (request.action !== ConnectorHostPointerAction.Up) {
                 events.push(button.down, button.button);
             }
-            if (request.action !== HostDesktopPointerAction.Down) {
+            if (request.action !== ConnectorHostPointerAction.Down) {
                 events.push(button.up, button.button);
             }
-            if (request.action === HostDesktopPointerAction.Down) {
+            if (request.action === ConnectorHostPointerAction.Down) {
                 this.#held.add(request.button);
             } else {
                 this.#held.delete(request.button);
@@ -261,7 +265,7 @@ export class HostDesktopMac implements HostDesktopDriver {
     }
 
     /** Release a held button where the pointer is now, without moving it. */
-    public async releaseButton(button: HostDesktopButton): Promise<void> {
+    public async releaseButton(button: ConnectorHostPointerButton): Promise<void> {
         const events: HostDesktopMacButtonEvents = HostDesktopMac.#buttons[button];
         await this.#script(Script.pointer, [
             'here',
@@ -286,13 +290,13 @@ export class HostDesktopMac implements HostDesktopDriver {
             ? (HostDesktopMac.#flags['Shift'] ?? 0)
             : 0;
         const events: string[] = [];
-        if (request.action !== HostDesktopKeyAction.Up) {
+        if (request.action !== ConnectorHostKeyAction.Up) {
             if (modifier !== undefined) {
                 this.#modifiers.add(request.key);
             }
             events.push(code.toString(), '1', (this.#mask() | extra).toString());
         }
-        if (request.action !== HostDesktopKeyAction.Down) {
+        if (request.action !== ConnectorHostKeyAction.Down) {
             if (modifier !== undefined) {
                 this.#modifiers.delete(request.key);
             }

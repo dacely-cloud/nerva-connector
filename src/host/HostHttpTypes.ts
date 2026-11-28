@@ -1,11 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-/** Native input fetching supports no request body or implicit authentication. */
-export const HostHttpMethod = { Get: 'GET', Head: 'HEAD' } as const;
-/** Methods are validated before opening the pinned connection. */
-export type HostHttpMethod = (typeof HostHttpMethod)[keyof typeof HostHttpMethod];
-
+import { ConnectorHostHttpMethod } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 /** End of HTTP framing is distinct from failed or still-pending input. */
 export const HostHttpState = {
     Pending: 'pending',
@@ -29,7 +25,7 @@ export type HostHttpFailure = (typeof HostHttpFailure)[keyof typeof HostHttpFail
 export interface HostHttpRequest {
     readonly url: string;
     readonly address: string;
-    readonly method: HostHttpMethod;
+    readonly method: ConnectorHostHttpMethod;
     readonly headers: Readonly<Record<string, string>>;
     readonly maximumBytes: bigint;
     readonly timeoutMs: number;

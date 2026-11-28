@@ -4,43 +4,21 @@
 import type { BigIntStats } from 'node:fs';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
-import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import type { ConnectorHostArguments } from 'nerva-connector-protocol/protocol/ConnectorHostArguments.js';
 import { HostFileIdentity } from './HostFileIdentity.js';
 import type { HostFileSnapshot } from './HostWorkspaceTypes.js';
 
 /** Snapshot preconditions remain exact across JSON transport and descriptor checks. */
 export class HostFileSnapshotCodec {
-    /**
-     * External snapshots use decimal strings, including signed historical timestamps.
-     *
-     * @throws {HostOperationError} `invalid-request`, definitive, for any other shape
-     */
-    public static decode(raw: unknown): HostFileSnapshot {
-        let snapshot: HostFileSnapshot;
-        try {
-            const value: Readonly<Record<string, unknown>> = Boundary.record(raw, [
-                'identity',
-                'size',
-                'modifiedAtNs',
-            ]);
-            if (typeof value['identity'] !== 'string') {
-                throw new Error('Invalid host snapshot identity');
-            }
-            snapshot = {
-                identity: value['identity'],
-                size: Boundary.integer(value['size']),
-                modifiedAtNs: this.#timestamp(value['modifiedAtNs']),
-            };
-        } catch (cause: unknown) {
-            throw new HostOperationError(
-                ConnectorHostErrorCode.InvalidRequest,
-                'Host file snapshot must hold identity, a decimal string size and a decimal string modifiedAtNs',
-                true,
-                { cause },
-            );
-        }
-        this.validate(snapshot);
-        return snapshot;
+    /** A snapshot from tool arguments that already satisfy their contract; quantities stay exact. */
+    public static decode(snapshot: ConnectorHostArguments): HostFileSnapshot {
+        const decoded: HostFileSnapshot = {
+            identity: snapshot.text('identity'),
+            size: snapshot.decimal('size'),
+            modifiedAtNs: snapshot.decimal('modifiedAtNs'),
+        };
+        this.validate(decoded);
+        return decoded;
     }
 
     /** Typed callers cannot bypass actual runtime snapshot validation. */
@@ -78,12 +56,5 @@ export class HostFileSnapshotCodec {
                 true,
             );
         }
-    }
-
-    static #timestamp(raw: unknown): bigint {
-        if (typeof raw !== 'string' || raw.length > 40 || !/^(0|-?[1-9][0-9]*)$/u.test(raw)) {
-            throw new Error('Invalid exact host file timestamp');
-        }
-        return BigInt(raw);
     }
 }

@@ -14,58 +14,91 @@ import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
-/** One argument-shape refusal: the tool, its arguments and the local message that names the field. */
+/** One argument-contract refusal: the tool, its arguments and the local message that names the field. */
 interface ShapeCase {
     readonly tool: ConnectorHostTool;
     readonly args: HostJsonObject;
     readonly message: string;
 }
 
-const offset: string = '^(0|[1-9][0-9]{0,18})$';
-
 it.each<ShapeCase>([
     {
         tool: ConnectorHostTool.ProcessRead,
         args: { processId: 'p', stdoutOffset: 0, stderrOffset: '0' },
-        message: `Host operation field stdoutOffset must be a string matching ${offset}, not an integer`,
+        message: 'stdoutOffset must be a decimal integer string such as "0", not a JSON number',
+    },
+    {
+        tool: ConnectorHostTool.ProcessRead,
+        args: { processId: 'p', stdoutOffset: '01' },
+        message: 'stdoutOffset must be a decimal integer string such as "0"',
     },
     {
         tool: ConnectorHostTool.FileRead,
         args: { path: 'missing.txt', offset: '0', maximumBytes: '1024' },
-        message: 'Host operation field maximumBytes must be an integer, not a string',
+        message: 'maximumBytes must be a JSON integer from 1 to 1048576, not a string',
     },
     {
         tool: ConnectorHostTool.FileWrite,
         args: { path: 'new.txt', data: 'x', encoding: 'utf8', mode: 'update', offset: 0 },
-        message: `Host operation field offset must be a string matching ${offset}, not an integer`,
+        message: 'offset must be a decimal integer string such as "0", not a JSON number',
     },
     {
         tool: ConnectorHostTool.FileWrite,
         args: { path: 'new.txt', data: 'x', encoding: 'utf-8', mode: 'replace' },
-        message: 'Host operation field encoding must be one of "utf8", "base64"',
+        message: 'encoding must be one of utf8, base64',
     },
     {
         tool: ConnectorHostTool.FileWrite,
         args: { path: 'new.txt', data: 'x', encoding: 'utf8', mode: 'overwrite' },
-        message: 'Host operation field mode must be one of "create", "replace", "update", "append"',
+        message: 'mode must be one of create, replace, update, append',
+    },
+    {
+        tool: ConnectorHostTool.FileWrite,
+        args: { path: 'new.txt', data: 'not base64!', encoding: 'base64', mode: 'create' },
+        message: 'data must be canonical padded base64 when encoding is base64',
+    },
+    {
+        tool: ConnectorHostTool.FileWrite,
+        args: { path: 'new.txt', data: 'x', encoding: 'utf8', mode: 'append', offset: '1' },
+        message: 'an offset other than "0" needs mode update',
     },
     {
         tool: ConnectorHostTool.FileRemove,
         args: { path: 'new.txt', recursive: 'true' },
-        message: 'Host operation field recursive must be a boolean, not a string',
+        message: 'recursive must be true or false, not a string',
+    },
+    {
+        tool: ConnectorHostTool.FileRemove,
+        args: { path: 'new.txt' },
+        message: 'file_remove requires recursive',
+    },
+    {
+        tool: ConnectorHostTool.FileRemove,
+        args: { path: '', recursive: false },
+        message: 'path must not be empty',
     },
     {
         tool: ConnectorHostTool.FileChmod,
         args: { path: 'new.txt', mode: 99999 },
-        message: 'Host operation field mode must be from 0 to 4095',
+        message: 'mode must be a JSON integer from 0 to 4095',
     },
     {
         tool: ConnectorHostTool.ProcessStart,
         args: { executable: 'private.exe', arguments: 'private argument', timeoutMs: 1000 },
-        message: 'Host operation field arguments must be an array, not a string',
+        message: 'arguments must be an array of strings, not a string',
+    },
+    {
+        tool: ConnectorHostTool.ProcessStart,
+        args: { command: 'private command', timeoutMs: 1000 },
+        message: 'process_start requires shell with command',
+    },
+    {
+        tool: ConnectorHostTool.EnvironmentInspect,
+        args: { programs: ['node'] },
+        message: 'environment_inspect requires variables',
     },
 ])(
-    'a wrong JSON shape for $tool is a definitive invalid request naming the field',
+    'a wrong argument for $tool is a definitive invalid request naming the field',
     async ({ tool, args, message }: ShapeCase): Promise<void> => {
         await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
         const tools: HostMcpWorkspaceTools = new HostMcpWorkspaceTools(
@@ -88,39 +121,6 @@ it.each<ShapeCase>([
         });
         expect(fixture.checks).toEqual([]);
         await expect(stat(join(fixture.directory, 'new.txt'))).rejects.toThrow();
-    },
-);
-
-it.each<ShapeCase>([
-    {
-        tool: ConnectorHostTool.ProcessRead,
-        args: { processId: 'p', stdoutOffset: '01' },
-        message: 'Host operation offsets must be decimal strings within the signed 64-bit range',
-    },
-    {
-        tool: ConnectorHostTool.FileWrite,
-        args: { path: 'new.txt', data: 'not base64!', encoding: 'base64', mode: 'create' },
-        message: 'Host operation data must be canonical base64 within the transport chunk bound',
-    },
-    {
-        tool: ConnectorHostTool.FileRemove,
-        args: { path: '', recursive: false },
-        message: 'Host operation text must be a string without NUL characters and not empty',
-    },
-])(
-    'a decoder refusal for $tool after the shape check is still definitive',
-    async ({ tool, args, message }: ShapeCase): Promise<void> => {
-        await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
-        const tools: HostMcpWorkspaceTools = new HostMcpWorkspaceTools(
-            fixture.host,
-            new AbortController().signal,
-        );
-        await expect(tools.call(tool, args)).rejects.toMatchObject({
-            code: 'invalid-request',
-            definitive: true,
-            message,
-        });
-        expect(fixture.checks).toEqual([]);
     },
 );
 

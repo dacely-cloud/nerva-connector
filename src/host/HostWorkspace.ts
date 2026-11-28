@@ -46,10 +46,10 @@ import {
     type HostFileRead,
     type HostFileSnapshot,
     type HostFileDigestResult,
-    type HostWriteMode,
     type HostFileMetadata,
     type HostDirectoryPage,
 } from './HostWorkspaceTypes.js';
+import type { ConnectorHostWriteMode } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** A pending process registers its exact owner before native launch admission can settle. */
 interface HostProcessAdmission {
@@ -225,7 +225,7 @@ export class HostWorkspace implements AsyncDisposable {
     public async write(
         path: string,
         bytes: Buffer,
-        mode: HostWriteMode,
+        mode: ConnectorHostWriteMode,
         offset: bigint,
     ): Promise<bigint> {
         return await this.#file(HostOperation.Write, path, (absolute: string): Promise<bigint> =>
@@ -385,7 +385,7 @@ export class HostWorkspace implements AsyncDisposable {
     /** Capture an intentional PNG file; large images use existing chunked file retrieval. */
     public async desktopScreenshot(
         path: string,
-        mode: HostWriteMode,
+        mode: ConnectorHostWriteMode,
         maximumWidth: number = 4096,
         maximumHeight: number = 4096,
     ): Promise<HostDesktopScreenshot> {

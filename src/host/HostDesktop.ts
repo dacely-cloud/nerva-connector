@@ -2,22 +2,18 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
-import { HostWriteMode } from './HostWorkspaceTypes.js';
 import { HostDesktopCapture } from './HostDesktopCapture.js';
 import { HostDesktopCoordinates } from './HostDesktopCoordinates.js';
 import { HostDesktopX11 } from './HostDesktopX11.js';
 import { HostDesktopWayland } from './HostDesktopWayland.js';
 import { HostDesktopWindows } from './HostDesktopWindows.js';
-import { HostDesktopKeyChord } from './HostDesktopKeyChord.js';
+import { ConnectorHostKeyChord } from 'nerva-connector-protocol/protocol/ConnectorHostKeyChord.js';
 import { HostDesktopError } from './HostDesktopError.js';
 import type { HostApplicationResult, HostDesktopFrame } from './HostApplication.js';
 import { HostOperationError } from './HostOperationError.js';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostDesktopMac } from './HostDesktopMac.js';
 import {
-    HostDesktopPointerAction,
-    HostDesktopButton,
-    HostDesktopKeyAction,
     HostDesktopLimits,
     type HostDesktopInfo,
     type HostDesktopScreenshot,
@@ -28,12 +24,18 @@ import {
     type HostDesktopViewport,
     type HostDesktopTextField,
 } from './HostDesktopTypes.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** One desktop session owns held inputs and uses the connector user's actual interactive display. */
 export class HostDesktop implements AsyncDisposable {
     readonly #driver: HostDesktopDriver;
     readonly #keys: Set<string> = new Set();
-    readonly #buttons: Set<HostDesktopButton> = new Set();
+    readonly #buttons: Set<ConnectorHostPointerButton> = new Set();
     #closed: boolean = false;
     #disposal: Promise<void> | null = null;
     #pending: Promise<undefined> | null = null;
@@ -114,7 +116,7 @@ export class HostDesktop implements AsyncDisposable {
     /** Capture retains one intentional PNG artifact for bounded file retrieval. */
     public async screenshot(
         path: string,
-        mode: HostWriteMode,
+        mode: ConnectorHostWriteMode,
         maximumWidth: number,
         maximumHeight: number,
     ): Promise<HostDesktopScreenshot> {
@@ -122,7 +124,7 @@ export class HostDesktop implements AsyncDisposable {
             this.#active();
             HostWorkspaceValidation.count(maximumWidth, 1, HostDesktopLimits.dimension);
             HostWorkspaceValidation.count(maximumHeight, 1, HostDesktopLimits.dimension);
-            if (mode !== HostWriteMode.Create && mode !== HostWriteMode.Replace) {
+            if (mode !== ConnectorHostWriteMode.Create && mode !== ConnectorHostWriteMode.Replace) {
                 throw new Error('Desktop screenshots require create or replace mode');
             }
             const desktop: HostDesktopInfo = await this.#available();
@@ -157,25 +159,25 @@ export class HostDesktop implements AsyncDisposable {
             HostWorkspaceValidation.count(request.x, desktop.x, desktop.x + desktop.width - 1);
             HostWorkspaceValidation.count(request.y, desktop.y, desktop.y + desktop.height - 1);
             if (
-                !Object.values(HostDesktopPointerAction).includes(request.action) ||
-                (request.action === HostDesktopPointerAction.Move
+                !Object.values(ConnectorHostPointerAction).includes(request.action) ||
+                (request.action === ConnectorHostPointerAction.Move
                     ? request.button !== null
                     : request.button === null ||
-                      !Object.values(HostDesktopButton).includes(request.button))
+                      !Object.values(ConnectorHostPointerButton).includes(request.button))
             ) {
                 throw new Error('Invalid desktop pointer action');
             }
             if (
-                (request.action === HostDesktopPointerAction.Down ||
-                    request.action === HostDesktopPointerAction.Click) &&
+                (request.action === ConnectorHostPointerAction.Down ||
+                    request.action === ConnectorHostPointerAction.Click) &&
                 request.button !== null
             ) {
                 this.#buttons.add(request.button);
             }
             await this.#driver.pointer(request);
             if (
-                (request.action === HostDesktopPointerAction.Click ||
-                    request.action === HostDesktopPointerAction.Up) &&
+                (request.action === ConnectorHostPointerAction.Click ||
+                    request.action === ConnectorHostPointerAction.Up) &&
                 request.button !== null
             ) {
                 this.#buttons.delete(request.button);
@@ -199,7 +201,7 @@ export class HostDesktop implements AsyncDisposable {
             let key: string;
             try {
                 key = windows
-                    ? HostDesktopKeyChord.read(request.key, request.action)
+                    ? ConnectorHostKeyChord.read(request.key, request.action)
                     : this.#key(request.key);
             } catch (error: unknown) {
                 if (windows) {
@@ -207,13 +209,13 @@ export class HostDesktop implements AsyncDisposable {
                 }
                 throw error;
             }
-            if (!Object.values(HostDesktopKeyAction).includes(request.action)) {
+            if (!Object.values(ConnectorHostKeyAction).includes(request.action)) {
                 throw new Error('Invalid desktop key action');
             }
             const owned: boolean = this.#keys.has(key);
             if (
-                request.action === HostDesktopKeyAction.Down ||
-                (!windows && request.action === HostDesktopKeyAction.Press)
+                request.action === ConnectorHostKeyAction.Down ||
+                (!windows && request.action === ConnectorHostKeyAction.Press)
             ) {
                 this.#keys.add(key);
             }
@@ -226,8 +228,8 @@ export class HostDesktop implements AsyncDisposable {
                 throw error;
             }
             if (
-                request.action === HostDesktopKeyAction.Press ||
-                request.action === HostDesktopKeyAction.Up
+                request.action === ConnectorHostKeyAction.Press ||
+                request.action === ConnectorHostKeyAction.Up
             ) {
                 this.#keys.delete(key);
             }
@@ -284,9 +286,9 @@ export class HostDesktop implements AsyncDisposable {
         await this.#pending;
         const effects: Promise<void>[] = [
             ...Array.from(this.#keys, (key: string): Promise<void> =>
-                this.#driver.key({ key, action: HostDesktopKeyAction.Up }),
+                this.#driver.key({ key, action: ConnectorHostKeyAction.Up }),
             ),
-            ...Array.from(this.#buttons, (button: HostDesktopButton): Promise<void> =>
+            ...Array.from(this.#buttons, (button: ConnectorHostPointerButton): Promise<void> =>
                 this.#driver.releaseButton(button),
             ),
         ];
@@ -311,32 +313,7 @@ export class HostDesktop implements AsyncDisposable {
     }
 
     #key(key: string): string {
-        if (
-            typeof key !== 'string' ||
-            (!/^[A-Za-z0-9]$/u.test(key) &&
-                !/^F([1-9]|1[0-2])$/u.test(key) &&
-                ![
-                    'Control',
-                    'Alt',
-                    'Shift',
-                    'Meta',
-                    'Enter',
-                    'Tab',
-                    'Escape',
-                    'Backspace',
-                    'Delete',
-                    'Insert',
-                    'Home',
-                    'End',
-                    'PageUp',
-                    'PageDown',
-                    'Up',
-                    'Down',
-                    'Left',
-                    'Right',
-                    'Space',
-                ].includes(key))
-        ) {
+        if (!ConnectorHostKeyChord.single(key)) {
             throw new Error('Unsupported desktop key');
         }
         return key;

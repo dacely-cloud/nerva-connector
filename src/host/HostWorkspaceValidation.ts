@@ -4,7 +4,8 @@
 import { isAbsolute, resolve } from 'node:path';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostOperationError } from './HostOperationError.js';
-import { HostShell, HostWorkspaceLimits, type HostProcessRequest } from './HostWorkspaceTypes.js';
+import { HostWorkspaceLimits, type HostProcessRequest } from './HostWorkspaceTypes.js';
+import { ConnectorHostShell } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /**
  * Validation is repeated at the host operation boundary even for typed callers.
@@ -106,7 +107,7 @@ export class HostWorkspaceValidation {
                 );
             }
         } else if (
-            !Object.values(HostShell).includes(request.shell) ||
+            !Object.values(ConnectorHostShell).includes(request.shell) ||
             !this.#text(request.command, 1024 * 1024) ||
             request.executable !== null ||
             request.arguments.length !== 0

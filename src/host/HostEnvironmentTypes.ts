@@ -33,12 +33,8 @@ export interface HostEnvironmentSource {
     variable(name: string): string | undefined;
 }
 
-/** Inspection bounds cover both untrusted request size and locally configured search breadth. */
+/** Inspection bounds cover locally configured search breadth; request size is part of the argument contract. */
 export class HostEnvironmentLimits {
-    /** Each request names at most 256 programs and 256 variables. */
-    public static readonly names: number = 256;
-    /** Each program or variable name has 1 to 255 Unicode code points. */
-    public static readonly nameLength: number = 255;
     /** Only the first 1024 PATH entries are considered. */
     public static readonly pathEntries: number = 1024;
     /** Only the first 32 usable PATHEXT extensions are considered. */

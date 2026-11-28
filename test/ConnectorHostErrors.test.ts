@@ -173,12 +173,12 @@ it.skipIf(process.platform !== 'linux')(
         expect(failures[7]).toMatchObject({
             tool: ConnectorHostTool.ProcessRead,
             code: ConnectorHostErrorCode.InvalidRequest,
-            reason: 'Host operation field stdoutOffset must be a string matching ^(0|[1-9][0-9]{0,18})$, not an integer',
+            reason: 'stdoutOffset must be a decimal integer string such as "0", not a JSON number',
         });
         expect(failures[8]).toMatchObject({
             tool: ConnectorHostTool.FileWrite,
             outcome: ConnectorHostOutcome.Failed,
-            reason: 'Host operation field offset must be a string matching ^(0|[1-9][0-9]{0,18})$, not an integer',
+            reason: 'offset must be a decimal integer string such as "0", not a JSON number',
         });
         for (const line of failures) {
             expect(line['reason']).not.toContain('The OS or local authority rejected');

@@ -22,7 +22,6 @@ import { HostFileSnapshotCodec } from './HostFileSnapshotCodec.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import {
     HostFileKind,
-    HostWriteMode,
     HostWorkspaceLimits,
     type HostFileRead,
     type HostFileSnapshot,
@@ -30,6 +29,7 @@ import {
     type HostDirectoryEntry,
     type HostDirectoryPage,
 } from './HostWorkspaceTypes.js';
+import { ConnectorHostWriteMode } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Bounded write metadata from the native file descriptor. */
 interface HostWriteResult {
@@ -112,7 +112,7 @@ export class HostFilesystem {
     public static async write(
         path: string,
         bytes: Buffer,
-        mode: HostWriteMode,
+        mode: ConnectorHostWriteMode,
         offset: bigint,
     ): Promise<bigint> {
         const position: number = HostWorkspaceValidation.offset(offset);
@@ -120,8 +120,8 @@ export class HostFilesystem {
             !Buffer.isBuffer(bytes) ||
             offset + BigInt(bytes.length) > BigInt(Number.MAX_SAFE_INTEGER) ||
             bytes.length > HostWorkspaceLimits.chunkBytes ||
-            !Object.values(HostWriteMode).includes(mode) ||
-            (mode !== HostWriteMode.Update && offset !== 0n)
+            !Object.values(ConnectorHostWriteMode).includes(mode) ||
+            (mode !== ConnectorHostWriteMode.Update && offset !== 0n)
         ) {
             throw new HostOperationError(
                 ConnectorHostErrorCode.InvalidRequest,
@@ -130,20 +130,20 @@ export class HostFilesystem {
             );
         }
         const flags: number =
-            mode === HostWriteMode.Replace
+            mode === ConnectorHostWriteMode.Replace
                 ? constants.O_WRONLY | constants.O_CREAT
-                : mode === HostWriteMode.Append
+                : mode === ConnectorHostWriteMode.Append
                   ? constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND
                   : constants.O_WRONLY;
         const handle: FileHandle =
-            mode === HostWriteMode.Create
+            mode === ConnectorHostWriteMode.Create
                 ? await this.openExclusive(path)
                 : await open(path, flags | constants.O_NONBLOCK, 0o600);
         try {
             if (!(await handle.stat()).isFile()) {
                 throw new Error('Host file writes require a regular file');
             }
-            if (mode === HostWriteMode.Replace) {
+            if (mode === ConnectorHostWriteMode.Replace) {
                 await handle.truncate(0);
             }
             let written: number = 0;
@@ -152,7 +152,7 @@ export class HostFilesystem {
                     bytes,
                     written,
                     bytes.length - written,
-                    mode === HostWriteMode.Append ? null : position + written,
+                    mode === ConnectorHostWriteMode.Append ? null : position + written,
                 );
                 if (result.bytesWritten === 0) {
                     throw new Error('Host file write made no progress');

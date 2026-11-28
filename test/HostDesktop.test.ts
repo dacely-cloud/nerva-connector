@@ -10,18 +10,20 @@ import { expect, it } from 'vitest';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
 import { HostWorkspace } from '../src/host/HostWorkspace.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
-import { HostWriteMode } from '../src/host/HostWorkspaceTypes.js';
 import {
     HostDesktopBackend,
     HostDesktopUnavailable,
-    HostDesktopPointerAction,
-    HostDesktopButton,
-    HostDesktopKeyAction,
     type HostDesktopScreenshot,
 } from '../src/host/HostDesktopTypes.js';
 import { HostDesktopFixture } from './support/HostDesktopFixture.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** GUI qualification is explicit: ordinary headless test environments need not install desktop applications. */
 const x11Qualification: boolean =
@@ -57,7 +59,7 @@ it.skipIf(!x11Qualification)(
         await tools.call('desktop_pointer', {
             x: 60,
             y: 50,
-            action: HostDesktopPointerAction.Click,
+            action: ConnectorHostPointerAction.Click,
             image: {
                 width: 400,
                 height: 300,
@@ -79,7 +81,7 @@ it.skipIf(!x11Qualification)(
             tools.call('desktop_pointer', {
                 x: 1,
                 y: 1,
-                action: HostDesktopPointerAction.Click,
+                action: ConnectorHostPointerAction.Click,
                 image: {
                     width: 400,
                     height: 300,
@@ -90,7 +92,7 @@ it.skipIf(!x11Qualification)(
                 },
             }),
         ).rejects.toThrow('fresh screenshot');
-        await fixture.host.desktopKey({ key: 'A', action: HostDesktopKeyAction.Press });
+        await fixture.host.desktopKey({ key: 'A', action: ConnectorHostKeyAction.Press });
         await tools.call('desktop_text', { text: 'hello' });
         for (
             let attempt: number = 0;
@@ -106,7 +108,7 @@ it.skipIf(!x11Qualification)(
         expect(fixture.events).toContain('keysym 0x6f, o');
         const captured: HostDesktopScreenshot = await fixture.host.desktopScreenshot(
             'desktop.png',
-            HostWriteMode.Create,
+            ConnectorHostWriteMode.Create,
             400,
             300,
         );
@@ -119,7 +121,7 @@ it.skipIf(!x11Qualification)(
         const bytes: Buffer = await readFile(captured.path);
         expect(bytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
         await expect(
-            fixture.host.desktopScreenshot('desktop.png', HostWriteMode.Create),
+            fixture.host.desktopScreenshot('desktop.png', ConnectorHostWriteMode.Create),
         ).rejects.toMatchObject({ code: ConnectorHostErrorCode.AlreadyExists, definitive: true });
         expect(await readFile(captured.path)).toEqual(bytes);
         fixture.files.allowed = false;
@@ -127,12 +129,12 @@ it.skipIf(!x11Qualification)(
             fixture.host.desktopPointer({
                 x: 10,
                 y: 10,
-                action: HostDesktopPointerAction.Move,
+                action: ConnectorHostPointerAction.Move,
                 button: null,
             }),
         ).rejects.toThrow('revoked');
         await expect(
-            fixture.host.desktopScreenshot('refused.png', HostWriteMode.Create),
+            fixture.host.desktopScreenshot('refused.png', ConnectorHostWriteMode.Create),
         ).rejects.toThrow('revoked');
         await expect(stat(join(fixture.files.directory, 'refused.png'))).rejects.toThrow();
     },
@@ -142,12 +144,12 @@ it.skipIf(!x11Qualification)(
     'session cleanup releases held modifiers in the owned display',
     async (): Promise<void> => {
         await using fixture: HostDesktopFixture = await HostDesktopFixture.create();
-        await fixture.host.desktopKey({ key: 'Shift', action: HostDesktopKeyAction.Down });
+        await fixture.host.desktopKey({ key: 'Shift', action: ConnectorHostKeyAction.Down });
         await fixture.host.desktopPointer({
             x: 80,
             y: 80,
-            action: HostDesktopPointerAction.Down,
-            button: HostDesktopButton.Left,
+            action: ConnectorHostPointerAction.Down,
+            button: ConnectorHostPointerButton.Left,
         });
         await fixture.host[Symbol.asyncDispose]();
         await promisify(execFile)('xdotool', ['key', 'a'], {

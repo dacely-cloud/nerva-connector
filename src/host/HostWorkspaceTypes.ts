@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
+import { ConnectorHostShell } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 /** Full computer operations run with the connector user's existing OS permissions. */
 export const HostOperation = {
     NetworkResolve: 'network-resolve',
@@ -63,23 +64,11 @@ export interface HostWorkspaceOptions {
     readonly ended?: (processId: string) => void;
 }
 
-/** Explicit shells accept a command string; normal executables accept a separate argument vector. */
-export const HostShell = {
-    Bash: 'bash',
-    Sh: 'sh',
-    Cmd: 'cmd',
-    PowerShell: 'powershell',
-    Pwsh: 'pwsh',
-} as const;
-
-/** Shell names match the runtime mapping, including optional user-installed shells. */
-export type HostShell = (typeof HostShell)[keyof typeof HostShell];
-
 /** A caller selects an actual command or executable, working directory, environment and finite lifetime. */
 export interface HostProcessRequest {
     readonly executable: string | null;
     readonly arguments: readonly string[];
-    readonly shell: HostShell | null;
+    readonly shell: ConnectorHostShell | null;
     readonly command: string | null;
     readonly directory: string | null;
     readonly environment: Readonly<Record<string, string>>;
@@ -185,17 +174,6 @@ export interface HostDirectoryPage {
     readonly entries: readonly HostDirectoryEntry[];
     readonly nextOffset: number | null;
 }
-
-/** Writes require an explicit mode so chunk writes cannot accidentally truncate existing files. */
-export const HostWriteMode = {
-    Create: 'create',
-    Replace: 'replace',
-    Update: 'update',
-    Append: 'append',
-} as const;
-
-/** Write modes expose creation and truncation intentionally. */
-export type HostWriteMode = (typeof HostWriteMode)[keyof typeof HostWriteMode];
 
 /** Bounds size connector-owned buffers and replies; no count of processes, operations or digests is refused. */
 export class HostWorkspaceLimits {

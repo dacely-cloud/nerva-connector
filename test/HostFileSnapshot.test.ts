@@ -6,7 +6,15 @@ import { writeFile, open, readdir, readlink, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { expect, it } from 'vitest';
-import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import {
+    ConnectorHostErrorCode,
+    ConnectorHostTool,
+} from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostArgumentContracts } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentContract.js';
+import {
+    ConnectorHostArgumentValidation,
+    type ConnectorHostArgumentCheck,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentValidation.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { HostFileSnapshotCodec } from '../src/host/HostFileSnapshotCodec.js';
 import type {
@@ -119,21 +127,29 @@ it('empty-file hashing is complete and snapshot JSON quantities preserve precisi
     expect((await fixture.host.digest(path, captured)).digest).toBe(
         createHash('sha256').digest('hex'),
     );
+    const precise: ConnectorHostArgumentCheck = ConnectorHostArgumentValidation.check(
+        ConnectorHostTool.FileDigest,
+        {
+            path,
+            snapshot: { identity: 'opaque', size: '9007199254740993', modifiedAtNs: '-1000000000' },
+        },
+        ConnectorHostArgumentContracts.paired,
+    );
+    expect(precise.valid).toBe(true);
     expect(
-        HostFileSnapshotCodec.decode({
-            identity: 'opaque',
-            size: '9007199254740993',
-            modifiedAtNs: '-1000000000',
-        }),
+        precise.valid ? HostFileSnapshotCodec.decode(precise.arguments.record('snapshot')) : null,
     ).toEqual({ identity: 'opaque', size: 9007199254740993n, modifiedAtNs: -1000000000n });
     for (const value of [
         { identity: '', size: '1', modifiedAtNs: '1' },
         { identity: 'opaque', size: 1, modifiedAtNs: '1' },
         { identity: 'opaque', size: '1', modifiedAtNs: '-0' },
     ]) {
-        expect((): void => {
-            HostFileSnapshotCodec.decode(value);
-        }).toThrow();
+        const check: ConnectorHostArgumentCheck = ConnectorHostArgumentValidation.check(
+            ConnectorHostTool.FileDigest,
+            { path, snapshot: value },
+            ConnectorHostArgumentContracts.paired,
+        );
+        expect(check.valid ? null : check.field).toMatch(/^snapshot\./u);
     }
 });
 

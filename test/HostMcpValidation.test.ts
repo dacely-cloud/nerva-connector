@@ -102,12 +102,12 @@ it('identifies rejected launch fields in the local diagnostic without quoting co
         new AbortController().signal,
     );
     await expect(tools.call('process_start', { executable: 'private.exe' })).rejects.toMatchObject({
-        message: 'Host operation requires the timeoutMs field',
+        message: 'process_start requires timeoutMs',
     });
     await expect(
         tools.call('process_start', { executable: 'private.exe', timeoutMs: 0 }),
     ).rejects.toMatchObject({
-        message: 'Host operation field timeoutMs must be from 1 to 604800000',
+        message: 'timeoutMs must be a JSON integer from 1 to 604800000',
     });
     await expect(
         tools.call('process_start', {
@@ -117,6 +117,7 @@ it('identifies rejected launch fields in the local diagnostic without quoting co
             timeoutMs: 1000,
         }),
     ).rejects.toMatchObject({
-        message: 'Shell mode requires shell and command. Omit executable and arguments',
+        message:
+            'process_start takes executable with optional arguments or shell with command, not both',
     });
 });

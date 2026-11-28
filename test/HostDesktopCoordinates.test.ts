@@ -2,14 +2,22 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { expect, it } from 'vitest';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostArgumentContracts } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentContract.js';
+import {
+    ConnectorHostArgumentValidation,
+    type ConnectorHostArgumentCheck,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentValidation.js';
 import { HostDesktopCoordinates } from '../src/host/HostDesktopCoordinates.js';
 import {
-    HostDesktopButton,
-    HostDesktopPointerAction,
     type HostDesktopInfo,
     type HostDesktopPointerRequest,
     type HostDesktopViewport,
 } from '../src/host/HostDesktopTypes.js';
+import {
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 const desktop: HostDesktopInfo = {
     platform: 'win32',
@@ -34,8 +42,8 @@ const image: HostDesktopViewport = {
 const request: HostDesktopPointerRequest = {
     x: 1000,
     y: 500,
-    action: HostDesktopPointerAction.Click,
-    button: HostDesktopButton.Left,
+    action: ConnectorHostPointerAction.Click,
+    button: ConnectorHostPointerButton.Left,
 };
 
 it('maps screenshot pixels to the real multi-monitor desktop without changing the request or physical-coordinate calls', (): void => {
@@ -66,11 +74,11 @@ it('rejects stale geometry, out-of-image coordinates and malformed metadata befo
         { ...image, hidden: true },
         { ...image, height: Number.POSITIVE_INFINITY },
     ]) {
-        expect((): HostDesktopViewport => HostDesktopCoordinates.read(raw)).toThrow(
-            expect.objectContaining({
-                reason: 'screenshot-geometry-invalid',
-                definitive: true,
-            }),
+        const check: ConnectorHostArgumentCheck = ConnectorHostArgumentValidation.check(
+            ConnectorHostTool.DesktopPointer,
+            { x: 1000, y: 500, action: ConnectorHostPointerAction.Click, image: raw },
+            ConnectorHostArgumentContracts.paired,
         );
+        expect(check.valid ? null : check.field).toMatch(/^image\./u);
     }
 });

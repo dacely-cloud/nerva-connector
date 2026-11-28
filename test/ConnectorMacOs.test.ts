@@ -10,13 +10,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { HostDesktop } from '../src/host/HostDesktop.js';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
 import { HostDesktopMac } from '../src/host/HostDesktopMac.js';
-import { HostWriteMode } from '../src/host/HostWorkspaceTypes.js';
 import { HostDesktopMacScript } from '../src/host/HostDesktopMacScript.js';
 import {
     HostDesktopBackend,
-    HostDesktopButton,
-    HostDesktopKeyAction,
-    HostDesktopPointerAction,
     HostDesktopUnavailable,
     type HostDesktopInfo,
 } from '../src/host/HostDesktopTypes.js';
@@ -26,6 +22,12 @@ import {
 } from '../src/runtime/ConnectorPrivateDirectory.js';
 import { ConnectorDarwinStateLock } from '../src/runtime/ConnectorDarwinStateLock.js';
 import { ConnectorNativeExecutable } from '../src/runtime/ConnectorNativeExecutable.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** One faked desktop program invocation as the backend issued it. */
 interface DesktopCall {
@@ -207,22 +209,22 @@ it('pointer drags, modifier chords and typed text become exact CoreGraphics even
     await driver.pointer({
         x: 10,
         y: 20,
-        action: HostDesktopPointerAction.Down,
-        button: HostDesktopButton.Left,
+        action: ConnectorHostPointerAction.Down,
+        button: ConnectorHostPointerButton.Left,
     });
-    await driver.pointer({ x: 30, y: 40, action: HostDesktopPointerAction.Move, button: null });
+    await driver.pointer({ x: 30, y: 40, action: ConnectorHostPointerAction.Move, button: null });
     await driver.pointer({
         x: 30,
         y: 40,
-        action: HostDesktopPointerAction.Up,
-        button: HostDesktopButton.Left,
+        action: ConnectorHostPointerAction.Up,
+        button: ConnectorHostPointerButton.Left,
     });
-    await driver.pointer({ x: 50, y: 60, action: HostDesktopPointerAction.Move, button: null });
+    await driver.pointer({ x: 50, y: 60, action: ConnectorHostPointerAction.Move, button: null });
     await driver.pointer({
         x: 5,
         y: 6,
-        action: HostDesktopPointerAction.Click,
-        button: HostDesktopButton.Right,
+        action: ConnectorHostPointerAction.Click,
+        button: ConnectorHostPointerButton.Right,
     });
     expect(calls.map(numbers)).toEqual([
         ['10', '20', '1', '0'],
@@ -232,11 +234,11 @@ it('pointer drags, modifier chords and typed text become exact CoreGraphics even
         ['5', '6', '3', '1', '4', '1'],
     ]);
     calls.length = 0;
-    await driver.key({ key: 'Meta', action: HostDesktopKeyAction.Down });
-    await driver.key({ key: 'c', action: HostDesktopKeyAction.Press });
-    await driver.key({ key: 'Meta', action: HostDesktopKeyAction.Up });
-    await driver.key({ key: 'A', action: HostDesktopKeyAction.Press });
-    await driver.key({ key: 'Enter', action: HostDesktopKeyAction.Press });
+    await driver.key({ key: 'Meta', action: ConnectorHostKeyAction.Down });
+    await driver.key({ key: 'c', action: ConnectorHostKeyAction.Press });
+    await driver.key({ key: 'Meta', action: ConnectorHostKeyAction.Up });
+    await driver.key({ key: 'A', action: ConnectorHostKeyAction.Press });
+    await driver.key({ key: 'Enter', action: ConnectorHostKeyAction.Press });
     expect(calls.map(numbers)).toEqual([
         ['55', '1', '1048576'],
         ['8', '1', '1048576', '8', '0', '1048576'],
@@ -249,7 +251,7 @@ it('pointer drags, modifier chords and typed text become exact CoreGraphics even
     expect(calls).toHaveLength(1);
     expect(calls[0]?.input).toBe('héllo\n');
     expect(numbers(calls[0])).toEqual([]);
-    await expect(driver.key({ key: 'F13', action: HostDesktopKeyAction.Press })).rejects.toThrow(
+    await expect(driver.key({ key: 'F13', action: ConnectorHostKeyAction.Press })).rejects.toThrow(
         'Unsupported desktop key',
     );
 });
@@ -267,7 +269,7 @@ it('a Retina screenshot is scaled to the requested bound and its temporary file 
     const target: string = join(root, 'screen.png');
     const shot: Awaited<ReturnType<HostDesktop['screenshot']>> = await session.screenshot(
         target,
-        HostWriteMode.Create,
+        ConnectorHostWriteMode.Create,
         1024,
         1024,
     );

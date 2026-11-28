@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorHostLimits } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostPointerButton,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Desktop backends describe actual session mechanisms, without assuming every machine has a GUI. */
 export const HostDesktopBackend = {
@@ -60,28 +65,12 @@ export interface HostDesktopScreenshot {
     readonly desktop: HostDesktopInfo;
 }
 
-/** Pointer actions include held buttons so desktop drag operations are expressible. */
-export const HostDesktopPointerAction = {
-    Move: 'move',
-    Click: 'click',
-    Down: 'down',
-    Up: 'up',
-} as const;
-/** Runtime-accessible pointer actions. */
-export type HostDesktopPointerAction =
-    (typeof HostDesktopPointerAction)[keyof typeof HostDesktopPointerAction];
-
-/** Button labels map to ordinary OS pointer buttons. */
-export const HostDesktopButton = { Left: 'left', Middle: 'middle', Right: 'right' } as const;
-/** Runtime-accessible button names. */
-export type HostDesktopButton = (typeof HostDesktopButton)[keyof typeof HostDesktopButton];
-
 /** Pointer coordinates refer to the reported physical scope, independent of screenshot scaling. */
 export interface HostDesktopPointerRequest {
     readonly x: number;
     readonly y: number;
-    readonly action: HostDesktopPointerAction;
-    readonly button: HostDesktopButton | null;
+    readonly action: ConnectorHostPointerAction;
+    readonly button: ConnectorHostPointerButton | null;
 }
 
 /** Image pixels and the physical desktop they depict must be supplied together when clicking a scaled screenshot. */
@@ -94,15 +83,10 @@ export interface HostDesktopViewport {
     readonly sourceHeight: number;
 }
 
-/** Held modifiers can be combined with ordinary key presses and are released on session cleanup. */
-export const HostDesktopKeyAction = { Press: 'press', Down: 'down', Up: 'up' } as const;
-/** Runtime-accessible key actions. */
-export type HostDesktopKeyAction = (typeof HostDesktopKeyAction)[keyof typeof HostDesktopKeyAction];
-
 /** Keys accept ASCII letters/digits, F1-F12 and named navigation/modifier keys; Unicode uses text entry. */
 export interface HostDesktopKeyRequest {
     readonly key: string;
-    readonly action: HostDesktopKeyAction;
+    readonly action: ConnectorHostKeyAction;
     /** Windows fresh input requires a signed launch/snapshot window selector. */
     readonly target?: string;
 }
@@ -148,7 +132,7 @@ export interface HostDesktopDriver {
     /** Apply an already validated pointer action. */
     pointer(request: HostDesktopPointerRequest): Promise<void>;
     /** Release an owned held button without moving the user's current pointer. */
-    releaseButton(button: HostDesktopButton): Promise<void>;
+    releaseButton(button: ConnectorHostPointerButton): Promise<void>;
     /** Apply an already validated key action. */
     key(request: HostDesktopKeyRequest): Promise<void>;
     /** Apply bounded text as foreground data or one explicitly selected field replacement. */

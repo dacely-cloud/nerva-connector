@@ -11,7 +11,6 @@ import {
     type HostDesktopDriver,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
-    type HostDesktopButton,
 } from './HostDesktopTypes.js';
 import {
     HostDesktopWaylandOperation,
@@ -19,6 +18,7 @@ import {
     type HostDesktopWaylandResult,
     type HostDesktopWaylandInfo,
 } from './HostDesktopWaylandProtocol.js';
+import type { ConnectorHostPointerButton } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Wayland uses one user-approved portal session for one monitor, never XWayland or privileged input injection. */
 export class HostDesktopWayland implements HostDesktopDriver, AsyncDisposable {
@@ -95,7 +95,7 @@ export class HostDesktopWayland implements HostDesktopDriver, AsyncDisposable {
     }
 
     /** Release only an owned ordinary button without moving the current pointer. */
-    public async releaseButton(button: HostDesktopButton): Promise<void> {
+    public async releaseButton(button: ConnectorHostPointerButton): Promise<void> {
         this.#sent(
             await this.#active().request({
                 operation: HostDesktopWaylandOperation.ReleaseButton,

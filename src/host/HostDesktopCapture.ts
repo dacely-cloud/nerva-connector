@@ -3,17 +3,17 @@
 
 import { constants, type BigIntStats } from 'node:fs';
 import { open, lstat, unlink, type FileHandle } from 'node:fs/promises';
-import { HostWriteMode } from './HostWorkspaceTypes.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import type { HostDesktopInfo, HostDesktopScreenshot } from './HostDesktopTypes.js';
 import { HostFilesystem } from './HostFilesystem.js';
+import { ConnectorHostWriteMode } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** An intentional screenshot artifact owns no intermediate files or repeated exports. */
 export class HostDesktopCapture {
     /** Validate native PNG geometry before creating or replacing the explicit destination. */
     public static async save(
         path: string,
-        mode: HostWriteMode,
+        mode: ConnectorHostWriteMode,
         bytes: Buffer,
         desktop: HostDesktopInfo,
         maximumWidth: number,
@@ -37,7 +37,7 @@ export class HostDesktopCapture {
             maximumHeight,
         );
         const file: FileHandle =
-            mode === HostWriteMode.Create
+            mode === ConnectorHostWriteMode.Create
                 ? await HostFilesystem.openExclusive(path)
                 : await open(
                       path,
@@ -49,7 +49,7 @@ export class HostDesktopCapture {
             if (!(await file.stat()).isFile()) {
                 throw new Error('Desktop screenshot requires a regular destination file');
             }
-            if (mode === HostWriteMode.Replace) {
+            if (mode === ConnectorHostWriteMode.Replace) {
                 await file.truncate(0);
             }
             await file.writeFile(bytes);
@@ -57,7 +57,7 @@ export class HostDesktopCapture {
             completed = true;
         } finally {
             try {
-                if (!completed && mode === HostWriteMode.Create) {
+                if (!completed && mode === ConnectorHostWriteMode.Create) {
                     const owned: BigIntStats = await file.stat({ bigint: true });
                     const current: BigIntStats = await lstat(path, { bigint: true });
                     if (

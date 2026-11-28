@@ -7,7 +7,6 @@ import type { LookupOptions } from 'node:dns';
 import { isIP, type LookupFunction, type Socket } from 'node:net';
 import {
     HostHttpFailure,
-    HostHttpMethod,
     HostHttpState,
     type HostHttpHead,
     type HostHttpRead,
@@ -15,6 +14,7 @@ import {
     type HostHttpTrust,
 } from './HostHttpTypes.js';
 import { HostHttpValidation } from './HostHttpValidation.js';
+import { ConnectorHostHttpMethod } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Node forwards the connection high-water mark to its private HTTP agent and socket. */
 interface HostHttpConnectionOptions extends RequestOptions {
@@ -245,7 +245,7 @@ export class HostHttpTransfer {
         }
         this.#expected = lengths[0] === undefined ? null : BigInt(lengths[0]);
         this.#noBody =
-            this.input.method === HostHttpMethod.Head || status === 204 || status === 304;
+            this.input.method === ConnectorHostHttpMethod.Head || status === 204 || status === 304;
         if (!this.#noBody && this.#expected !== null && this.#expected > this.input.maximumBytes) {
             this.#fail(HostHttpFailure.Limit);
             return;

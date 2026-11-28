@@ -7,8 +7,8 @@ import {
     HostDesktopUnavailable,
     type HostDesktopPointerRequest,
     type HostDesktopKeyRequest,
-    type HostDesktopButton,
 } from './HostDesktopTypes.js';
+import type { ConnectorHostPointerButton } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Fixed helper operations never interpret caller data as Python, shell or D-Bus source. */
 export const HostDesktopWaylandOperation = {
@@ -32,7 +32,7 @@ export interface HostDesktopWaylandCommand {
     readonly pointer?: HostDesktopPointerRequest;
     readonly key?: HostDesktopKeyRequest;
     readonly text?: string;
-    readonly button?: HostDesktopButton;
+    readonly button?: ConnectorHostPointerButton;
 }
 /** Helper failures distinguish declined local consent from unavailable platform prerequisites. */
 export const HostDesktopWaylandFailure = {

@@ -8,13 +8,13 @@ import { expect, it } from 'vitest';
 import { HostHttpPool } from '../src/host/HostHttpPool.js';
 import {
     HostHttpFailure,
-    HostHttpMethod,
     HostHttpState,
     type HostHttpHead,
     type HostHttpRead,
     type HostHttpRequest,
 } from '../src/host/HostHttpTypes.js';
 import { SocketFixture } from './support/SocketFixture.js';
+import { ConnectorHostHttpMethod } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** The fixture's self-signed localhost certificate is explicitly trusted without disabling TLS checks. */
 function request(fixture: SocketFixture, hostname: string = 'localhost'): HostHttpRequest {
@@ -25,7 +25,7 @@ function request(fixture: SocketFixture, hostname: string = 'localhost'): HostHt
     return {
         url: 'https://' + hostname + ':' + String(address.port) + '/source?exact=1',
         address: '127.0.0.1',
-        method: HostHttpMethod.Get,
+        method: ConnectorHostHttpMethod.Get,
         headers: { accept: 'application/octet-stream' },
         maximumBytes: 4194304n,
         timeoutMs: 10000,
@@ -92,11 +92,11 @@ it('retains certificate hostname validation even when its root and pinned IP are
 });
 
 it.each([
-    [HostHttpMethod.Head, 200],
-    [HostHttpMethod.Get, 304],
+    [ConnectorHostHttpMethod.Head, 200],
+    [ConnectorHostHttpMethod.Get, 304],
 ] as const)(
     'preserves representation length for bodyless %s responses with status %s',
-    async (method: HostHttpMethod, status: number): Promise<void> => {
+    async (method: ConnectorHostHttpMethod, status: number): Promise<void> => {
         await using fixture: SocketFixture = await SocketFixture.create();
         await using pool: HostHttpPool = new HostHttpPool({
             certificates: [fixture.certificate.toString('utf8')],

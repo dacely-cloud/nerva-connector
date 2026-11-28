@@ -3,17 +3,17 @@
 
 import { expect, it, vi, type MockInstance } from 'vitest';
 import { HostDesktopWindows } from '../src/host/HostDesktopWindows.js';
-import { HostDesktopKeyAction } from '../src/host/HostDesktopTypes.js';
 import { HostDesktopCommand } from '../src/host/HostDesktopCommand.js';
 import { HostDesktopError } from '../src/host/HostDesktopError.js';
 import { HostDesktopWindowTarget } from '../src/host/HostDesktopWindowTarget.js';
-import { HostDesktopKeyChord } from '../src/host/HostDesktopKeyChord.js';
+import { ConnectorHostKeyChord } from 'nerva-connector-protocol/protocol/ConnectorHostKeyChord.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
     ConnectorHostErrorCode,
 } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostKeyAction } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 const target: string = 'win32:v1:00000000000000ff:0000002a:01dc000000000001:00000037';
 
@@ -28,7 +28,7 @@ it('rejects missing or malformed Windows targets and invalid chords before spawn
             definitive: true,
         });
         await expect(
-            driver.key({ key: 'Control+l', action: HostDesktopKeyAction.Press }),
+            driver.key({ key: 'Control+l', action: ConnectorHostKeyAction.Press }),
         ).rejects.toMatchObject({ reason: 'keyboard-target-required', definitive: true });
         for (const invalid of [
             '',
@@ -51,7 +51,7 @@ it('rejects missing or malformed Windows targets and invalid chords before spawn
             'Alt+Control+Shift+Meta+Control+l',
         ]) {
             await expect(
-                driver.key({ key, action: HostDesktopKeyAction.Press, target }),
+                driver.key({ key, action: ConnectorHostKeyAction.Press, target }),
             ).rejects.toMatchObject({ reason: 'key-chord', definitive: true });
         }
         expect(run).not.toHaveBeenCalled();
@@ -66,7 +66,7 @@ it('one guarded compound press is piped as data and never replayed or split into
         .mockResolvedValue(Buffer.from('{"ok":true}'));
     try {
         const driver: HostDesktopWindows = new HostDesktopWindows('verified.exe', {});
-        await driver.key({ key: 'Control+l', action: HostDesktopKeyAction.Press, target });
+        await driver.key({ key: 'Control+l', action: ConnectorHostKeyAction.Press, target });
         expect(run).toHaveBeenCalledExactlyOnceWith(
             'verified.exe',
             ['--desktop'],
@@ -82,7 +82,7 @@ it('one guarded compound press is piped as data and never replayed or split into
         );
         run.mockRejectedValueOnce(new HostDesktopError('key', 'keyboard-input-partial', 5));
         await expect(
-            driver.key({ key: 'Control+l', action: HostDesktopKeyAction.Press, target }),
+            driver.key({ key: 'Control+l', action: ConnectorHostKeyAction.Press, target }),
         ).rejects.toMatchObject({ reason: 'keyboard-input-partial' });
         expect(run).toHaveBeenCalledTimes(2);
     } finally {
@@ -96,8 +96,8 @@ it('held keys borrow only this owner and target, and cleanup emits only the prev
         .mockResolvedValue(Buffer.from('{"ok":true}'));
     try {
         const driver: HostDesktopWindows = new HostDesktopWindows('verified.exe', {});
-        await driver.key({ key: 'Control', action: HostDesktopKeyAction.Down, target });
-        await driver.key({ key: 'Control+l', action: HostDesktopKeyAction.Press, target });
+        await driver.key({ key: 'Control', action: ConnectorHostKeyAction.Down, target });
+        await driver.key({ key: 'Control+l', action: ConnectorHostKeyAction.Press, target });
         expect(run.mock.calls[1]?.[4]).toBe(
             JSON.stringify({
                 operation: 'key',
@@ -113,16 +113,16 @@ it('held keys borrow only this owner and target, and cleanup emits only the prev
         await expect(
             driver.key({
                 key: 'L',
-                action: HostDesktopKeyAction.Press,
+                action: ConnectorHostKeyAction.Press,
                 target: target.replace('00000000ff', '00000000fe'),
             }),
         ).rejects.toMatchObject({ reason: 'keyboard-owned-input-changed' });
-        await driver.key({ key: 'Control', action: HostDesktopKeyAction.Up });
+        await driver.key({ key: 'Control', action: ConnectorHostKeyAction.Up });
         expect(run.mock.calls[2]?.[4]).toBe(
             JSON.stringify({ operation: 'key-release', key: 'Control' }),
         );
         await expect(
-            driver.key({ key: 'Control', action: HostDesktopKeyAction.Up }),
+            driver.key({ key: 'Control', action: ConnectorHostKeyAction.Up }),
         ).rejects.toMatchObject({ reason: 'keyboard-owned-input-changed' });
         expect(run).toHaveBeenCalledTimes(3);
     } finally {
@@ -138,17 +138,17 @@ it('definitive down rejection owns no release, while uncertain down retains its 
         const driver: HostDesktopWindows = new HostDesktopWindows('verified.exe', {});
         run.mockRejectedValueOnce(new HostDesktopError('key', 'keyboard-focus-denied', 0));
         await expect(
-            driver.key({ key: 'Shift', action: HostDesktopKeyAction.Down, target }),
+            driver.key({ key: 'Shift', action: ConnectorHostKeyAction.Down, target }),
         ).rejects.toThrow();
         await expect(
-            driver.key({ key: 'Shift', action: HostDesktopKeyAction.Up }),
+            driver.key({ key: 'Shift', action: ConnectorHostKeyAction.Up }),
         ).rejects.toMatchObject({ reason: 'keyboard-owned-input-changed' });
         expect(run).toHaveBeenCalledTimes(1);
         run.mockRejectedValueOnce(new HostDesktopError('key', 'keyboard-input-partial', 5));
         await expect(
-            driver.key({ key: 'Shift', action: HostDesktopKeyAction.Down, target }),
+            driver.key({ key: 'Shift', action: ConnectorHostKeyAction.Down, target }),
         ).rejects.toThrow();
-        await driver.key({ key: 'Shift', action: HostDesktopKeyAction.Up });
+        await driver.key({ key: 'Shift', action: ConnectorHostKeyAction.Up });
         expect(run.mock.calls[2]?.[4]).toBe(
             JSON.stringify({ operation: 'key-release', key: 'Shift' }),
         );
@@ -207,5 +207,5 @@ it('safe failure reasons preserve definitive rejection separately from partial i
         ).errorCode,
     ).toBe(ConnectorHostErrorCode.PermissionDenied);
     expect(HostDesktopWindowTarget.read(target)).toBe(target);
-    expect(HostDesktopKeyChord.read('Control+l', HostDesktopKeyAction.Press)).toBe('Control+l');
+    expect(ConnectorHostKeyChord.read('Control+l', ConnectorHostKeyAction.Press)).toBe('Control+l');
 });

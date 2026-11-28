@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
-import { HostDesktopKeyAction, HostDesktopPointerAction } from '../host/HostDesktopTypes.js';
-import { HostWriteMode } from '../host/HostWorkspaceTypes.js';
 import { ConnectorActivityKind } from './ConnectorActivity.js';
 import { ConnectorActivityArguments } from './ConnectorActivityArguments.js';
 import { ConnectorActivityLaneOperation } from './ConnectorActivityLane.js';
+import {
+    ConnectorHostKeyAction,
+    ConnectorHostPointerAction,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Plain words for one request: the kind of effect, a short sentence and what it acts on. */
 export interface ConnectorActivityDescribed {
@@ -475,10 +478,10 @@ export class ConnectorActivityDescription {
     }
 
     static #writeTitle(mode: string): string {
-        if (mode === HostWriteMode.Create) {
+        if (mode === ConnectorHostWriteMode.Create) {
             return 'Creating a file';
         }
-        return mode === HostWriteMode.Append ? 'Adding to a file' : 'Changing a file';
+        return mode === ConnectorHostWriteMode.Append ? 'Adding to a file' : 'Changing a file';
     }
 
     static #removeTitle(recursive: boolean): string {
@@ -536,11 +539,11 @@ export class ConnectorActivityDescription {
 
     static #pointerTitle(action: string): string {
         switch (action) {
-            case HostDesktopPointerAction.Click:
+            case ConnectorHostPointerAction.Click:
                 return 'Clicking';
-            case HostDesktopPointerAction.Down:
+            case ConnectorHostPointerAction.Down:
                 return 'Pressing a mouse button';
-            case HostDesktopPointerAction.Up:
+            case ConnectorHostPointerAction.Up:
                 return 'Letting go of a mouse button';
             default:
                 return 'Moving the mouse';
@@ -557,9 +560,9 @@ export class ConnectorActivityDescription {
 
     static #keyTitle(action: string): string {
         switch (action) {
-            case HostDesktopKeyAction.Down:
+            case ConnectorHostKeyAction.Down:
                 return 'Holding a key';
-            case HostDesktopKeyAction.Up:
+            case ConnectorHostKeyAction.Up:
                 return 'Letting go of a key';
             default:
                 return 'Pressing keys';

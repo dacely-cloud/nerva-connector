@@ -9,9 +9,7 @@ import { HostWorkspace } from '../src/host/HostWorkspace.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 import { HostByteRing } from '../src/host/HostByteRing.js';
 import {
-    HostWriteMode,
     HostFileKind,
-    HostShell,
     HostProcessFailure,
     HostWorkspaceLimits,
     type HostWorkspaceAccess,
@@ -20,6 +18,10 @@ import {
     type HostProcessSnapshot,
     type HostFileRead,
 } from '../src/host/HostWorkspaceTypes.js';
+import {
+    ConnectorHostShell,
+    ConnectorHostWriteMode,
+} from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 
 /** Piped Node fixtures exercise argument vectors, binary I/O, environment and normal host permissions. */
 function command(source: string, timeoutMs: number = 10000): HostProcessRequest {
@@ -54,10 +56,25 @@ it('host files preserve chunks, update offsets, append, list pages and enforce f
     await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
     await fixture.host.mkdir('nested', false);
     expect(
-        await fixture.host.write('nested/file.bin', Buffer.from('abc'), HostWriteMode.Create, 0n),
+        await fixture.host.write(
+            'nested/file.bin',
+            Buffer.from('abc'),
+            ConnectorHostWriteMode.Create,
+            0n,
+        ),
     ).toBe(3n);
-    await fixture.host.write('nested/file.bin', Buffer.from('Z'), HostWriteMode.Update, 1n);
-    await fixture.host.write('nested/file.bin', Buffer.from('!'), HostWriteMode.Append, 0n);
+    await fixture.host.write(
+        'nested/file.bin',
+        Buffer.from('Z'),
+        ConnectorHostWriteMode.Update,
+        1n,
+    );
+    await fixture.host.write(
+        'nested/file.bin',
+        Buffer.from('!'),
+        ConnectorHostWriteMode.Append,
+        0n,
+    );
     const first: HostFileRead = await fixture.host.read('nested/file.bin', 0n, 2);
     expect(first).toMatchObject({ offset: 0n, nextOffset: 2n, size: 4n, eof: false });
     expect(first.bytes.toString()).toBe('aZ');
@@ -66,24 +83,39 @@ it('host files preserve chunks, update offsets, append, list pages and enforce f
         kind: HostFileKind.File,
         size: 4n,
     });
-    await fixture.host.write('nested/other.bin', Buffer.from('other'), HostWriteMode.Create, 0n);
+    await fixture.host.write(
+        'nested/other.bin',
+        Buffer.from('other'),
+        ConnectorHostWriteMode.Create,
+        0n,
+    );
     expect((await fixture.host.list('nested', 0, 1)).nextOffset).toBe(1);
     expect((await fixture.host.list('nested', 1, 1)).nextOffset).toBeNull();
     fixture.allowed = false;
     await expect(fixture.host.read('nested/file.bin', 0n, 8)).rejects.toThrow('revoked');
     await expect(
-        fixture.host.write('nested/file.bin', Buffer.from('bad'), HostWriteMode.Replace, 0n),
+        fixture.host.write(
+            'nested/file.bin',
+            Buffer.from('bad'),
+            ConnectorHostWriteMode.Replace,
+            0n,
+        ),
     ).rejects.toThrow('revoked');
     expect(await readFile(join(fixture.directory, 'nested/file.bin'), 'utf8')).toBe('aZc!');
     fixture.allowed = true;
     await expect(
-        fixture.host.write('nested/file.bin', Buffer.from('bad'), HostWriteMode.Create, 0n),
+        fixture.host.write(
+            'nested/file.bin',
+            Buffer.from('bad'),
+            ConnectorHostWriteMode.Create,
+            0n,
+        ),
     ).rejects.toThrow();
     await expect(
         fixture.host.write(
             'nested/file.bin',
             Buffer.from('bad'),
-            HostWriteMode.Update,
+            ConnectorHostWriteMode.Update,
             9007199254740992n,
         ),
     ).rejects.toThrow('exact range');
@@ -132,7 +164,7 @@ it.skipIf(process.platform === 'win32')(
         const started: HostProcessSnapshot = await fixture.host.start({
             executable: null,
             arguments: [],
-            shell: HostShell.Bash,
+            shell: ConnectorHostShell.Bash,
             command: 'cat input.txt | grep needle; tail -n 1 input.txt',
             directory: null,
             environment: {},
@@ -310,7 +342,7 @@ it('closing while authorization is pending prevents late filesystem effects', as
         authorization,
     });
     const write: Promise<PromiseSettledResult<bigint>[]> = Promise.allSettled([
-        workspace.write('late-file.txt', Buffer.from('late'), HostWriteMode.Create, 0n),
+        workspace.write('late-file.txt', Buffer.from('late'), ConnectorHostWriteMode.Create, 0n),
     ]);
     await admitted.promise;
     const disposal: Promise<void> = workspace[Symbol.asyncDispose]();

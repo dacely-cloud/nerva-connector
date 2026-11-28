@@ -3,8 +3,9 @@
 
 import { join } from 'node:path';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostShell } from 'nerva-connector-protocol/protocol/ConnectorHostArgumentChoices.js';
 import { HostOperationError } from './HostOperationError.js';
-import { HostShell, type HostProcessRequest } from './HostWorkspaceTypes.js';
+import type { HostProcessRequest } from './HostWorkspaceTypes.js';
 
 /** Prepared arguments preserve the distinction between shell syntax and an executable argument vector. */
 export interface HostProcessLaunchOptions {
@@ -46,7 +47,7 @@ export class HostProcessLaunch {
                 true,
             );
         }
-        if (request.shell === HostShell.Cmd) {
+        if (request.shell === ConnectorHostShell.Cmd) {
             if (platform !== 'win32') {
                 throw new HostOperationError(
                     ConnectorHostErrorCode.Unsupported,
@@ -68,9 +69,12 @@ export class HostProcessLaunch {
                 windowsVerbatimArguments: true,
             };
         }
-        if (request.shell === HostShell.PowerShell || request.shell === HostShell.Pwsh) {
+        if (
+            request.shell === ConnectorHostShell.PowerShell ||
+            request.shell === ConnectorHostShell.Pwsh
+        ) {
             return {
-                executable: request.shell === HostShell.Pwsh ? 'pwsh' : 'powershell.exe',
+                executable: request.shell === ConnectorHostShell.Pwsh ? 'pwsh' : 'powershell.exe',
                 arguments: [
                     '-NoLogo',
                     '-NoProfile',

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import type { ConnectorHostArguments } from 'nerva-connector-protocol/protocol/ConnectorHostArguments.js';
 import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostDesktopError } from './HostDesktopError.js';
 import {
@@ -13,28 +13,15 @@ import {
 
 /** Image-based actions are converted exactly once before reaching any native input driver. */
 export class HostDesktopCoordinates {
-    /** External screenshot geometry is a closed shape; origins may be negative on multi-monitor desktops. */
-    public static read(raw: unknown): HostDesktopViewport {
-        let value: Readonly<Record<string, unknown>>;
-        try {
-            value = Boundary.record(raw, [
-                'width',
-                'height',
-                'sourceX',
-                'sourceY',
-                'sourceWidth',
-                'sourceHeight',
-            ]);
-        } catch {
-            throw new HostDesktopError('pointer', 'screenshot-geometry-invalid', null);
-        }
+    /** Screenshot geometry from `desktop_pointer` arguments that already satisfy their contract. */
+    public static read(image: ConnectorHostArguments): HostDesktopViewport {
         return {
-            width: this.#integer(value['width'], 1, HostDesktopLimits.dimension),
-            height: this.#integer(value['height'], 1, HostDesktopLimits.dimension),
-            sourceX: this.#integer(value['sourceX'], -65535, 65535),
-            sourceY: this.#integer(value['sourceY'], -65535, 65535),
-            sourceWidth: this.#integer(value['sourceWidth'], 1, 65535),
-            sourceHeight: this.#integer(value['sourceHeight'], 1, 65535),
+            width: image.integer('width'),
+            height: image.integer('height'),
+            sourceX: image.integer('sourceX'),
+            sourceY: image.integer('sourceY'),
+            sourceWidth: image.integer('sourceWidth'),
+            sourceHeight: image.integer('sourceHeight'),
         };
     }
 
@@ -72,17 +59,5 @@ export class HostDesktopCoordinates {
             x: desktop.x + Math.floor(((request.x + 0.5) * desktop.width) / image.width),
             y: desktop.y + Math.floor(((request.y + 0.5) * desktop.height) / image.height),
         };
-    }
-
-    static #integer(raw: unknown, minimum: number, maximum: number): number {
-        if (
-            typeof raw !== 'number' ||
-            !Number.isSafeInteger(raw) ||
-            raw < minimum ||
-            raw > maximum
-        ) {
-            throw new HostDesktopError('pointer', 'screenshot-geometry-invalid', null);
-        }
-        return raw;
     }
 }
