@@ -97,19 +97,27 @@ export class HostProcess implements AsyncDisposable {
                 );
             }
         }
-        const child: ChildProcess = spawn(executable, arguments_, {
-            cwd: directory,
-            env:
-                process.platform === 'win32'
-                    ? { ...process.env, ...request.environment }
-                    : process.env,
-            stdio:
-                process.platform === 'win32'
-                    ? ['pipe', 'pipe', 'pipe']
-                    : ['pipe', 'pipe', 'pipe', 'ipc'],
-            detached: process.platform !== 'win32',
-            windowsHide: false,
-        });
+        let child: ChildProcess;
+        try {
+            child = spawn(executable, arguments_, {
+                cwd: directory,
+                env:
+                    process.platform === 'win32'
+                        ? { ...process.env, ...request.environment }
+                        : process.env,
+                stdio:
+                    process.platform === 'win32'
+                        ? ['pipe', 'pipe', 'pipe']
+                        : ['pipe', 'pipe', 'pipe', 'ipc'],
+                detached: process.platform !== 'win32',
+                windowsHide: false,
+            });
+        } catch (cause: unknown) {
+            throw HostOperationError.before(
+                cause,
+                'The operating system refused to start the job launcher',
+            );
+        }
         if (!HostProcess.#piped(child)) {
             child.kill();
             throw new Error('Host process pipes are unavailable');
@@ -189,46 +197,53 @@ export class HostProcess implements AsyncDisposable {
         let owner: HostProcess | null = null;
         let channel: HostWindowsProcessChannel | null = null;
         if (process.platform === 'win32') {
-            channel = await HostWindowsProcessChannel.create(
-                (result: HostProcessReport): void => {
-                    if (owner !== null) {
-                        owner.#result(result);
-                    }
-                },
-                (): void => {
-                    if (owner !== null && owner.#treeRunning !== false) {
-                        owner.#treeRunning = null;
-                        owner.#failure ??= HostProcessFailure.Launch;
-                        owner.#startup.failed(
-                            new HostOperationError(
-                                ConnectorHostErrorCode.OperationFailed,
-                                'The Windows job launcher lost its control connection before confirming process creation',
-                                false,
-                            ),
-                        );
-                        owner.#stopChanged.resolve(undefined);
-                        owner.changes.advance();
-                    }
-                },
-                (): void => {
-                    if (owner !== null) {
-                        owner.#treeRunning = null;
-                        owner.#stopChanged.resolve(undefined);
-                        owner.changes.advance();
-                    }
-                },
-                (): void => {
-                    if (owner !== null) {
-                        owner.#startup.started();
-                        owner.#admitted();
-                    }
-                },
-                (result: HostProcessWindowsRejectedFrame): void => {
-                    if (owner !== null) {
-                        owner.#rejected(result);
-                    }
-                },
-            );
+            try {
+                channel = await HostWindowsProcessChannel.create(
+                    (result: HostProcessReport): void => {
+                        if (owner !== null) {
+                            owner.#result(result);
+                        }
+                    },
+                    (): void => {
+                        if (owner !== null && owner.#treeRunning !== false) {
+                            owner.#treeRunning = null;
+                            owner.#failure ??= HostProcessFailure.Launch;
+                            owner.#startup.failed(
+                                new HostOperationError(
+                                    ConnectorHostErrorCode.OperationFailed,
+                                    'The Windows job launcher lost its control connection before confirming process creation',
+                                    false,
+                                ),
+                            );
+                            owner.#stopChanged.resolve(undefined);
+                            owner.changes.advance();
+                        }
+                    },
+                    (): void => {
+                        if (owner !== null) {
+                            owner.#treeRunning = null;
+                            owner.#stopChanged.resolve(undefined);
+                            owner.changes.advance();
+                        }
+                    },
+                    (): void => {
+                        if (owner !== null) {
+                            owner.#startup.started();
+                            owner.#admitted();
+                        }
+                    },
+                    (result: HostProcessWindowsRejectedFrame): void => {
+                        if (owner !== null) {
+                            owner.#rejected(result);
+                        }
+                    },
+                );
+            } catch (cause: unknown) {
+                throw HostOperationError.before(
+                    cause,
+                    'The job launcher control pipe could not be created',
+                );
+            }
         }
         try {
             owner = new HostProcess(

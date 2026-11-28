@@ -41,6 +41,56 @@ it('writes one JSON line per event with control characters removed and long erro
     }
 });
 
+it('describes a thrown error by name, message, errno code, system call and causes, cleaned and bounded', async (): Promise<void> => {
+    const log: ConnectorConnectionLog = new ConnectorConnectionLog(
+        join(directory, 'connection.log'),
+    );
+    const native: NodeJS.ErrnoException = new Error(
+        "ENOENT: no such file or directory, lstat 'C:\\Users\\a\u001b[2Jb'",
+    );
+    native.code = 'ENOENT';
+    native.syscall = 'lstat';
+    const wrapped: Error = new Error('Host removal path could not be examined', { cause: native });
+    wrapped.name = 'HostOperationError';
+    log.record('host-operation-failed', {
+        tool: 'file_remove',
+        code: 'not-found',
+        ...ConnectorConnectionLog.failure(wrapped),
+    });
+    log.record('host-operation-failed', {
+        ...ConnectorConnectionLog.failure(
+            new AggregateError(
+                [new Error('x'.repeat(5000)), new TypeError('second')],
+                'Terminal startup and owned cleanup are unconfirmed',
+            ),
+        ),
+    });
+    log.record('host-operation-failed', { ...ConnectorConnectionLog.failure('text') });
+    const lines: readonly Readonly<Record<string, unknown>>[] = await log.recent(5);
+    expect(lines[0]).toMatchObject({
+        tool: 'file_remove',
+        code: 'not-found',
+        reason: 'Host removal path could not be examined',
+        errorName: 'HostOperationError',
+    });
+    expect(lines[0]?.['cause']).toBe(
+        "Error: ENOENT: no such file or directory, lstat 'C:\\Users\\a [2Jb' [ENOENT lstat]",
+    );
+    expect(lines[1]).toMatchObject({
+        reason: 'Terminal startup and owned cleanup are unconfirmed',
+        errorName: 'AggregateError',
+    });
+    expect(String(lines[1]?.['cause']).length).toBeLessThanOrEqual(301);
+    expect(lines[2]).toEqual({
+        time: lines[2]?.['time'],
+        event: 'host-operation-failed',
+        reason: 'A string was thrown instead of an error',
+    });
+    for (const line of lines) {
+        expect(JSON.stringify(line)).not.toMatch(/\\u00[01]/u);
+    }
+});
+
 it('rotates into a single predecessor so the log never holds more than two files', async (): Promise<void> => {
     const log: ConnectorConnectionLog = new ConnectorConnectionLog(
         join(directory, 'connection.log'),

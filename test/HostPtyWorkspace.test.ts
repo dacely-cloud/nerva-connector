@@ -9,6 +9,8 @@ import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { HostTerminal } from '../src/host/HostTerminal.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from '../src/host/HostTerminalTypes.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
 const native: boolean = process.platform === 'linux' && existsSync(HostLinuxBuild.executable());
@@ -68,6 +70,44 @@ it('terminal discovery requires completed native evidence and a revoked probe ca
     expect(await fixture.host.terminals.available()).toBe(true);
     expect(probe).toHaveBeenCalledTimes(1);
     expect(fixture.host.terminals.supported).toBe(true);
+});
+
+it.skipIf(process.platform === 'win32')(
+    'a terminal refused before its native broker is spawned is a definitive failure, not an uncertain start',
+    async (): Promise<void> => {
+        await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
+        vi.spyOn(HostTerminal, 'available').mockResolvedValue(true);
+        vi.spyOn(HostLinuxBuild, 'read').mockResolvedValue(null);
+        let failure: unknown = null;
+        try {
+            await fixture.host.terminals.start(request());
+        } catch (caught: unknown) {
+            failure = caught;
+        }
+        expect(failure).toMatchObject({
+            code: 'unsupported',
+            definitive: true,
+            message: 'Host terminals require their reviewed native build',
+        });
+        expect(ConnectorHostFailure.response(ConnectorHostTool.TerminalStart, failure)).toEqual({
+            outcome: 'failed',
+            resultJson: null,
+            errorCode: 'unsupported',
+        });
+        expect(fixture.host.terminals.size).toBe(0);
+    },
+);
+
+it('a closed workspace refuses a terminal start definitively before anything is created', async (): Promise<void> => {
+    const fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
+    vi.spyOn(HostTerminal, 'available').mockResolvedValue(true);
+    const create = vi.spyOn(HostTerminal, 'create');
+    await fixture[Symbol.asyncDispose]();
+    await expect(fixture.host.terminals.start(request())).rejects.toMatchObject({
+        code: 'canceled',
+        definitive: true,
+    });
+    expect(create).not.toHaveBeenCalled();
 });
 
 it.skipIf(!native)(

@@ -57,7 +57,7 @@ it('rejection before wait is immediately observed and retains the same definitiv
     }
 });
 
-it('native creation timeout stays indeterminate and cannot later become a new launch', async (): Promise<void> => {
+it('native creation timeout is canceled, stays indeterminate and cannot later become a new launch', async (): Promise<void> => {
     vi.useFakeTimers();
     try {
         const startup: HostProcessStartup = new HostProcessStartup(true);
@@ -71,7 +71,7 @@ it('native creation timeout stays indeterminate and cannot later become a new la
             ConnectorHostFailure.response(ConnectorHostTool.ProcessStart, result.reason),
         ).toEqual({
             outcome: 'indeterminate',
-            errorCode: 'operation-failed',
+            errorCode: 'canceled',
             resultJson: null,
         });
         expect((): void => startup.started()).toThrow('decision changed');

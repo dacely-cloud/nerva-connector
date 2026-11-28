@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import type { BigIntStats } from 'node:fs';
-import { mkdtemp, rm, writeFile, readFile, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
+import { ConnectorHostTool } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { HostFilesystem } from '../src/host/HostFilesystem.js';
 import { HostOperation } from '../src/host/HostWorkspaceTypes.js';
+import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
 it('rename preserves the source file identity while replacing the destination and authorizes both endpoints', async (): Promise<void> => {
@@ -83,3 +85,35 @@ it.skipIf(process.platform !== 'linux')(
         }
     },
 );
+
+it('removing a path that does not exist, or a directory without recursive intent, definitively removes nothing', async (): Promise<void> => {
+    await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
+    let missing: unknown = null;
+    try {
+        await fixture.host.remove('missing-private-name', false);
+    } catch (caught: unknown) {
+        missing = caught;
+    }
+    expect(missing).toMatchObject({ code: 'not-found', definitive: true });
+    expect(missing).toMatchObject({ cause: { code: 'ENOENT' } });
+    expect(ConnectorHostFailure.response(ConnectorHostTool.FileRemove, missing)).toEqual({
+        outcome: 'failed',
+        resultJson: null,
+        errorCode: 'not-found',
+    });
+    await expect(fixture.host.remove('missing/child', true)).rejects.toMatchObject({
+        code: 'not-found',
+        definitive: true,
+    });
+    await mkdir(join(fixture.directory, 'kept', 'inner'), { recursive: true });
+    await writeFile(join(fixture.directory, 'kept', 'inner', 'file.txt'), 'kept');
+    await expect(fixture.host.remove('kept', false)).rejects.toMatchObject({
+        code: 'is-directory',
+        definitive: true,
+    });
+    expect(await readFile(join(fixture.directory, 'kept', 'inner', 'file.txt'), 'utf8')).toBe(
+        'kept',
+    );
+    await fixture.host.remove('kept', true);
+    await expect(stat(join(fixture.directory, 'kept'))).rejects.toMatchObject({ code: 'ENOENT' });
+});

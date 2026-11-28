@@ -108,7 +108,23 @@ export class HostPtyPool implements AsyncDisposable {
             request.directory ?? this.options.directory,
             this.options.directory,
         );
-        if (!(await this.available())) {
+        if (this.#closed) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.Canceled,
+                'Host terminal owner is closed',
+                true,
+            );
+        }
+        let available: boolean;
+        try {
+            available = await this.available();
+        } catch (cause: unknown) {
+            throw HostOperationError.before(
+                cause,
+                'Native host terminal support could not be confirmed',
+            );
+        }
+        if (!available) {
             throw new HostOperationError(
                 ConnectorHostErrorCode.Unsupported,
                 'Native host terminal support is unavailable',
@@ -124,7 +140,11 @@ export class HostPtyPool implements AsyncDisposable {
             },
             async (): Promise<HostTerminalSnapshot> => {
                 if (this.#closed) {
-                    throw new Error('Host terminal owner is closed');
+                    throw new HostOperationError(
+                        ConnectorHostErrorCode.Canceled,
+                        'Host terminal owner is closed',
+                        true,
+                    );
                 }
                 let created: HostTerminal | null = null;
                 const id: string = randomUUID();
@@ -149,7 +169,11 @@ export class HostPtyPool implements AsyncDisposable {
                         },
                     );
                     if (this.#closed) {
-                        throw new Error('Host workspace closed before terminal admission');
+                        throw new HostOperationError(
+                            ConnectorHostErrorCode.Canceled,
+                            'The host workspace closed while the terminal was starting; it was stopped',
+                            false,
+                        );
                     }
                     HostProgramWatch.watch(terminal, this.options.ended, this.options.signal);
                     return terminal.snapshot(0n, maximum);
@@ -190,7 +214,11 @@ export class HostPtyPool implements AsyncDisposable {
     /** Terminal input is exact bytes; Ctrl-D remains data and never becomes pipe EOF. */
     public async input(processId: string, bytes: Buffer): Promise<void> {
         if (bytes.byteLength > HostWorkspaceLimits.chunkBytes) {
-            throw new Error('Terminal input exceeds its chunk bound');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Terminal input exceeds its chunk bound',
+                true,
+            );
         }
         await this.#run(HostOperation.Input, processId, (terminal: HostTerminal): Promise<void> =>
             terminal.input(bytes),
@@ -280,7 +308,11 @@ export class HostPtyPool implements AsyncDisposable {
         action: (terminal: HostTerminal) => Promise<T>,
     ): Promise<T> {
         if (typeof processId !== 'string' || processId.length > 128) {
-            throw new Error('Invalid host terminal identifier');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host terminal identifiers are at most 128 characters',
+                true,
+            );
         }
         return await this.options.owner.run(
             { operation, path: null, destinationPath: null, processId },

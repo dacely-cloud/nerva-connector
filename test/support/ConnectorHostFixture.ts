@@ -24,6 +24,7 @@ import { type ConnectorHostLocalGrant } from '../../src/runtime/ConnectorHostGra
 import { ConnectorClientHost } from '../../src/runtime/ConnectorClientHost.js';
 import type { ConnectorClientIdentity } from '../../src/runtime/ConnectorClientConfiguration.js';
 import type { ConnectorActivitySink } from '../../src/runtime/ConnectorActivity.js';
+import type { ConnectorConnectionLog } from '../../src/runtime/ConnectorConnectionLog.js';
 import { ConnectorSessionFixture } from './ConnectorSessionFixture.js';
 import { ProtectedFiles } from '../../src/local/ProtectedFiles.js';
 import { WindowsStateOwner } from '../../src/windows/WindowsStateOwner.js';
@@ -122,11 +123,15 @@ export class ConnectorHostFixture implements AsyncDisposable {
         });
     }
     /** Keep every opened owner in fixture cleanup, including after a negative assertion fails. */
-    public async open(activity: ConnectorActivitySink | null = null): Promise<ConnectorClientHost> {
+    public async open(
+        activity: ConnectorActivitySink | null = null,
+        log: ConnectorConnectionLog | null = null,
+    ): Promise<ConnectorClientHost> {
         const host: ConnectorClientHost | null = await ConnectorClientHost.load(
             this.identity,
             null,
             activity,
+            log,
         );
         if (host === null) {
             throw new Error('Explicit host fixture grant required');

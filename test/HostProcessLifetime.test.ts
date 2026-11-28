@@ -174,7 +174,12 @@ it('only an opted-in cell expires after its whole lifetime and retained-output d
         for (const value of [0, 999, HostWorkspaceLimits.retentionAfterTimeoutMs + 1, Number.NaN]) {
             await expect(
                 fixture.host.start({ ...command(''), retentionAfterTimeoutMs: value }),
-            ).rejects.toThrow('resource limit');
+            ).rejects.toMatchObject({
+                message:
+                    'Host launch retentionAfterTimeoutMs must be an integer from 1000 to 86400000',
+                code: 'invalid-request',
+                definitive: true,
+            });
         }
     } finally {
         allowed.resolve(undefined);

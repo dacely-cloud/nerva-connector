@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 import { join } from 'node:path';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
+import { HostOperationError } from './HostOperationError.js';
 import { HostShell, type HostProcessRequest } from './HostWorkspaceTypes.js';
 
 /** Prepared arguments preserve the distinction between shell syntax and an executable argument vector. */
@@ -13,14 +15,23 @@ export interface HostProcessLaunchOptions {
 
 /** Shell mappings use installed user programs; this layer neither downloads tools nor claims to sandbox them. */
 export class HostProcessLaunch {
-    /** Native PowerShell encoding avoids command-line quoting reinterpretation. */
+    /**
+     * Native PowerShell encoding avoids command-line quoting reinterpretation.
+     *
+     * @remarks
+     * Preparation runs before any process is created, so each refusal is definitive.
+     */
     public static prepare(
         request: HostProcessRequest,
         platform: NodeJS.Platform = process.platform,
     ): HostProcessLaunchOptions {
         if (request.shell === null) {
             if (request.executable === null) {
-                throw new Error('Host executable is required');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.InvalidRequest,
+                    'Executable mode requires executable',
+                    true,
+                );
             }
             return {
                 executable: request.executable,
@@ -29,15 +40,27 @@ export class HostProcessLaunch {
             };
         }
         if (request.command === null) {
-            throw new Error('Host shell command is required');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Shell mode requires command',
+                true,
+            );
         }
         if (request.shell === HostShell.Cmd) {
             if (platform !== 'win32') {
-                throw new Error('The cmd shell requires Windows');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'The cmd shell requires Windows',
+                    true,
+                );
             }
             const systemRoot: string | undefined = process.env['SystemRoot'];
             if (systemRoot === undefined || !/^[A-Za-z]:\\/u.test(systemRoot)) {
-                throw new Error('Windows SystemRoot is unavailable');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Windows SystemRoot is unavailable to locate cmd.exe',
+                    true,
+                );
             }
             return {
                 executable: join(systemRoot, 'System32', 'cmd.exe'),

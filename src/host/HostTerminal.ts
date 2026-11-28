@@ -441,7 +441,13 @@ export class HostTerminal implements AsyncDisposable {
     }
 }
 
-/** Timers bound observation without replaying or abandoning the underlying original. */
+/**
+ * Timers bound observation without replaying or abandoning the underlying original.
+ *
+ * @remarks
+ * An expired deadline rejects with a `TimeoutError`, which reports `canceled` with its effect still uncertain, as
+ * an unconfirmed process launch does.
+ */
 class HostTerminalDeadline {
     public static async wait<T>(
         work: Promise<T>,
@@ -451,7 +457,11 @@ class HostTerminalDeadline {
         let timer: NodeJS.Timeout | undefined;
         const deadline: Promise<never> = new Promise<never>(
             (_resolve: (value: never) => void, reject: (error: Error) => void): void => {
-                timer = setTimeout((): void => reject(new Error(message)), milliseconds);
+                timer = setTimeout((): void => {
+                    const error: Error = new Error(message);
+                    error.name = 'TimeoutError';
+                    reject(error);
+                }, milliseconds);
             },
         );
         try {

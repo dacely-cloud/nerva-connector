@@ -496,7 +496,11 @@ export class HostWorkspace implements AsyncDisposable {
                             throw caught;
                         }
                         this.#processes.delete(id);
-                        throw new Error('Host workspace closed before process admission');
+                        throw new HostOperationError(
+                            ConnectorHostErrorCode.Canceled,
+                            'The host workspace closed while the process was starting; it was stopped',
+                            false,
+                        );
                     }
                     this.#processes.set(id, process);
                     HostProgramWatch.watch(
@@ -635,7 +639,11 @@ export class HostWorkspace implements AsyncDisposable {
         action: (process: HostProcess) => Promise<T>,
     ): Promise<T> {
         if (typeof processId !== 'string' || processId.length > 128) {
-            throw new Error('Invalid host process identifier');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host process identifiers are at most 128 characters',
+                true,
+            );
         }
         return await this.#run(
             { operation, path: null, destinationPath: null, processId },
@@ -653,16 +661,25 @@ export class HostWorkspace implements AsyncDisposable {
         );
     }
 
+    /** A closed workspace refuses before the action, so that refusal is definitive; the authorizer states the certainty of its own refusals. */
     async #run<T>(access: HostWorkspaceAccess, action: () => Promise<T>): Promise<T> {
         if (this.#closed) {
-            throw new Error('Host workspace is closed');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.Canceled,
+                'Host workspace is closed',
+                true,
+            );
         }
         const pending: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
         this.#pending.add(pending.promise);
         try {
             await this.#options.authorization.authorize(access);
             if (this.#closed) {
-                throw new Error('Host workspace closed before operation admission');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Canceled,
+                    'Host workspace closed before operation admission',
+                    true,
+                );
             }
             return await action();
         } finally {

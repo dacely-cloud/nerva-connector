@@ -6,7 +6,14 @@ import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/Connec
 import { HostOperationError } from './HostOperationError.js';
 import { HostShell, HostWorkspaceLimits, type HostProcessRequest } from './HostWorkspaceTypes.js';
 
-/** Validation is repeated at the host operation boundary even for typed callers. */
+/**
+ * Validation is repeated at the host operation boundary even for typed callers.
+ *
+ * @remarks
+ * Path, offset and launch checks run before any effect, so their rejections are definitive `invalid-request`
+ * failures. {@link HostWorkspaceValidation.count} also checks native results after an effect and therefore keeps
+ * a plain error; a pre-effect caller states its own certainty.
+ */
 export class HostWorkspaceValidation {
     /** Host paths may address the whole computer, including outside the default workspace. */
     public static path(path: string, directory: string): string {
@@ -16,7 +23,9 @@ export class HostWorkspaceValidation {
             path.length > 32767 ||
             path.includes('\0')
         ) {
-            throw new Error('Invalid host path');
+            throw this.#invalid(
+                'Host paths must be non-empty, at most 32767 characters and without NUL',
+            );
         }
         return resolve(directory, path);
     }
@@ -24,7 +33,7 @@ export class HostWorkspaceValidation {
     /** Construction requires an explicit absolute initial directory. */
     public static directory(path: string): string {
         if (!isAbsolute(path)) {
-            throw new Error('Host workspace requires an absolute directory');
+            throw this.#invalid('Host workspace requires an absolute directory');
         }
         return this.path(path, path);
     }
@@ -40,7 +49,7 @@ export class HostWorkspaceValidation {
     /** Node filesystem APIs accept exact safe-number positions; reject unrepresentable offsets instead of rounding. */
     public static offset(value: bigint): number {
         if (typeof value !== 'bigint' || value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) {
-            throw new Error('Host file offset is outside the supported exact range');
+            throw this.#invalid('Host file offset is outside the supported exact range');
         }
         return Number(value);
     }
@@ -62,7 +71,9 @@ export class HostWorkspaceValidation {
             typeof request.environment !== 'object' ||
             Array.isArray(request.environment)
         ) {
-            throw new Error('Invalid host process request');
+            throw this.#invalid(
+                'Host launch requires at most 1024 string arguments totalling 1 MiB and an environment object',
+            );
         }
         const environment: readonly [string, string][] = Object.entries(request.environment);
         if (
@@ -78,7 +89,9 @@ export class HostWorkspaceValidation {
             ) >
                 1024 * 1024
         ) {
-            throw new Error('Invalid host environment');
+            throw this.#invalid(
+                'Host launch environment must be at most 256 NAME=value pairs and 1 MiB',
+            );
         }
         if (request.shell === null) {
             if (
@@ -104,17 +117,34 @@ export class HostWorkspaceValidation {
                 true,
             );
         }
-        this.count(request.timeoutMs, 1, HostWorkspaceLimits.timeoutMs);
-        if (request.retentionAfterTimeoutMs !== undefined) {
-            this.count(
-                request.retentionAfterTimeoutMs,
-                1000,
-                HostWorkspaceLimits.retentionAfterTimeoutMs,
+        if (
+            !Number.isSafeInteger(request.timeoutMs) ||
+            request.timeoutMs < 1 ||
+            request.timeoutMs > HostWorkspaceLimits.timeoutMs
+        ) {
+            throw this.#invalid(
+                `Host launch timeoutMs must be an integer from 1 to ${HostWorkspaceLimits.timeoutMs}`,
+            );
+        }
+        if (
+            request.retentionAfterTimeoutMs !== undefined &&
+            (!Number.isSafeInteger(request.retentionAfterTimeoutMs) ||
+                request.retentionAfterTimeoutMs < 1000 ||
+                request.retentionAfterTimeoutMs > HostWorkspaceLimits.retentionAfterTimeoutMs)
+        ) {
+            throw this.#invalid(
+                `Host launch retentionAfterTimeoutMs must be an integer from 1000 to ${HostWorkspaceLimits.retentionAfterTimeoutMs}`,
             );
         }
         if (request.directory !== null && !this.#text(request.directory, 32767)) {
-            throw new Error('Invalid host working directory');
+            throw this.#invalid(
+                'Host working directory must be at most 32767 characters without NUL',
+            );
         }
+    }
+
+    static #invalid(message: string): HostOperationError {
+        return new HostOperationError(ConnectorHostErrorCode.InvalidRequest, message, true);
     }
 
     static #text(value: string | null, maximum: number): boolean {

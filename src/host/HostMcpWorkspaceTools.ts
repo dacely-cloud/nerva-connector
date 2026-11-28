@@ -14,6 +14,7 @@ import { HostHttpMethod, type HostHttpRequest, type HostHttpRead } from './HostH
 import { HostEnvironmentValidation } from './HostEnvironmentValidation.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from './HostTerminalTypes.js';
 import { HostOperationError } from './HostOperationError.js';
+import { HostMcpArgumentShape } from './HostMcpArgumentShape.js';
 import { HostDesktopTextFieldOptions } from './HostDesktopTextFieldOptions.js';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import {
@@ -85,7 +86,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
     ): Promise<string> {
         this.signal.throwIfAborted();
         if (observation !== undefined && name !== 'process_start' && name !== 'terminal_start') {
-            throw new Error('Native observation reservation requires an exact start');
+            throw this.#invalid('Native observation reservation requires an exact start');
         }
         const definition: HostMcpTool | undefined = this.tools.find(
             (entry: HostMcpTool): boolean => entry.name === name,
@@ -103,15 +104,23 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     true,
                 );
             }
-            throw new Error('Unknown computer tool');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.Unsupported,
+                'This Connector does not offer the requested computer tool',
+                true,
+            );
         }
         const properties: HostJsonValue | undefined = definition.inputSchema['properties'];
-        if (properties === null || typeof properties !== 'object' || Array.isArray(properties)) {
-            throw new Error('Invalid computer tool schema');
+        if (!HostMcpArgumentShape.object(properties)) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.OperationFailed,
+                'Invalid computer tool schema',
+                true,
+            );
         }
         const args: Readonly<Record<string, unknown>> = this.#arguments(
             argumentsValue,
-            Object.keys(properties),
+            properties,
             definition.inputSchema['required'],
         );
         switch (name) {
@@ -171,7 +180,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             case 'desktop_screenshot': {
                 const mode: HostWriteMode = this.#writeMode(args['mode']);
                 if (mode !== HostWriteMode.Create && mode !== HostWriteMode.Replace) {
-                    throw new Error('Desktop screenshots require create or replace');
+                    throw this.#invalid('Desktop screenshots require mode create or replace');
                 }
                 return this.#serialize(
                     await this.workspace.desktopScreenshot(
@@ -386,17 +395,24 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 await this.workspace.terminals.release(this.#text(args['processId']));
                 return '{"released":true}';
             default:
-                throw new Error('Unknown computer tool');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'This Connector does not offer the requested computer tool',
+                    true,
+                );
         }
     }
 
     #arguments(
         value: HostJsonObject,
-        fields: readonly string[],
+        properties: HostJsonObject,
         required: HostJsonValue | undefined,
     ): Readonly<Record<string, unknown>> {
         try {
-            const args: Readonly<Record<string, unknown>> = Boundary.record(value, fields);
+            const args: Readonly<Record<string, unknown>> = Boundary.record(
+                value,
+                Object.keys(properties),
+            );
             for (const field of Boundary.array(required, 32)) {
                 if (typeof field !== 'string') {
                     throw new Error('Invalid host operation schema');
@@ -409,6 +425,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                     );
                 }
             }
+            HostMcpArgumentShape.check(properties, args);
             return args;
         } catch (cause: unknown) {
             if (cause instanceof HostOperationError) {
@@ -518,7 +535,7 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             Array.isArray(raw) ||
             Object.keys(raw).length > 256
         ) {
-            throw new Error('Invalid process environment');
+            throw this.#invalid('Invalid process environment');
         }
         return Boundary.record(raw, Object.keys(raw));
     }
@@ -526,25 +543,29 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
     #input(args: Readonly<Record<string, unknown>>): Buffer {
         const raw: unknown = args['data'];
         if (typeof raw !== 'string' || raw.length > 196608) {
-            throw new Error('Invalid computer operation bytes');
+            throw this.#invalid(
+                'Host operation data must be a string of at most 196608 characters',
+            );
         }
         const data: string = raw;
         if (args['encoding'] === 'utf8') {
             const bytes: Buffer = Buffer.from(data, 'utf8');
             if (bytes.byteLength > this.#bounds.maximumChunkBytes) {
-                throw new Error('Host input exceeds the transport chunk bound');
+                throw this.#invalid('Host input exceeds the transport chunk bound');
             }
             return bytes;
         }
         if (args['encoding'] !== 'base64') {
-            throw new Error('Invalid byte encoding');
+            throw this.#invalid('Host operation encoding must be utf8 or base64');
         }
         const bytes: Buffer = Buffer.from(data, 'base64');
         if (
             bytes.toString('base64') !== data ||
             bytes.byteLength > this.#bounds.maximumChunkBytes
         ) {
-            throw new Error('Invalid canonical base64');
+            throw this.#invalid(
+                'Host operation data must be canonical base64 within the transport chunk bound',
+            );
         }
         return bytes;
     }
@@ -556,13 +577,23 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
             raw.length > 196608 ||
             raw.includes('\0')
         ) {
-            throw new Error('Invalid computer operation text');
+            throw this.#invalid(
+                'Host operation text must be a string without NUL characters' +
+                    (empty ? '' : ' and not empty'),
+            );
         }
         return raw;
     }
 
     #offset(raw: unknown): bigint {
-        return raw === undefined ? 0n : Boundary.integer(raw);
+        try {
+            return raw === undefined ? 0n : Boundary.integer(raw);
+        } catch (cause: unknown) {
+            throw this.#invalid(
+                'Host operation offsets must be decimal strings within the signed 64-bit range',
+                cause,
+            );
+        }
     }
     #choice<T extends string>(raw: unknown, choices: readonly T[]): T {
         for (const choice of choices) {
@@ -570,18 +601,25 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 return choice;
             }
         }
-        throw new Error('Invalid desktop action');
+        throw this.#invalid('Host operation choice must be one of ' + choices.join(', '));
     }
     #coordinate(raw: unknown): number {
         if (typeof raw !== 'number' || !Number.isSafeInteger(raw) || Math.abs(raw) > 1000000) {
-            throw new Error('Invalid desktop coordinate');
+            throw this.#invalid('Desktop coordinates must be integers within 1000000 pixels');
         }
         return raw;
     }
     #maximum(raw: unknown): number {
-        return raw === undefined
-            ? this.#bounds.defaultChunkBytes
-            : Boundary.count(raw, this.#bounds.maximumChunkBytes);
+        try {
+            return raw === undefined
+                ? this.#bounds.defaultChunkBytes
+                : Boundary.count(raw, this.#bounds.maximumChunkBytes);
+        } catch (cause: unknown) {
+            throw this.#invalid(
+                `Host operation maximumBytes must be an integer up to ${this.#bounds.maximumChunkBytes}`,
+                cause,
+            );
+        }
     }
     #writeMode(raw: unknown): HostWriteMode {
         for (const mode of Object.values(HostWriteMode)) {
@@ -589,7 +627,18 @@ export class HostMcpWorkspaceTools implements HostMcpTools {
                 return mode;
             }
         }
-        throw new Error('Explicit file write mode required');
+        throw this.#invalid(
+            'Host file mode must be one of ' + Object.values(HostWriteMode).join(', '),
+        );
+    }
+
+    #invalid(message: string, cause?: unknown): HostOperationError {
+        return new HostOperationError(
+            ConnectorHostErrorCode.InvalidRequest,
+            message,
+            true,
+            cause === undefined ? undefined : { cause },
+        );
     }
 
     #bytes(bytes: Buffer): HostJsonObject {

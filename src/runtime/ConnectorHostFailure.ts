@@ -6,7 +6,6 @@ import { HostDesktopError } from '../host/HostDesktopError.js';
 import {
     ConnectorHostTool,
     ConnectorHostOutcome,
-    ConnectorHostErrorCode,
     type ConnectorHostResponse,
 } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
@@ -36,52 +35,7 @@ export class ConnectorHostFailure {
                     ? ConnectorHostOutcome.Failed
                     : ConnectorHostOutcome.Indeterminate,
             resultJson: null,
-            errorCode: this.#code(caught),
+            errorCode: HostOperationError.code(caught),
         };
-    }
-
-    static #code(caught: unknown): ConnectorHostErrorCode {
-        if (caught instanceof HostOperationError) {
-            return caught.code;
-        }
-        if (!(caught instanceof Error)) {
-            return ConnectorHostErrorCode.OperationFailed;
-        }
-        if (caught.name === 'AbortError' || caught.name === 'TimeoutError') {
-            return ConnectorHostErrorCode.Canceled;
-        }
-        const code: unknown = Reflect.get(caught, 'code');
-        switch (code) {
-            case 'ENOENT':
-                return ConnectorHostErrorCode.NotFound;
-            case 'EEXIST':
-                return ConnectorHostErrorCode.AlreadyExists;
-            case 'ENOTDIR':
-                return ConnectorHostErrorCode.NotDirectory;
-            case 'EISDIR':
-                return ConnectorHostErrorCode.IsDirectory;
-            case 'EACCES':
-            case 'EPERM':
-                return ConnectorHostErrorCode.PermissionDenied;
-            case 'ENOTSUP':
-            case 'EOPNOTSUPP':
-            case 'ENOSYS':
-            case 'ENOEXEC':
-                return ConnectorHostErrorCode.Unsupported;
-            case 'EINVAL':
-            case 'ERR_INVALID_ARG_TYPE':
-            case 'ERR_OUT_OF_RANGE':
-                return ConnectorHostErrorCode.InvalidRequest;
-            case 'E2BIG':
-            case 'EFBIG':
-            case 'EMFILE':
-            case 'ENFILE':
-            case 'ENOSPC':
-                return ConnectorHostErrorCode.ResourceLimit;
-            case 'EXDEV':
-                return ConnectorHostErrorCode.CrossDevice;
-            default:
-                return ConnectorHostErrorCode.OperationFailed;
-        }
     }
 }

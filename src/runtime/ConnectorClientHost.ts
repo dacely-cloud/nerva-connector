@@ -470,7 +470,7 @@ export class ConnectorClientHost implements AsyncDisposable {
             }) ?? null;
         try {
             await this.#authorize();
-        } catch {
+        } catch (caught: unknown) {
             response = {
                 outcome: ConnectorHostOutcome.Failed,
                 resultJson: null,
@@ -482,7 +482,7 @@ export class ConnectorClientHost implements AsyncDisposable {
                 jobId: permit.jobId,
                 outcome: response.outcome,
                 code: response.errorCode,
-                reason: 'Local full computer approval is unavailable or changed',
+                ...ConnectorConnectionLog.failure(caught),
             });
             await this.journal.complete(permit, response);
             return response;
@@ -490,7 +490,11 @@ export class ConnectorClientHost implements AsyncDisposable {
         let observation: ConnectorHostObservationPrepared | null = null;
         try {
             if (this.#tools === null) {
-                throw new Error('Host workspace unavailable');
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.AdmissionDenied,
+                    'Host workspace unavailable because full computer access is not enabled',
+                    true,
+                );
             }
             let argumentsJson: string = permit.request.argumentsJson;
             try {
@@ -516,13 +520,7 @@ export class ConnectorClientHost implements AsyncDisposable {
                     { cause: error },
                 );
             }
-            const raw: unknown = JSON.parse(argumentsJson);
-            const argumentsValue: HostJsonObject = HostMcpProtocol.request({
-                jsonrpc: '2.0',
-                id: 'paired-host',
-                method: 'tools/call',
-                params: raw,
-            }).params;
+            const argumentsValue: HostJsonObject = ConnectorClientHost.#arguments(argumentsJson);
             const resultJson: string = await this.#tools.call(
                 permit.request.toolName,
                 argumentsValue,
@@ -540,11 +538,7 @@ export class ConnectorClientHost implements AsyncDisposable {
                 jobId: permit.jobId,
                 outcome: response.outcome,
                 code: response.errorCode,
-                reason:
-                    caught instanceof HostDesktopError || caught instanceof HostOperationError
-                        ? caught.message
-                        : 'The OS or local authority rejected this operation: ' +
-                          (response.errorCode ?? 'operation-failed'),
+                ...ConnectorConnectionLog.failure(caught),
                 ...(caught instanceof HostDesktopError
                     ? {
                           operation: caught.operation,
@@ -618,12 +612,53 @@ export class ConnectorClientHost implements AsyncDisposable {
         await this.journal.complete(permit, response);
         return response;
     }
+    /**
+     * The operation's own arguments, from the exact JSON text the permit carries.
+     *
+     * @throws {HostOperationError} `invalid-request`, definitive, when the text is not a bounded JSON object
+     */
+    static #arguments(argumentsJson: string): HostJsonObject {
+        try {
+            const raw: unknown = JSON.parse(argumentsJson);
+            return HostMcpProtocol.request({
+                jsonrpc: '2.0',
+                id: 'paired-host',
+                method: 'tools/call',
+                params: raw,
+            }).params;
+        } catch (cause: unknown) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host operation arguments must be one JSON object',
+                true,
+                { cause },
+            );
+        }
+    }
+    /** Every refusal precedes the operation, so each one is a definitive admission denial. */
     async #authorize(): Promise<void> {
-        this.#active();
+        try {
+            this.#active();
+        } catch (cause: unknown) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.AdmissionDenied,
+                'The paired host owner is closed or failed',
+                true,
+                { cause },
+            );
+        }
         const permit: ConnectorHostPermit | null = this.#permit;
-        const current: ConnectorHostLocalGrant | null = await ConnectorHostGrant.read(
-            this.identity,
-        );
+        let current: ConnectorHostLocalGrant | null;
+        try {
+            current = await ConnectorHostGrant.read(this.identity);
+        } catch (cause: unknown) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.AdmissionDenied,
+                'Local full computer approval could not be read',
+                true,
+                { cause },
+            );
+        }
         if (
             permit === null ||
             current === null ||
@@ -635,7 +670,11 @@ export class ConnectorClientHost implements AsyncDisposable {
             !current.profile.tools.includes(permit.request.toolName) ||
             permit.expiresAtMs <= BigInt(Date.now())
         ) {
-            throw new Error('Full-computer consent changed or expired before the operation');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.AdmissionDenied,
+                'Full-computer consent changed or expired before the operation',
+                true,
+            );
         }
     }
     async #inspect(): Promise<void> {

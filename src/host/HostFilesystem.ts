@@ -56,7 +56,7 @@ export class HostFilesystem {
         try {
             const metadata: BigIntStats = await handle.stat({ bigint: true });
             if (!metadata.isFile()) {
-                throw new Error('Host file reads require a regular file');
+                throw this.#irregular(metadata, 'Host file reads require a regular file');
             }
             signal?.throwIfAborted();
             if (snapshot !== undefined) {
@@ -123,7 +123,11 @@ export class HostFilesystem {
             !Object.values(HostWriteMode).includes(mode) ||
             (mode !== HostWriteMode.Update && offset !== 0n)
         ) {
-            throw new Error('Invalid host file write');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host file writes take at most one chunk, and an offset only in update mode',
+                true,
+            );
         }
         const flags: number =
             mode === HostWriteMode.Replace
@@ -293,12 +297,47 @@ export class HostFilesystem {
         await mkdir(path, { recursive });
     }
 
-    /** Normal host removal preserves OS errors and requires explicit recursive intent. */
+    /**
+     * Normal host removal preserves OS errors and requires explicit recursive intent.
+     *
+     * @remarks
+     * The named path is examined before anything is removed, as `rm` itself does first. A path that cannot be
+     * examined, such as one that does not exist, and a directory named without recursive intent are definitive
+     * failures, because nothing was attempted. A failure once removal began keeps its uncertainty: a recursive
+     * removal may have deleted part of the tree.
+     */
     public static async remove(path: string, recursive: boolean): Promise<void> {
         if (typeof recursive !== 'boolean') {
-            throw new Error('Host removal requires an explicit recursive flag');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host removal requires an explicit recursive flag',
+                true,
+            );
+        }
+        let named: BigIntStats;
+        try {
+            named = await lstat(path, { bigint: true });
+        } catch (cause: unknown) {
+            throw HostOperationError.before(cause, 'Host removal path could not be examined');
+        }
+        if (named.isDirectory() && !recursive) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.IsDirectory,
+                'Host removal of a directory requires recursive true',
+                true,
+            );
         }
         await rm(path, { recursive, force: false, maxRetries: 0 });
+    }
+
+    static #irregular(metadata: BigIntStats, message: string): HostOperationError {
+        return new HostOperationError(
+            metadata.isDirectory()
+                ? ConnectorHostErrorCode.IsDirectory
+                : ConnectorHostErrorCode.Unsupported,
+            message,
+            true,
+        );
     }
 
     static #alreadyExists(caught: unknown): boolean {

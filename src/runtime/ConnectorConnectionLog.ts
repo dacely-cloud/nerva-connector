@@ -28,6 +28,7 @@ export class ConnectorConnectionLog {
     /** Size at which the current file is rotated into its single predecessor. */
     public static readonly maximumBytes: number = 1048576;
     static readonly #valueLength: number = 300;
+    static readonly #causeCount: number = 4;
     #queue: Promise<void> = Promise.resolve();
     #failed: boolean = false;
     #last: string = 'started';
@@ -93,6 +94,46 @@ export class ConnectorConnectionLog {
             return null;
         }
         return ConnectorConnectionLog.#clean(cause.message === '' ? cause.name : cause.message);
+    }
+
+    /**
+     * The local diagnosis of a thrown value, for this file only: its message, name, errno-style code and system
+     * call, and the errors behind it.
+     *
+     * @remarks
+     * `cause` follows `Error.cause` and the members of an `AggregateError`, at most four of them, each written as
+     * `Name: message [code syscall]`. Every value is cleaned and bounded like any other field. Nothing here is sent
+     * to Nerva; a paired operation reports only its public code.
+     *
+     * @param caught - What was thrown
+     * @returns `reason`, `errorName`, and when present `errorCode`, `errorSyscall` and `cause`
+     */
+    public static failure(caught: unknown): ConnectorLogFields {
+        try {
+            if (!(caught instanceof Error)) {
+                return { reason: 'A ' + typeof caught + ' was thrown instead of an error' };
+            }
+            const fields: Record<string, ConnectorLogValue> = {
+                reason: ConnectorConnectionLog.error(caught),
+                errorName: caught.name,
+            };
+            const code: unknown = Reflect.get(caught, 'code');
+            if (typeof code === 'string' || typeof code === 'number') {
+                fields['errorCode'] = code.toString();
+            }
+            const syscall: unknown = Reflect.get(caught, 'syscall');
+            if (typeof syscall === 'string') {
+                fields['errorSyscall'] = syscall;
+            }
+            const causes: readonly string[] = ConnectorConnectionLog.#causes(caught);
+            if (causes.length !== 0) {
+                fields['cause'] = causes.join(' | ');
+            }
+            return fields;
+        } catch {
+            /** A hostile getter on the thrown value cannot stop the failure from being recorded. */
+            return { reason: 'The thrown error could not be described' };
+        }
     }
 
     /** Queues one line; it never throws and never waits for the disk. */
@@ -191,6 +232,44 @@ export class ConnectorConnectionLog {
                 this.#failed = true;
             });
         }
+    }
+
+    static #causes(caught: Error): readonly string[] {
+        const described: string[] = [];
+        const seen: Set<unknown> = new Set([caught]);
+        const pending: unknown[] = [...ConnectorConnectionLog.#inner(caught)];
+        while (pending.length !== 0 && described.length < ConnectorConnectionLog.#causeCount) {
+            const next: unknown = pending.shift();
+            if (next === undefined || seen.has(next)) {
+                continue;
+            }
+            seen.add(next);
+            if (!(next instanceof Error)) {
+                described.push(typeof next);
+                continue;
+            }
+            const code: unknown = Reflect.get(next, 'code');
+            const syscall: unknown = Reflect.get(next, 'syscall');
+            const detail: string = [
+                typeof code === 'string' || typeof code === 'number' ? code.toString() : '',
+                typeof syscall === 'string' ? syscall : '',
+            ]
+                .filter((part: string): boolean => part !== '')
+                .join(' ');
+            described.push(
+                next.name +
+                    ': ' +
+                    (next.message === '' ? next.name : next.message) +
+                    (detail === '' ? '' : ' [' + detail + ']'),
+            );
+            pending.push(...ConnectorConnectionLog.#inner(next));
+        }
+        return described;
+    }
+
+    static #inner(error: Error): readonly unknown[] {
+        const members: readonly unknown[] = error instanceof AggregateError ? error.errors : [];
+        return [...members, error.cause];
     }
 
     static #clean(value: string): string {

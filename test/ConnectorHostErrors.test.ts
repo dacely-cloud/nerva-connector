@@ -14,6 +14,7 @@ import {
 } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorHostCodec } from 'nerva-connector-protocol/protocol/ConnectorHostCodec.js';
 import { ConnectorHostFailure } from '../src/runtime/ConnectorHostFailure.js';
+import { ConnectorConnectionLog } from '../src/runtime/ConnectorConnectionLog.js';
 import { ConnectorHostProof } from '../src/runtime/ConnectorHostProof.js';
 import { ConnectorHostFixture } from './support/ConnectorHostFixture.js';
 import type { ConnectorClientHost } from '../src/runtime/ConnectorClientHost.js';
@@ -76,7 +77,10 @@ it.skipIf(process.platform !== 'linux')(
     async (): Promise<void> => {
         await using fixture: ConnectorHostFixture = await ConnectorHostFixture.create();
         const grant: ConnectorHostLocalGrant = await fixture.grant();
-        const host: ConnectorClientHost = await fixture.open();
+        const log: ConnectorConnectionLog = new ConnectorConnectionLog(
+            join(fixture.directory, 'logs', 'connection.log'),
+        );
+        const host: ConnectorClientHost = await fixture.open(null, log);
         await writeFile(join(fixture.tasks, 'existing.txt'), 'keep');
         const calls: readonly FailureCase[] = [
             {
@@ -109,6 +113,21 @@ it.skipIf(process.platform !== 'linux')(
                 args: '{"source":"existing.txt","destination":"existing.txt"}',
                 code: ConnectorHostErrorCode.AlreadyExists,
             },
+            {
+                tool: ConnectorHostTool.FileRemove,
+                args: '{"path":"missing-private-token","recursive":false}',
+                code: ConnectorHostErrorCode.NotFound,
+            },
+            {
+                tool: ConnectorHostTool.ProcessRead,
+                args: '{"processId":"00000000-0000-4000-8000-000000000000","stdoutOffset":0,"stderrOffset":0}',
+                code: ConnectorHostErrorCode.InvalidRequest,
+            },
+            {
+                tool: ConnectorHostTool.FileWrite,
+                args: '{"path":"existing.txt","mode":"update","encoding":"utf8","data":"private","offset":0}',
+                code: ConnectorHostErrorCode.InvalidRequest,
+            },
         ];
         let sequence: bigint = 0n;
         for (const entry of calls) {
@@ -136,6 +155,34 @@ it.skipIf(process.platform !== 'linux')(
         }
         expect(host.journal.snapshot.acknowledgedSequence).toBe(BigInt(calls.length));
         expect(await readFile(join(fixture.tasks, 'existing.txt'), 'utf8')).toBe('keep');
+        const failures: readonly Readonly<Record<string, unknown>>[] = (
+            await log.recent(50)
+        ).filter(
+            (line: Readonly<Record<string, unknown>>): boolean =>
+                line['event'] === 'host-operation-failed',
+        );
+        expect(failures).toHaveLength(calls.length);
+        expect(failures[6]).toMatchObject({
+            tool: ConnectorHostTool.FileRemove,
+            outcome: ConnectorHostOutcome.Failed,
+            code: ConnectorHostErrorCode.NotFound,
+            reason: 'Host removal path could not be examined',
+            errorName: 'HostOperationError',
+        });
+        expect(failures[6]?.['cause']).toMatch(/^Error: ENOENT.*\[ENOENT lstat\]$/u);
+        expect(failures[7]).toMatchObject({
+            tool: ConnectorHostTool.ProcessRead,
+            code: ConnectorHostErrorCode.InvalidRequest,
+            reason: 'Host operation field stdoutOffset must be a string matching ^(0|[1-9][0-9]{0,18})$, not an integer',
+        });
+        expect(failures[8]).toMatchObject({
+            tool: ConnectorHostTool.FileWrite,
+            outcome: ConnectorHostOutcome.Failed,
+            reason: 'Host operation field offset must be a string matching ^(0|[1-9][0-9]{0,18})$, not an integer',
+        });
+        for (const line of failures) {
+            expect(line['reason']).not.toContain('The OS or local authority rejected');
+        }
     },
 );
 

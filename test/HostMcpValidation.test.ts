@@ -107,7 +107,7 @@ it('identifies rejected launch fields in the local diagnostic without quoting co
     await expect(
         tools.call('process_start', { executable: 'private.exe', timeoutMs: 0 }),
     ).rejects.toMatchObject({
-        message: 'Program launch requires timeoutMs to be an integer from 1 to 604800000',
+        message: 'Host operation field timeoutMs must be from 1 to 604800000',
     });
     await expect(
         tools.call('process_start', {

@@ -10,21 +10,35 @@ import type { HostFileSnapshot } from './HostWorkspaceTypes.js';
 
 /** Snapshot preconditions remain exact across JSON transport and descriptor checks. */
 export class HostFileSnapshotCodec {
-    /** External snapshots use decimal strings, including signed historical timestamps. */
+    /**
+     * External snapshots use decimal strings, including signed historical timestamps.
+     *
+     * @throws {HostOperationError} `invalid-request`, definitive, for any other shape
+     */
     public static decode(raw: unknown): HostFileSnapshot {
-        const value: Readonly<Record<string, unknown>> = Boundary.record(raw, [
-            'identity',
-            'size',
-            'modifiedAtNs',
-        ]);
-        if (typeof value['identity'] !== 'string') {
-            throw new Error('Invalid host snapshot identity');
+        let snapshot: HostFileSnapshot;
+        try {
+            const value: Readonly<Record<string, unknown>> = Boundary.record(raw, [
+                'identity',
+                'size',
+                'modifiedAtNs',
+            ]);
+            if (typeof value['identity'] !== 'string') {
+                throw new Error('Invalid host snapshot identity');
+            }
+            snapshot = {
+                identity: value['identity'],
+                size: Boundary.integer(value['size']),
+                modifiedAtNs: this.#timestamp(value['modifiedAtNs']),
+            };
+        } catch (cause: unknown) {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host file snapshot must hold identity, a decimal string size and a decimal string modifiedAtNs',
+                true,
+                { cause },
+            );
         }
-        const snapshot: HostFileSnapshot = {
-            identity: value['identity'],
-            size: Boundary.integer(value['size']),
-            modifiedAtNs: this.#timestamp(value['modifiedAtNs']),
-        };
         this.validate(snapshot);
         return snapshot;
     }
@@ -42,7 +56,11 @@ export class HostFileSnapshotCodec {
             snapshot.size < 0n ||
             typeof snapshot.modifiedAtNs !== 'bigint'
         ) {
-            throw new Error('Invalid host file snapshot');
+            throw new HostOperationError(
+                ConnectorHostErrorCode.InvalidRequest,
+                'Host file snapshot identity must be 1 to 256 characters with a non-negative size',
+                true,
+            );
         }
     }
 

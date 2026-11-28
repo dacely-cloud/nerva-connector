@@ -5,11 +5,13 @@ import { spawn, type ChildProcess, type ChildProcessWithoutNullStreams } from 'n
 import { Duplex } from 'node:stream';
 import type { FileHandle } from 'node:fs/promises';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
+import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 import { ConnectorNativeExecutable } from '../runtime/ConnectorNativeExecutable.js';
 import { HostLinuxBuild } from './HostLinuxBuild.js';
 import type { HostLinuxArtifact } from './HostLinuxArtifact.js';
 import type { HostProcessLaunchOptions } from './HostProcessLaunch.js';
 import { HostTerminalChannel, type HostTerminalChannelObserver } from './HostTerminalChannel.js';
+import { HostOperationError } from './HostOperationError.js';
 import type { HostTerminalControlKind } from './HostTerminalTypes.js';
 
 /** OS process and byte events stay below the terminal owner's evidence and authorization boundary. */
@@ -25,6 +27,12 @@ export interface HostTerminalBackendLaunch {
     readonly cols: number;
     readonly rows: number;
     readonly windowsLauncher: string | undefined;
+}
+
+/** The verified native broker and its arguments, resolved before anything is spawned. */
+interface HostTerminalBackendLauncher {
+    readonly executable: string;
+    readonly arguments: readonly string[];
 }
 
 /** One owner retains the exact reviewed ELF or Mach-O descriptor, or the compiled Windows broker, until process close. */
@@ -49,44 +57,25 @@ export class HostTerminalBackend {
         return this.#closed.promise;
     }
 
-    /** Construction is separate from startup so the pool registers this resource owner before any await or spawn. */
+    /**
+     * Construction is separate from startup so the pool registers this resource owner before any await or spawn.
+     *
+     * @remarks
+     * Every failure before the native broker is spawned is definitive: no terminal or program was created. A
+     * failure after the spawn keeps its uncertainty.
+     */
     public async start(input: HostTerminalBackendLaunch, signal: AbortSignal): Promise<void> {
-        signal.throwIfAborted();
-        let executable: string;
-        let arguments_: readonly string[];
         const configuration: HostProcessLaunchOptions = input.launch;
-        const encoded: string = JSON.stringify({
-            ...configuration,
-            cols: input.cols,
-            rows: input.rows,
-        });
-        if (process.platform === 'win32') {
-            if (input.windowsLauncher === undefined) {
-                throw new Error('Windows terminal requires its verified native broker');
-            }
-            await this.#channel.listen();
-            executable = input.windowsLauncher;
-            const launch: string = Buffer.from(encoded).toString('base64');
-            if (launch.length > 30000) {
-                throw new Error('Windows terminal launch exceeds its bound');
-            }
-            arguments_ = ['--terminal', launch, this.#channel.path, this.#channel.token];
-        } else if (process.platform === 'linux' || process.platform === 'darwin') {
-            const artifact: HostLinuxArtifact | null = await HostLinuxBuild.read();
-            if (artifact === null) {
-                throw new Error('Host terminals require their reviewed native build');
-            }
-            this.#pin = await ConnectorNativeExecutable.open(
-                HostLinuxBuild.executable(),
-                artifact.sha256,
-                artifact.bytes,
+        let launcher: HostTerminalBackendLauncher;
+        try {
+            launcher = await this.#launcher(input, signal);
+        } catch (cause: unknown) {
+            throw HostOperationError.before(
+                cause,
+                'Native terminal startup was refused before launch',
             );
-            executable = await HostTerminalBackend.#executable(this.#pin);
-            arguments_ = ['--host-terminal'];
-        } else {
-            throw new Error('Native terminals are unavailable on this platform');
         }
-        signal.throwIfAborted();
+        const { executable, arguments: arguments_ } = launcher;
         const child: ChildProcess = spawn(executable, arguments_, {
             cwd: input.directory,
             env: {
@@ -135,6 +124,67 @@ export class HostTerminalBackend {
                 }),
             );
         }
+    }
+
+    async #launcher(
+        input: HostTerminalBackendLaunch,
+        signal: AbortSignal,
+    ): Promise<HostTerminalBackendLauncher> {
+        signal.throwIfAborted();
+        const encoded: string = JSON.stringify({
+            ...input.launch,
+            cols: input.cols,
+            rows: input.rows,
+        });
+        let launcher: HostTerminalBackendLauncher;
+        if (process.platform === 'win32') {
+            if (input.windowsLauncher === undefined) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Windows terminal requires its verified native broker',
+                    true,
+                );
+            }
+            const launch: string = Buffer.from(encoded).toString('base64');
+            if (launch.length > 30000) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.ResourceLimit,
+                    'Windows terminal launch exceeds the native command-line limit',
+                    true,
+                );
+            }
+            await this.#channel.listen();
+            launcher = {
+                executable: input.windowsLauncher,
+                arguments: ['--terminal', launch, this.#channel.path, this.#channel.token],
+            };
+        } else if (process.platform === 'linux' || process.platform === 'darwin') {
+            const artifact: HostLinuxArtifact | null = await HostLinuxBuild.read();
+            if (artifact === null) {
+                throw new HostOperationError(
+                    ConnectorHostErrorCode.Unsupported,
+                    'Host terminals require their reviewed native build',
+                    true,
+                );
+            }
+            this.#pin = await ConnectorNativeExecutable.open(
+                HostLinuxBuild.executable(),
+                artifact.sha256,
+                artifact.bytes,
+            );
+            launcher = {
+                executable: await HostTerminalBackend.#executable(this.#pin),
+                arguments: ['--host-terminal'],
+            };
+        } else {
+            throw new HostOperationError(
+                ConnectorHostErrorCode.Unsupported,
+                'Native terminals are unavailable on this platform',
+                true,
+            );
+        }
+        signal.throwIfAborted();
+        return launcher;
     }
 
     public pause(value: boolean): void {
