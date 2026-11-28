@@ -19,13 +19,29 @@ import { SystemSpecificationCodec } from 'nerva-connector-protocol/system/System
 export class SystemInfo {
     /** One process-wide baseline, because CPU and network counters are process-independent. */
     static readonly #usage: SystemUsageSampler = new SystemUsageSampler();
-    /** The caller signs this snapshot before publication; this operation grants no execution or filesystem authority. */
-    public static async read(signal: AbortSignal): Promise<SystemSpecification> {
+    /**
+     * The caller signs this snapshot before publication; this operation grants no execution or filesystem authority.
+     *
+     * @remarks
+     * Processor, memory and platform facts are read synchronously and always reported. GPU inventory and the usage
+     * sample run external tools and the Windows helper, so `detailMs` can bound them: when it runs out first, the
+     * GPUs are reported unavailable and the usage sample is left out, as when those tools fail. Only `signal`
+     * cancels the whole read.
+     *
+     * @param signal - Cancels the read; nothing is returned once it aborts
+     * @param detailMs - How long GPU inventory and usage sampling together may take, or `null` for no bound
+     */
+    public static async read(
+        signal: AbortSignal,
+        detailMs: number | null = null,
+    ): Promise<SystemSpecification> {
         signal.throwIfAborted();
         const processors: readonly CpuInfo[] = cpus();
         if (processors.length < 1 || processors.length > 4096) {
             throw new Error('Unsupported processor inventory');
         }
+        const details: AbortSignal =
+            detailMs === null ? signal : AbortSignal.any([signal, AbortSignal.timeout(detailMs)]);
         const hostPlatform: NodeJS.Platform = platform();
         let gpuState: GpuInventoryState = GpuInventoryState.Unavailable;
         let gpus: readonly GpuSpecification[] = Object.freeze([]);
@@ -33,7 +49,7 @@ export class SystemInfo {
             try {
                 const csv: string | null = await NvidiaSmi.query(
                     ['uuid', 'name', 'memory.total', 'memory.free'],
-                    signal,
+                    details,
                 );
                 if (csv === null) {
                     throw new Error('NVIDIA inventory tool is not installed');
@@ -45,13 +61,13 @@ export class SystemInfo {
             }
         } else if (hostPlatform === 'win32') {
             try {
-                gpus = await WindowsGpuInventory.read(signal);
+                gpus = await WindowsGpuInventory.read(details);
                 gpuState = GpuInventoryState.Reported;
             } catch {
                 signal.throwIfAborted();
             }
         }
-        const usage: SystemUsage | undefined = await this.#sample(gpus, signal);
+        const usage: SystemUsage | undefined = await this.#sample(gpus, details, signal);
         signal.throwIfAborted();
         const total: string = this.#memory(totalmem());
         const available: string = this.#memory(freemem());
@@ -81,13 +97,19 @@ export class SystemInfo {
         });
     }
 
-    /** A usage sample never prevents the specification itself from being reported. */
+    /**
+     * A usage sample never prevents the specification itself from being reported.
+     *
+     * @param details - Bounds the sample; when it aborts first the sample is left out
+     * @param signal - Cancels the whole read
+     */
     static async #sample(
         gpus: readonly GpuSpecification[],
+        details: AbortSignal,
         signal: AbortSignal,
     ): Promise<SystemUsage | undefined> {
         try {
-            return await this.#usage.sample(gpus, signal);
+            return await this.#usage.sample(gpus, details);
         } catch {
             signal.throwIfAborted();
             return undefined;

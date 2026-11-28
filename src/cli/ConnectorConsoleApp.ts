@@ -41,6 +41,7 @@ import type { ConnectorSetupProfile } from '../runtime/ConnectorSetupProfile.js'
 import { ConnectorConnectionLog } from '../runtime/ConnectorConnectionLog.js';
 import { ConnectorLogSummary } from './ConnectorLogSummary.js';
 import { WindowsStateError } from '../windows/WindowsStateProtocol.js';
+import { ConnectorStorageAdvice } from './ConnectorStorageAdvice.js';
 import { WindowsBackgroundStartup } from '../windows/WindowsBackgroundStartup.js';
 import { ConnectorUpdateChannel } from './ConnectorUpdateChannel.js';
 import { ConnectorConsoleView } from './ConnectorConsoleScreen.js';
@@ -212,7 +213,10 @@ export class ConnectorConsoleApp {
             this.#model.failure(reason, null);
             this.#model.details = [
                 ...(caught instanceof WindowsStateError && caught.diagnostic !== undefined
-                    ? ['Windows storage check: ' + caught.diagnostic]
+                    ? [
+                          ...ConnectorStorageAdvice.lines(caught.diagnostic),
+                          'Windows storage check: ' + caught.diagnostic,
+                      ]
                     : []),
                 'Startup log: ' + this.#log.path,
             ];

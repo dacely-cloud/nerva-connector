@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { it, expect } from 'vitest';
+import { it, expect, vi, type MockInstance } from 'vitest';
+import { NvidiaSmi } from '../src/system/NvidiaSmi.js';
 import { GpuInventory } from '../src/system/GpuInventory.js';
 import { SystemInfo } from '../src/system/SystemInfo.js';
 import {
@@ -54,3 +55,35 @@ it('cancellation prevents starting a new local probe', async (): Promise<void> =
     stop.abort();
     await expect(SystemInfo.read(stop.signal)).rejects.toThrow();
 });
+
+it.skipIf(process.platform !== 'linux')(
+    'a GPU tool that outlasts the detail bound is reported unavailable instead of failing the snapshot',
+    async (): Promise<void> => {
+        const query: MockInstance<typeof NvidiaSmi.query> = vi
+            .spyOn(NvidiaSmi, 'query')
+            .mockImplementation(async (_fields: readonly string[], signal: AbortSignal) => {
+                const stopped: PromiseWithResolvers<null> = Promise.withResolvers<null>();
+                signal.addEventListener('abort', (): void => stopped.reject(signal.reason), {
+                    once: true,
+                });
+                return await stopped.promise;
+            });
+        try {
+            const started: number = performance.now();
+            const snapshot: SystemSpecification = await SystemInfo.read(
+                new AbortController().signal,
+                200,
+            );
+            expect(performance.now() - started).toBeLessThan(2000);
+            expect(snapshot.gpuState).toBe(GpuInventoryState.Unavailable);
+            expect(snapshot.gpus).toEqual([]);
+            expect(snapshot.usage).toBeUndefined();
+            expect(snapshot.logicalCpuCount).toBeGreaterThan(0);
+            const stop: AbortController = new AbortController();
+            stop.abort();
+            await expect(SystemInfo.read(stop.signal, 200)).rejects.toThrow();
+        } finally {
+            query.mockRestore();
+        }
+    },
+);

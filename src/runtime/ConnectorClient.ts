@@ -21,6 +21,7 @@ import { dirname } from 'node:path';
 import { ConnectorStartupStage, type ConnectorStartupObserver } from './ConnectorStartup.js';
 import type { ConnectorActivitySink } from './ConnectorActivity.js';
 import { ConnectorHistoryMigration } from './ConnectorHistoryMigration.js';
+import { ConnectorLane, ConnectorLaneFailure } from './ConnectorLaneFailure.js';
 import {
     ConnectorPrivateDirectory,
     ConnectorDirectoryPurpose,
@@ -149,7 +150,11 @@ export class ConnectorClient implements AsyncDisposable {
         return client;
     }
 
-    /** Endpoint rotation and capped jittered backoff always start a new key proof; no execution is replayed. */
+    /**
+     * Endpoint rotation and capped jittered backoff always start a new key proof; no execution is replayed.
+     *
+     * @throws {@link ConnectorLaneFailure} When a capability owner retired itself; the caller loads a new client
+     */
     public async run(signal: AbortSignal): Promise<void> {
         if (this.#running) {
             throw new Error('Connector client already running');
@@ -207,13 +212,9 @@ export class ConnectorClient implements AsyncDisposable {
                     await this.#resources[Symbol.asyncDispose]();
                     break;
                 }
-                if (
-                    this.#files?.failed === true ||
-                    this.#execution?.failed === true ||
-                    this.#workspaces?.failed === true ||
-                    this.#host?.failed === true
-                ) {
-                    throw new Error('Connector retained-result durability failed');
+                const failed: readonly ConnectorLane[] = this.#failedLanes();
+                if (failed.length > 0) {
+                    throw new ConnectorLaneFailure(failed);
                 }
                 if (stopped.aborted) {
                     break;
@@ -254,6 +255,15 @@ export class ConnectorClient implements AsyncDisposable {
                 this.#done.resolve(undefined);
             }
         }
+    }
+    /** The capability owners that retired themselves, in a fixed order. */
+    #failedLanes(): readonly ConnectorLane[] {
+        return [
+            ...(this.#host?.failed === true ? [ConnectorLane.Host] : []),
+            ...(this.#files?.failed === true ? [ConnectorLane.Files] : []),
+            ...(this.#execution?.failed === true ? [ConnectorLane.Execution] : []),
+            ...(this.#workspaces?.failed === true ? [ConnectorLane.Workspaces] : []),
+        ];
     }
     /** Explicit shutdown terminates the exact owned socket and joins its reconnect loop. */
     public async [Symbol.asyncDispose](): Promise<void> {

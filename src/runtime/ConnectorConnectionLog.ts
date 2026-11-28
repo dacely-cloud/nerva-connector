@@ -161,19 +161,30 @@ export class ConnectorConnectionLog {
      *
      * @remarks
      * A blocked loop also stops the console from reading keys, so a stall line next to an unresponsive terminal
-     * says the connector itself was busy rather than the terminal having lost its input.
+     * says the connector itself was busy rather than the terminal having lost its input. Each line also carries
+     * `cpuMs`, the processor time the whole process used across that tick. Close to `blockedMs` means the connector
+     * was computing. Near zero means it was not running at all: the computer slept, Windows suspended the process,
+     * or a write to its console window waited, as while text is selected in a classic console. The Windows clock
+     * behind `blockedMs` keeps counting while the computer sleeps.
      *
      * @returns Stops watching when disposed
      */
     public watchStalls(): Disposable {
         const periodMs: number = 500;
         let expected: number = performance.now() + periodMs;
+        let cpu: NodeJS.CpuUsage = process.cpuUsage();
         const timer: NodeJS.Timeout = setInterval((): void => {
             const now: number = performance.now();
+            const used: NodeJS.CpuUsage = process.cpuUsage(cpu);
+            cpu = process.cpuUsage();
             const blocked: number = Math.round(now - expected);
             expected = now + periodMs;
             if (blocked > 1000) {
-                this.record('stall', { blockedMs: blocked, after: this.#last });
+                this.record('stall', {
+                    blockedMs: blocked,
+                    cpuMs: Math.round((used.user + used.system) / 1000),
+                    after: this.#last,
+                });
             }
         }, periodMs);
         timer.unref();

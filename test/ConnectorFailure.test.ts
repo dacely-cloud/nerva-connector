@@ -16,6 +16,7 @@ import { ConnectorLoggedOut } from '../src/runtime/ConnectorLogout.js';
 import { ConnectorJournalFormatError } from '../src/runtime/ConnectorJournalFormatError.js';
 import { WindowsStateError, WindowsStateFailure } from '../src/windows/WindowsStateProtocol.js';
 import { ConnectorRuntimeUnsupported } from '../src/networking/ConnectorNodeRuntime.js';
+import { ConnectorLane, ConnectorLaneFailure } from '../src/runtime/ConnectorLaneFailure.js';
 
 /** Builds a context with only the facts a case cares about. */
 function context(overrides: Partial<ConnectorFailureContext>): ConnectorFailureContext {
@@ -73,6 +74,14 @@ it('classifies from typed evidence: pairing events, local error classes, system 
         [
             context({ error: new WindowsStateError(WindowsStateFailure.Stopped) }),
             ConnectorFailureKind.StorageHelperStopped,
+            ConnectorFailureRecovery.Automatic,
+        ],
+        [
+            context({
+                error: new ConnectorLaneFailure([ConnectorLane.Host]),
+                stage: ConnectorStartupStage.Ready,
+            }),
+            ConnectorFailureKind.AccessReloaded,
             ConnectorFailureRecovery.Automatic,
         ],
         [

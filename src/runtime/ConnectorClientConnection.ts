@@ -54,6 +54,14 @@ interface ConnectorHostObservationRun {
 
 /** Each socket owns finite control timers and one task per paired lane across any number of lease renewals. */
 export class ConnectorClientConnection {
+    /**
+     * How long GPU inventory and usage sampling may take before a lease's inventory is published without them.
+     *
+     * @remarks
+     * Every lease publishes a fresh inventory, so a slow GPU tool or a blocked event loop leaves out those details
+     * for one lease instead of ending the socket.
+     */
+    static readonly #inventoryDetailMs: number = 3000;
     #socket: ConnectorSocket | null = null;
     #executionLink: ExecutionDeliveryLink | null = null;
     #leaseId: string | null = null;
@@ -582,7 +590,8 @@ export class ConnectorClientConnection {
     ): Promise<void> {
         try {
             const specification: SystemSpecification = await SystemInfo.read(
-                AbortSignal.any([signal, AbortSignal.timeout(3000)]),
+                signal,
+                ConnectorClientConnection.#inventoryDetailMs,
             );
             if (
                 !signal.aborted &&

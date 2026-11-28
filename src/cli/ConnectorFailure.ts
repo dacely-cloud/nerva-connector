@@ -11,6 +11,7 @@ import { ConnectorHistoryMigrationError } from '../runtime/ConnectorHistoryMigra
 import { ConnectorPermissionError } from '../permissions/ConnectorPermissionError.js';
 import { WindowsStateError, WindowsStateFailure } from '../windows/WindowsStateProtocol.js';
 import { ConnectorRuntimeUnsupported } from '../networking/ConnectorNodeRuntime.js';
+import { ConnectorLaneFailure } from '../runtime/ConnectorLaneFailure.js';
 
 /** Every reason the connector can explain to a person; no remote text ever selects or fills one. */
 export const ConnectorFailureKind = {
@@ -29,6 +30,7 @@ export const ConnectorFailureKind = {
     StoragePermission: 'storage-permission',
     FolderPermissions: 'folder-permissions',
     StorageHelperStopped: 'storage-helper-stopped',
+    AccessReloaded: 'access-reloaded',
     DiskFull: 'disk-full',
     RuntimeUnsupported: 'runtime-unsupported',
     LocalState: 'local-state',
@@ -129,6 +131,9 @@ export class ConnectorFailure {
                 ...this.#reason(ConnectorFailureKind.RuntimeUnsupported),
                 detail: error.advice,
             };
+        }
+        if (error instanceof ConnectorLaneFailure) {
+            return this.#reason(ConnectorFailureKind.AccessReloaded);
         }
         if (error instanceof WindowsStateError) {
             return error.failure === WindowsStateFailure.Busy
@@ -385,7 +390,7 @@ export class ConnectorFailure {
                 return {
                     kind,
                     title: 'Windows folder permissions block the connector',
-                    detail: 'Windows rejected a storage folder or permission. See the storage check below and the README.',
+                    detail: 'Windows rejected a connector storage folder. Its name and fix are below; pairing and keys are unchanged.',
                     recovery: ConnectorFailureRecovery.Manual,
                 };
             case ConnectorFailureKind.StorageHelperStopped:
@@ -393,6 +398,13 @@ export class ConnectorFailure {
                     kind,
                     title: "The connector's Windows storage helper stopped",
                     detail: 'The connector starts a new one and reconnects. Saved pairing and keys are unchanged.',
+                    recovery: ConnectorFailureRecovery.Automatic,
+                };
+            case ConnectorFailureKind.AccessReloaded:
+                return {
+                    kind,
+                    title: "A local check stopped this computer's connector access",
+                    detail: 'The connector reloads its saved state and reconnects. Nothing that already started runs again.',
                     recovery: ConnectorFailureRecovery.Automatic,
                 };
             case ConnectorFailureKind.DiskFull:

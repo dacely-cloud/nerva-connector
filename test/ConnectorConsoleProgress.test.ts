@@ -125,9 +125,11 @@ it('keeps the first-run screen open on a Windows storage failure and retries the
             storageCheck: 'nerva-folder/unexpected-permission',
             code: WindowsStateFailure.Untrusted,
         });
-        expect(capture.model?.details).toContain(
+        expect(capture.model?.details.slice(0, 3)).toEqual([
+            'Folder: %LOCALAPPDATA%\\Nerva',
+            expect.stringContaining('Problem: another account has access'),
             'Windows storage check: nerva-folder/unexpected-permission',
-        );
+        ]);
         capture.command?.(ConnectorConsoleCommand.Reconnect);
         await vi.waitFor((): void => {
             expect(load).toHaveBeenCalledTimes(2);

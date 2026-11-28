@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Dacely <business@dacely.com>
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { setTimeout as delay } from 'node:timers/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, it } from 'vitest';
@@ -159,15 +160,63 @@ it('summarizes refusals, closes by Nerva and stalls for /log and skips routine o
             { time, event: 'closed', reason: 'host', afterMs: 1040 },
             { time, event: 'closed', reason: 'closed', closeCode: 1006, afterMs: 900000 },
             { time, event: 'stall', blockedMs: 4200, after: 'signed-in' },
+            { time, event: 'stall', blockedMs: 119047, cpuMs: 31, after: 'signed-in' },
+            {
+                time,
+                event: 'host-consent-check-failed',
+                check: 'unreadable',
+                reason: 'Windows connector storage permissions could not be verified.',
+                errorName: 'Error',
+                errorCode: 'untrusted',
+                storageCheck: 'connector-state/unexpected-permission',
+            },
             { time: 'not a time', event: 'ending', reason: 'files' },
             { event: 'ending', reason: 'files' },
         ],
         10,
     );
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(5);
     expect(rows[0]).toContain('Disconnected: host (host-permit) · Paired host permit denied');
     expect(rows[1]).toContain(
         'Nerva or the network closed the connection (code 1006) after 900.0s',
     );
     expect(rows[2]).toContain('The connector was busy for 4.2s after signed-in');
+    expect(rows[3]).toContain('The connector was paused for 119.0s after signed-in (0.0s of CPU)');
+    expect(rows[4]).toContain(
+        'Full-computer approval check: unreadable · Windows connector storage permissions could not be verified. [connector-state/unexpected-permission]',
+    );
 });
+
+it('a stall line separates a computing event loop from one that was not running', async (): Promise<void> => {
+    const log: ConnectorConnectionLog = new ConnectorConnectionLog(
+        join(directory, 'connection.log'),
+    );
+    {
+        using _stalls: Disposable = log.watchStalls();
+        await delay(600);
+        const started: number = performance.now();
+        while (performance.now() - started < 2000) {
+            Math.sqrt(started);
+        }
+        await delay(600);
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+        await delay(600);
+    }
+    await log.flush();
+    const stalls: readonly Readonly<Record<string, unknown>>[] = (await readFile(log.path, 'utf8'))
+        .trim()
+        .split('\n')
+        .map((line: string): Readonly<Record<string, unknown>> => {
+            const value: unknown = JSON.parse(line);
+            if (typeof value !== 'object' || value === null) {
+                throw new Error('Connection log line must be an object');
+            }
+            return Object.fromEntries(Object.entries(value));
+        })
+        .filter((line: Readonly<Record<string, unknown>>): boolean => line['event'] === 'stall');
+    expect(stalls).toHaveLength(2);
+    const [busy, paused]: readonly (Readonly<Record<string, unknown>> | undefined)[] = stalls;
+    expect(busy?.['cpuMs']).toEqual(expect.any(Number));
+    expect(Number(busy?.['cpuMs'])).toBeGreaterThan(Number(busy?.['blockedMs']) / 2);
+    expect(Number(paused?.['cpuMs'])).toBeLessThan(Number(paused?.['blockedMs']) / 4);
+}, 10000);

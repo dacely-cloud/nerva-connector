@@ -12,6 +12,18 @@ using System.Windows.Forms;
 /// <summary>Owns connector process startup, console discovery, shutdown and restart on the supervisor UI thread.</summary>
 internal sealed partial class NexaConnectorSupervisor : ApplicationContext
 {
+    /// <summary>
+    /// The connector and everything it starts work outside the installation folder.
+    /// Applications it opens inherit this directory and keep running after it stops;
+    /// one holding the installation folder as its current directory made every update
+    /// fail to rename that folder until the application was closed.
+    /// </summary>
+    private static string WorkingDirectory()
+    {
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return Directory.Exists(profile) ? profile : Environment.SystemDirectory;
+    }
+
     private void Start()
     {
         restartTimer.Stop();
@@ -59,7 +71,7 @@ internal sealed partial class NexaConnectorSupervisor : ApplicationContext
                 false,
                 NexaConnectorSupervisorNative.CreateNewConsole,
                 IntPtr.Zero,
-                directory,
+                WorkingDirectory(),
                 ref startup,
                 out created
             )

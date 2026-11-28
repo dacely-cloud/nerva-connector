@@ -177,7 +177,10 @@ your account link and activity history stay in place.
 Settings → Time & language → Date & time and click **Sync now**. A clock more than a few seconds off cannot sign in.
 
 **Windows: it does not start, or an update did not install.** See
-`%LOCALAPPDATA%\Nerva Connector\Logs\supervisor.log`, which records each start, stop and update.
+`%LOCALAPPDATA%\Nerva Connector\Logs\supervisor.log`, which records each start, stop and update. An update
+replaces the installation folder, which fails while another program has that folder as its current directory.
+Before 0.1.21 every application Nexa opened started there, so close those applications and choose **Check for
+updates** again. From 0.1.21 the connector and the applications it opens start in your user profile folder.
 
 **"Nerva Connector is already running on this computer".** Close the other connector window, or stop it in Task
 Manager, and open it again.
@@ -199,9 +202,10 @@ and child directory still requires protected user/SYSTEM-only permissions and is
 inheriting the outer folder's grants. Extra create, write, delete, ownership or permission-changing
 rights on the outer folder remain errors, as does extra read access on private files or child directories.
 
-Look for the `storageCheck` field in
-`%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which part of the path was
-rejected and which check failed. These Command Prompt commands show the permissions for the default storage:
+The connector names the rejected folder and how to fix it below this message, followed by its
+`storageCheck`, which also appears in `%LOCALAPPDATA%\Nerva Connector\Logs\connection.log`. It identifies which
+part of the path was rejected and which check failed. These Command Prompt commands show the permissions for the
+default storage:
 
 ```bat
 icacls "%LOCALAPPDATA%"
@@ -215,10 +219,20 @@ icacls "%USERPROFILE%\.nerva-connector-state"
 Share the storage check and the relevant permissions with support or your Windows administrator. Keep the
 existing Connector folder intact so that any saved pairing and credentials are preserved.
 
+**"A local check stopped this computer's connector access".** A part of the connector that holds full-computer,
+file or program access stopped itself because a storage write failed or the saved approval could not be read, was
+changed or was removed. Programs it had started are stopped. The connector reloads its saved approval and history
+by itself and reconnects; an operation that started but has no result is reported as interrupted and never runs
+again. If the cause remains, the reload stops with its own explanation, such as a folder permission. A
+`host-consent-check-failed` line in `connection.log` names what the full-computer approval check found and, for a
+Windows storage refusal, its `storageCheck`.
+
 **"The connector's Windows storage helper stopped".** The helper that guards the connector's private files exited
 or stopped answering for 30 seconds. The connector starts a new one and reconnects by itself, and your saved pairing
 and keys stay as they were. Time the connector's own event loop spent blocked (a `stall` line in `connection.log`)
-does not count toward those 30 seconds. **"The compiled Windows helper could not start"** means the helper exited
+does not count toward those 30 seconds. A `stall` line's `cpuMs` tells the two kinds of stall apart: close to
+`blockedMs` means the connector was computing; near zero means it was not running at all, because the computer
+slept, Windows suspended it, or its console window was waiting, as while text is selected in it. **"The compiled Windows helper could not start"** means the helper exited
 before it answered at all. Check that .NET Framework 4.x is installed and that security software allows
 `nerva-connector-state.exe`.
 

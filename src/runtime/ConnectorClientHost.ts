@@ -45,6 +45,20 @@ import type { ConnectorActivityHandle, ConnectorActivitySink } from './Connector
 import { ConnectorConnectionLog } from './ConnectorConnectionLog.js';
 import { HostDesktopError } from '../host/HostDesktopError.js';
 import { ConnectorActivityArguments } from './ConnectorActivityArguments.js';
+import { WindowsStateError } from '../windows/WindowsStateProtocol.js';
+
+/** What the periodic check of the saved full-computer approval found when it retired the owner. */
+const HostConsentCheck = {
+    /** The saved approval no longer exists. */
+    Removed: 'removed',
+    /** The saved approval differs from the one this owner was loaded with. */
+    Changed: 'changed',
+    /** The saved approval could not be read or verified. */
+    Unreadable: 'unreadable',
+} as const;
+
+/** Allowed values derive from the runtime mapping. */
+type HostConsentCheck = (typeof HostConsentCheck)[keyof typeof HostConsentCheck];
 
 /** One verified delivery of an original host permit, bound to the lease it arrived on. */
 export interface ConnectorHostDelivery {
@@ -678,25 +692,46 @@ export class ConnectorClientHost implements AsyncDisposable {
         }
     }
     async #inspect(): Promise<void> {
+        let current: ConnectorHostLocalGrant | null;
         try {
-            const current: ConnectorHostLocalGrant | null = await ConnectorHostGrant.read(
-                this.identity,
-            );
-            if (
-                current === null ||
-                ConnectorHostCodec.encode(current) !== ConnectorHostCodec.encode(this.grant)
-            ) {
-                this.#failed = true;
-                this.#stop.abort();
-                this.#linkClose?.();
-                await this.#workspace?.[Symbol.asyncDispose]();
-            }
-        } catch {
-            this.#failed = true;
-            this.#stop.abort();
-            this.#linkClose?.();
-            await this.#workspace?.[Symbol.asyncDispose]();
+            current = await ConnectorHostGrant.read(this.identity);
+        } catch (caught: unknown) {
+            await this.#retire(HostConsentCheck.Unreadable, caught);
+            return;
         }
+        if (current === null) {
+            await this.#retire(HostConsentCheck.Removed, null);
+        } else if (ConnectorHostCodec.encode(current) !== ConnectorHostCodec.encode(this.grant)) {
+            await this.#retire(HostConsentCheck.Changed, null);
+        }
+    }
+    /**
+     * Stops admitting host work after the saved approval was removed, changed or could not be read.
+     *
+     * @remarks
+     * Running processes end and the connection that published this owner closes. The connector then loads a new
+     * owner from the saved approval and journal, which resumes only with verified consent and otherwise refuses with
+     * its own explanation. The first retirement is logged with its cause, including the Windows storage check that
+     * refused the read; later inspections stop.
+     *
+     * @param check - What the periodic consent check found
+     * @param caught - What the read threw, or `null` when it returned
+     */
+    async #retire(check: HostConsentCheck, caught: unknown): Promise<void> {
+        if (!this.#failed) {
+            this.log?.record('host-consent-check-failed', {
+                check,
+                ...(caught === null ? {} : ConnectorConnectionLog.failure(caught)),
+                ...(caught instanceof WindowsStateError && caught.diagnostic !== undefined
+                    ? { storageCheck: caught.diagnostic }
+                    : {}),
+            });
+        }
+        this.#failed = true;
+        clearInterval(this.#timer);
+        this.#stop.abort();
+        this.#linkClose?.();
+        await this.#workspace?.[Symbol.asyncDispose]();
     }
     async #observeInspection(task: Promise<void>): Promise<void> {
         try {

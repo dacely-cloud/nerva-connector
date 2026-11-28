@@ -5,8 +5,8 @@
  * Turns the connection log's most recent disconnect lines into short console rows.
  *
  * @remarks
- * Only why sockets ended, stalls and runtime failures are shown: a local refusal, or a close by Nerva or the
- * network. Routine connecting, sign-in and retry lines are left in the file. Every field is read as untrusted data: a line that is not the expected shape is skipped.
+ * Only why sockets ended, stalls, full-computer approval checks and runtime failures are shown: a local refusal,
+ * or a close by Nerva or the network. A stall that used little processor time is shown as a pause, not as work. Routine connecting, sign-in and retry lines are left in the file. Every field is read as untrusted data: a line that is not the expected shape is skipped.
  */
 export class ConnectorLogSummary {
     static readonly #shown: ReadonlySet<string> = new Set([
@@ -16,6 +16,7 @@ export class ConnectorLogSummary {
         'failed',
         'startup-failed',
         'host-operation-failed',
+        'host-consent-check-failed',
         'host-application-result',
     ]);
 
@@ -97,13 +98,27 @@ export class ConnectorLogSummary {
                 (after === null ? '' : ' after ' + (after / 1000).toFixed(1) + 's')
             );
         }
+        if (event === 'host-consent-check-failed') {
+            const storage: string | null = text('storageCheck');
+            const reason: string | null = text('reason');
+            return (
+                'Full-computer approval check: ' +
+                (text('check') ?? 'failed') +
+                (reason === null ? '' : ' · ' + reason) +
+                (storage === null ? '' : ' [' + storage + ']')
+            );
+        }
         if (event === 'stall') {
             const blocked: number | null = number('blockedMs');
+            const cpu: number | null = number('cpuMs');
             return (
-                'The connector was busy' +
+                (blocked !== null && cpu !== null && cpu * 4 < blocked
+                    ? 'The connector was paused'
+                    : 'The connector was busy') +
                 (blocked === null ? '' : ' for ' + (blocked / 1000).toFixed(1) + 's') +
                 ' after ' +
-                (text('after') ?? 'an unknown step')
+                (text('after') ?? 'an unknown step') +
+                (cpu === null ? '' : ' (' + (cpu / 1000).toFixed(1) + 's of CPU)')
             );
         }
         if (event === 'startup-failed') {
