@@ -197,7 +197,7 @@ export const HostWriteMode = {
 /** Write modes expose creation and truncation intentionally. */
 export type HostWriteMode = (typeof HostWriteMode)[keyof typeof HostWriteMode];
 
-/** Resource bounds constrain connector-owned buffers and concurrency, not arbitrary host program resources. */
+/** Bounds size connector-owned buffers and replies; no count of processes, operations or digests is refused. */
 export class HostWorkspaceLimits {
     /** File and process output replies retain at most one MiB. */
     public static readonly chunkBytes: number = 1024 * 1024;
@@ -205,16 +205,10 @@ export class HostWorkspaceLimits {
     public static readonly digestChunkBytes: number = 256 * 1024;
     /** Hashing has a finite runtime budget, without a total file-size truncation rule. */
     public static readonly digestTimeoutMs: number = 30000;
-    /** One workspace admits at most two simultaneous complete-file hashes. */
-    public static readonly digests: number = 2;
     /** Each stream retains its newest four MiB with exact loss offsets. */
     public static readonly streamBytes: number = 4 * 1024 * 1024;
-    /** Explicit release permits reuse without silently forgetting an original process. */
-    public static readonly processes: number = 32;
     /** A blocked stdin write cannot monopolize the command channel beyond ten seconds. */
     public static readonly inputWriteMs: number = 10000;
-    /** Parallel local I/O and grant checks have a fixed admission bound. */
-    public static readonly operations: number = 64;
     /** One invocation has a finite lifetime of at most seven days. */
     public static readonly timeoutMs: number = 7 * 24 * 60 * 60 * 1000;
     /** Explicit timeout retention stays bounded between one second and one day. */

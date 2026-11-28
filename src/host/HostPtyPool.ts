@@ -20,14 +20,10 @@ import { HostWorkspaceValidation } from './HostWorkspaceValidation.js';
 import { HostOperationError } from './HostOperationError.js';
 import { ConnectorHostErrorCode } from 'nerva-connector-protocol/protocol/ConnectorHost.js';
 
-/** The workspace retains authorization, shared operation admission and the combined native process budget. */
+/** The workspace retains authorization and operation admission for terminals as for ordinary processes. */
 export interface HostPtyPoolOwner {
     /** Authorize and join this operation under the same workspace lifetime as ordinary files and processes. */
     run<T>(access: HostWorkspaceAccess, action: () => Promise<T>): Promise<T>;
-    /** Reserve one startup against the workspace's combined process and terminal capacity. */
-    reserve(): void;
-    /** A startup reservation ends when its exact native owner enters the retained map, or construction fails. */
-    releaseReservation(): void;
 }
 
 /** Trusted local options never come from a terminal tool's JSON arguments. */
@@ -130,8 +126,6 @@ export class HostPtyPool implements AsyncDisposable {
                 if (this.#closed) {
                     throw new Error('Host terminal owner is closed');
                 }
-                this.options.owner.reserve();
-                let reserved: boolean = true;
                 let created: HostTerminal | null = null;
                 const id: string = randomUUID();
                 try {
@@ -145,8 +139,6 @@ export class HostPtyPool implements AsyncDisposable {
                         (owner: HostTerminal): void => {
                             created = owner;
                             this.#entries.set(id, owner);
-                            reserved = false;
-                            this.options.owner.releaseReservation();
                             observation?.created(
                                 this.options.observations.capture(
                                     id,
@@ -176,10 +168,6 @@ export class HostPtyPool implements AsyncDisposable {
                         }
                     }
                     throw error;
-                } finally {
-                    if (reserved) {
-                        this.options.owner.releaseReservation();
-                    }
                 }
             },
         );

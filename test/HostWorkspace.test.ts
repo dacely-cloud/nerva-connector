@@ -187,6 +187,46 @@ it('byte rings keep exact loss offsets and bounded newest binary output', (): vo
     }).toThrow();
 });
 
+it('byte rings grow with received output and stay exact across growth and wrap', (): void => {
+    const ring: HostByteRing = new HostByteRing();
+    const chunks: Buffer[] = [];
+    for (let index: number = 0; index < 400; index++) {
+        const chunk: Buffer = Buffer.alloc(3001 + index, index % 251);
+        chunks.push(chunk);
+        ring.append(chunk);
+    }
+    const all: Buffer = Buffer.concat(chunks);
+    expect(ring.read(0n, all.length)).toMatchObject({
+        offset: 0n,
+        endOffset: BigInt(all.length),
+        truncated: false,
+    });
+    expect(ring.read(0n, all.length).bytes.equals(all)).toBe(true);
+    const overflow: Buffer = Buffer.alloc(HostWorkspaceLimits.streamBytes, 7);
+    ring.append(overflow);
+    ring.append(Buffer.from([1, 2, 3]));
+    const end: bigint = BigInt(all.length + overflow.length + 3);
+    expect(ring.read(0n, 4)).toMatchObject({
+        offset: end - BigInt(HostWorkspaceLimits.streamBytes),
+        truncated: true,
+    });
+    expect(ring.read(end - 5n, 5).bytes).toEqual(Buffer.from([7, 7, 1, 2, 3]));
+    expect(ring.read(end, 5).bytes).toHaveLength(0);
+});
+
+it('a retained ring holds about what it received rather than the whole stream bound', (): void => {
+    const before: number = process.memoryUsage().arrayBuffers;
+    const rings: HostByteRing[] = [];
+    for (let index: number = 0; index < 64; index++) {
+        const ring: HostByteRing = new HostByteRing();
+        ring.append(Buffer.from('dir\r\n'));
+        rings.push(ring);
+    }
+    const grown: number = process.memoryUsage().arrayBuffers - before;
+    expect(rings).toHaveLength(64);
+    expect(grown).toBeLessThan((64 * HostWorkspaceLimits.streamBytes) / 16);
+});
+
 it.skipIf(process.platform !== 'linux')(
     'release kills ordinary background descendants after the original executable exits',
     async (): Promise<void> => {

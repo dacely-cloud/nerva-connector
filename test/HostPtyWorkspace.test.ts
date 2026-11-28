@@ -8,7 +8,6 @@ import { HostLinuxBuild } from '../src/host/HostLinuxBuild.js';
 import { HostMcpWorkspaceTools } from '../src/host/HostMcpWorkspaceTools.js';
 import { HostTerminal } from '../src/host/HostTerminal.js';
 import type { HostTerminalRequest, HostTerminalSnapshot } from '../src/host/HostTerminalTypes.js';
-import { HostWorkspaceLimits } from '../src/host/HostWorkspaceTypes.js';
 import { Boundary } from 'nerva-connector-protocol/protocol/Boundary.js';
 import { HostWorkspaceFixture } from './support/HostWorkspaceFixture.js';
 
@@ -153,29 +152,27 @@ it.skipIf(!native)(
 );
 
 it.skipIf(!native)(
-    'terminal cells and ordinary processes share one retained capacity budget',
+    'terminal cells and ordinary processes stay retained in any number until release',
     async (): Promise<void> => {
         await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
         const terminals: HostTerminalSnapshot[] = [];
-        for (let index: number = 0; index < HostWorkspaceLimits.processes; index++) {
+        for (let index: number = 0; index < 40; index++) {
             terminals.push(await fixture.host.terminals.start(request()));
         }
-        expect(fixture.host.terminals.size).toBe(HostWorkspaceLimits.processes);
-        await expect(fixture.host.terminals.start(request())).rejects.toThrow('process limit');
-        await expect(fixture.host.start(request())).rejects.toThrow('process limit');
-        const first: HostTerminalSnapshot | undefined = terminals[0];
-        if (first === undefined) {
-            throw new Error('Missing retained terminal');
-        }
-        await fixture.host.terminals.release(first.processId);
         const ordinary: Awaited<ReturnType<typeof fixture.host.start>> =
             await fixture.host.start(request());
-        await expect(fixture.host.terminals.start(request())).rejects.toThrow('process limit');
+        expect(fixture.host.terminals.size).toBe(40);
+        expect(
+            new Set(terminals.map((terminal: HostTerminalSnapshot): string => terminal.processId))
+                .size,
+        ).toBe(40);
+        for (const terminal of terminals) {
+            await fixture.host.terminals.release(terminal.processId);
+        }
         await fixture.host.release(ordinary.processId);
-        const replacement: HostTerminalSnapshot = await fixture.host.terminals.start(request());
-        expect(replacement.processId).not.toBe(first.processId);
+        expect(fixture.host.terminals.size).toBe(0);
     },
-    20000,
+    60000,
 );
 
 it.skipIf(!native)(

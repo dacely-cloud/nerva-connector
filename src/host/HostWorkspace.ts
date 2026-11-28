@@ -54,7 +54,6 @@ import {
 /** A pending process registers its exact owner before native launch admission can settle. */
 interface HostProcessAdmission {
     owner: HostProcess | null;
-    reserved: boolean;
 }
 
 /** Full-computer workspace owner keeps authorization, process lifetime and pending I/O under one explicit session. */
@@ -73,8 +72,6 @@ export class HostWorkspace implements AsyncDisposable {
     readonly #options: HostWorkspaceOptions;
     #desktop: HostDesktop | null = null;
     #closed: boolean = false;
-    #starting: number = 0;
-    #digests: number = 0;
     readonly #operationsStop: AbortController = new AbortController();
     #disposal: Promise<void> | null = null;
 
@@ -94,19 +91,6 @@ export class HostWorkspace implements AsyncDisposable {
             owner: {
                 run: <T>(access: HostWorkspaceAccess, action: () => Promise<T>): Promise<T> =>
                     this.#run(access, action),
-                reserve: (): void => {
-                    if (
-                        this.#closed ||
-                        this.#processes.size + this.#starting + this.terminals.size >=
-                            HostWorkspaceLimits.processes
-                    ) {
-                        throw new Error('Host process limit reached; release completed processes');
-                    }
-                    this.#starting += 1;
-                },
-                releaseReservation: (): void => {
-                    this.#starting -= 1;
-                },
             },
         });
     }
@@ -222,7 +206,7 @@ export class HostWorkspace implements AsyncDisposable {
         );
     }
 
-    /** A complete-file digest uses one opened generation, finite runtime and bounded concurrent buffers. */
+    /** A complete-file digest uses one opened generation, finite runtime and one fixed buffer. */
     public async digest(
         path: string,
         snapshot: HostFileSnapshot,
@@ -232,15 +216,7 @@ export class HostWorkspace implements AsyncDisposable {
             HostOperation.Digest,
             path,
             async (absolute: string): Promise<HostFileDigestResult> => {
-                if (this.#digests >= HostWorkspaceLimits.digests) {
-                    throw new Error('Host file digest limit reached');
-                }
-                this.#digests += 1;
-                try {
-                    return await HostFileDigest.read(absolute, snapshot, this.#signal(signal));
-                } finally {
-                    this.#digests -= 1;
-                }
+                return await HostFileDigest.read(absolute, snapshot, this.#signal(signal));
             },
         );
     }
@@ -477,19 +453,8 @@ export class HostWorkspace implements AsyncDisposable {
                 processId: null,
             },
             async (): Promise<HostProcessSnapshot> => {
-                if (
-                    this.#processes.size + this.#starting + this.terminals.size >=
-                    HostWorkspaceLimits.processes
-                ) {
-                    throw new HostOperationError(
-                        ConnectorHostErrorCode.ResourceLimit,
-                        'The Connector reached its process limit. Release completed processes before starting more.',
-                        true,
-                    );
-                }
                 const id: string = randomUUID();
-                this.#starting += 1;
-                const admission: HostProcessAdmission = { owner: null, reserved: true };
+                const admission: HostProcessAdmission = { owner: null };
                 try {
                     observation?.reserve(id);
                     const process: HostProcess = await HostProcess.create(
@@ -506,10 +471,6 @@ export class HostWorkspace implements AsyncDisposable {
                         (created: HostProcess): void => {
                             admission.owner = created;
                             this.#processes.set(id, created);
-                            if (admission.reserved) {
-                                admission.reserved = false;
-                                this.#starting -= 1;
-                            }
                             observation?.created(
                                 this.#observations.capture(
                                     id,
@@ -566,10 +527,6 @@ export class HostWorkspace implements AsyncDisposable {
                         }
                     }
                     throw caught;
-                } finally {
-                    if (admission.reserved) {
-                        this.#starting -= 1;
-                    }
                 }
             },
         );
@@ -697,8 +654,8 @@ export class HostWorkspace implements AsyncDisposable {
     }
 
     async #run<T>(access: HostWorkspaceAccess, action: () => Promise<T>): Promise<T> {
-        if (this.#closed || this.#pending.size >= HostWorkspaceLimits.operations) {
-            throw new Error('Host workspace is closed or busy');
+        if (this.#closed) {
+            throw new Error('Host workspace is closed');
         }
         const pending: PromiseWithResolvers<undefined> = Promise.withResolvers<undefined>();
         this.#pending.add(pending.promise);

@@ -191,7 +191,7 @@ it.skipIf(process.platform !== 'linux')(
 );
 
 it.skipIf(process.platform !== 'linux')(
-    'digest admission bounds concurrent buffers and workspace close joins active descriptor cleanup',
+    'concurrent digests are all admitted and workspace close joins their active descriptor cleanup',
     async (): Promise<void> => {
         await using fixture: HostWorkspaceFixture = await HostWorkspaceFixture.create();
         const path: string = join(fixture.directory, 'bounded.bin');
@@ -211,13 +211,6 @@ it.skipIf(process.platform !== 'linux')(
                     result.status === 'rejected',
             ),
         ).toBe(true);
-        expect(
-            results.filter(
-                (result: PromiseSettledResult<HostFileDigestResult>): boolean =>
-                    result.status === 'rejected' &&
-                    String(result.reason).includes('digest limit reached'),
-            ),
-        ).toHaveLength(1);
         let retained: string | null = null;
         try {
             retained = await readlink('/proc/self/fd/' + descriptor);

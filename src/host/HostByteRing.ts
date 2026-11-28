@@ -3,9 +3,18 @@
 
 import { HostWorkspaceLimits, type HostProcessOutput } from './HostWorkspaceTypes.js';
 
-/** A fixed-size byte ring preserves newest output and exact cumulative offsets without repeated concatenation. */
+/**
+ * A byte ring preserves newest output and exact cumulative offsets without repeated concatenation.
+ *
+ * @remarks
+ * Storage grows by doubling with the output actually received, up to the stream bound, so a
+ * retained process that printed little holds little; only output at the bound starts to wrap.
+ */
 export class HostByteRing {
-    readonly #bytes: Buffer = Buffer.alloc(HostWorkspaceLimits.streamBytes);
+    /** The smallest allocation, so short outputs do not reallocate on every chunk. */
+    static readonly #INITIAL_BYTES: number = 4096;
+
+    #bytes: Buffer = Buffer.alloc(0);
     #end: bigint = 0n;
     #length: number = 0;
     #position: number = 0;
@@ -15,13 +24,17 @@ export class HostByteRing {
         return this.#end;
     }
 
-    /** Stream chunks never enlarge the retained ring allocation. */
+    /** Stream chunks enlarge the allocation only up to the stream bound. */
     public append(bytes: Buffer): void {
         this.#end += BigInt(bytes.length);
+        if (bytes.length === 0) {
+            return;
+        }
         const chunk: Buffer =
-            bytes.length > this.#bytes.length
-                ? bytes.subarray(bytes.length - this.#bytes.length)
+            bytes.length > HostWorkspaceLimits.streamBytes
+                ? bytes.subarray(bytes.length - HostWorkspaceLimits.streamBytes)
                 : bytes;
+        this.#reserve(Math.min(HostWorkspaceLimits.streamBytes, this.#length + chunk.length));
         const first: number = Math.min(chunk.length, this.#bytes.length - this.#position);
         chunk.copy(this.#bytes, this.#position, 0, first);
         chunk.copy(this.#bytes, 0, first);
@@ -39,10 +52,19 @@ export class HostByteRing {
         const length: number = Number(
             this.#end - selected < BigInt(maximum) ? this.#end - selected : BigInt(maximum),
         );
+        const bytes: Buffer = Buffer.alloc(length);
+        if (length === 0) {
+            return {
+                offset: selected,
+                nextOffset: selected,
+                endOffset: this.#end,
+                truncated: offset < begin,
+                bytes,
+            };
+        }
         const position: number =
             (this.#position - Number(this.#end - selected) + this.#bytes.length) %
             this.#bytes.length;
-        const bytes: Buffer = Buffer.alloc(length);
         const first: number = Math.min(length, this.#bytes.length - position);
         this.#bytes.copy(bytes, 0, position, position + first);
         this.#bytes.copy(bytes, first, 0, length - first);
@@ -53,5 +75,27 @@ export class HostByteRing {
             truncated: offset < begin,
             bytes,
         };
+    }
+
+    /** Grows to hold `needed` retained bytes, keeping them in order at the start of the new buffer. */
+    #reserve(needed: number): void {
+        const size: number = this.#bytes.length;
+        if (needed <= size) {
+            return;
+        }
+        const grown: Buffer = Buffer.alloc(
+            Math.min(
+                HostWorkspaceLimits.streamBytes,
+                Math.max(needed, size * 2, HostByteRing.#INITIAL_BYTES),
+            ),
+        );
+        if (this.#length > 0) {
+            const start: number = (this.#position - this.#length + size) % size;
+            const first: number = Math.min(this.#length, size - start);
+            this.#bytes.copy(grown, 0, start, start + first);
+            this.#bytes.copy(grown, first, 0, this.#length - first);
+        }
+        this.#bytes = grown;
+        this.#position = this.#length;
     }
 }
